@@ -22,6 +22,8 @@ version = 3.0.0
  *  d. MGMT promoter region plot
  * 5 - Copy number variation calling using CNVpytor
  * 6 - Report rendering
+ * (optional) Run wf-human-variation SNP and SV workflows
+ * (optional) Run MNP-Flex preprocessing
  *******************************************************************************************
 */
 
@@ -76,6 +78,8 @@ if (params.help) {
         --remora_config    Remora model to be used [default: ${params.remora_config}]
         --port             Port for basecall server [default : ${params.port}] 
         --reads            samtools addreplacerg -r option. It should be specified as this example :  --reads '-r "SM:GM24385" -r "ID:GM24385"'
+        --mnp-flex          Run MNP-Flex preprocessing [default : FALSE]
+        --run_human_variation   Run the wf-human-variation SNP and SV pipeline [default : FALSE]
 
     Example:
       nextflow run main.nf  --input "/input/pod5" --ref "/Ref/Homo_sapiens_assembly38.fasta" --id "Sample_XYZ"
@@ -281,12 +285,13 @@ workflow {
     sniffles2(inputBam, inputBai, ref, id, snifflesThreads)
     annotsvAnnot(sniffles2.sv_vcf, id)
 
+    if (params.run_human_variation){
     // Human variation SNP workflow //not included in report yet
-    human_variation_snp(subsetted_bam.out.subsetBam, panel, ref, id, outDir, bam_min_coverage, snp_threads)
+        human_variation_snp(subsetted_bam.out.subsetBam, panel, ref, id, outDir, bam_min_coverage, snp_threads)
 
     // Human variation SV workflow // not included in report yet
-    human_variation_sv(inputBam, ref, id, sv_threads)
-
+        human_variation_sv(inputBam, ref, id, sv_threads)
+    }
 
     // Final report
     makeReport(makereport, copyNumberVariants.out, mgmtPred.out, methylationClassification.out, filter_report.out, id, mosdepth.mosdepth_out, mgmt_coverage_ch.mgmt_avg_cov, mgmtPromoter_methyartist.out, igv_reports.out, nextflow_version, input_bam, params.seq, report_UKHD)
