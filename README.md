@@ -1,5 +1,6 @@
 <div align="left">
-<img alt="Screenshot 2024-03-17 at 10 41 16 PM" src="https://github.com/areebapatel/Rapid-CNS2_nf/assets/46373444/6ba243da-0dca-4f4e-9cea-a4df7b989ff6" width="200" height="200" style="float: left; margin-right: 10px;">
+<img width="342" alt="313507599-6ba243da-0dca-4f4e-9cea-a4df7b989ff6" src="https://github.com/user-attachments/assets/cda166c2-664f-4286-951a-309b111c1132">
+
 <h1 style="display: inline-block;">Rapid-CNS<sup>2</sup> workflow</h1>
 </div>
 
