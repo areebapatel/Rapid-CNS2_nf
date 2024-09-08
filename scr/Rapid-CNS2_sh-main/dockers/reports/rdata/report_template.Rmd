@@ -1,0 +1,38 @@
+---
+title: "Rapid-CNS² report"
+author: "Kirsten Göbel (kirsten.goebel@med.uni-heidelberg.de)"
+date: `r format(Sys.time(), '%d %B, %Y')`
+
+output:
+  pdf_document:
+    latex_engine: pdflatex
+  html_document:
+    df_print: kable
+header-includes:
+- \usepackage{fancyhdr}
+- \addtolength{\headheight}{3.0cm} % make more space for the header
+- \pagestyle{fancyplain} % use fancy for all pages except chapter start
+- \fancyhead[R]{\includegraphics[height=3cm]{/logo.jpg}}
+- \renewcommand{\headrulewidth}{0pt}
+- \usepackage{palatino}
+- \renewcommand{\familydefault}{\sfdefault} % sans serif
+- \fontfamily{ppl}\selectfont
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+geometry: "left=1.5cm,right=1.5cm,top=2cm,bottom=2cm"
+always_allow_html: true
+---
+
+<style>
+  body{
+  font-size: 16pt;
+  text-align: justify;
+}
+</style>
