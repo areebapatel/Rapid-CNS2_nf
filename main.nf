@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 nextflow.enable.dsl = 2
-version = 3.0.0
+software_version = "3.0.0"
 /**
  ********************************** Rapid-CNS2 NextFlow ******************************************
  * 1 - Base calling, alligment and data preparation
@@ -31,15 +31,13 @@ version = 3.0.0
 //includeConfig './nextflow.config'
 params.input = null
 params.ref = null
-params.tmp_dir = "tempDir"
 //params.out_dir = "output"
-params.outDir = params.out_dir
 params.log_dir = "logDir"
 params.minimum_mgmt_cov = 5
 params.port= 8887
 params.num_gpu = 3
 params.num_clients = params.num_gpu * 3
-
+params.outDir = params.out_dir
 
 params.rParams = [] // Initialize an empty list to store -r parameters
 
@@ -48,8 +46,8 @@ params.pbDVMode = "ont"
 params.pbPATH = "pbrun"
 
 // set up and create an output directory
-out_dir = file(params.out_dir)
-out_dir.mkdir()
+//out_dir = path(params.outDir)
+//out_dir.mkdir()
 
 params.help = null
 params.test = null
@@ -99,14 +97,13 @@ include { basecalling } from './nextflow/basecalling.nf'
 include { subsetBam } from './nextflow/basecalling.nf'
 include { indexBam } from './nextflow/basecalling.nf'
 include { indexSubsettedBam } from './nextflow/basecalling.nf'
-include { methylationCalls } from './nextflow/methylationAnalysis.nf'
+include { mosdepth } from './nextflow/utils.nf'
 include { methylationCalls } from './nextflow/methylationAnalysis.nf'
 include { liftOver_ch } from './nextflow/methylationAnalysis.nf'
 include { check_mgmt_coverage } from './nextflow/methylationAnalysis.nf'
 include { mgmtPromoter_methyartist } from './nextflow/methylationAnalysis.nf'
 include { mgmtPred } from './nextflow/methylationAnalysis.nf'
 include { mnpFlex } from './nextflow/methylationAnalysis.nf'
-
 include { deepVariant } from './nextflow/variantCalling.nf'
 include { recodeVCF } from './nextflow/variantCalling.nf'
 include { convert2annovar } from './nextflow/variantCalling.nf'
@@ -120,9 +117,7 @@ include { annotsvAnnot } from './nextflow/structuralVariants.nf'
 include { methylationClassification } from './nextflow/methylationClassification.nf'
 include { cnvAnnotated } from './nextflow/copyNumberVariants.nf'
 include { copyNumberVariants } from './nextflow/copyNumberVariants.nf'
-
 include { reportRendering } from './nextflow/reportRendering.nf'
-include { mnpFlex } from './nextflow/mnpFlex.nf'
 
 workflow {
     Channel.fromPath(params.input, checkIfExists: true)
@@ -139,12 +134,21 @@ workflow {
 
     Channel.from(params.outDir)
     .set {out_dir}
+    
+    Channel.from(params.tmp_dir)
+    .set {tmpDir}
 
     Channel.from(params.model_config)
     .set {model_config}
 
     Channel.from(params.remora_config)
     .set {remora_config}
+    
+    Channel.from(params.liftOver)
+    .set {liftOver}
+    
+    Channel.from(params.liftOverChain)
+    .set {liftOverChain}
 
     Channel.from(params.num_clients)
     .set {num_clients}
@@ -184,7 +188,19 @@ workflow {
 
     Channel.from(params.sv_threads)
     .set {sv_threads}
-
+    
+    Channel.from(params.cov_threads)
+    .set {cov_threads}
+    
+    Channel.from(params.meth_threads)
+    .set {meth_threads}
+    
+    Channel.from(params.mgmt_threads)
+    .set {mgmt_threads}
+    
+    Channel.from(params.snifflesThreads)
+    .set {snifflesThreads}
+    
     Channel.from(params.minimum_mgmt_cov)
     .set {minimum_mgmt_cov}
 
@@ -210,6 +226,9 @@ workflow {
 
     Channel.fromPath("${projectDir}/scr/methylation_classification.R", checkIfExists: true)
     .set {methylationClassificationScript}
+    
+    Channel.fromPath("${projectDir}/scr/annotate.py", checkIfExists: true)
+    .set {annotateScript}
 
     Channel.fromPath("${projectDir}/data/top_probes_hm450.Rdata", checkIfExists: true)
     .set {topProbes}
@@ -253,37 +272,37 @@ workflow {
 
     // Call methylation
     methylation_calls = methylationCalls(inputBam, inputBai.indexedBam, ref, id,  modkitThreads)
-    liftOver_ch(methylation_calls.bedmethyl_file, liftOver, liftOverChain, id)
+    liftover_ch = liftOver_ch(methylation_calls.bedmethyl_file, liftOver, liftOverChain, id)
 
     // Methylation classification
-    methylation_classification = methylationClassification(methylationClassificationScript, liftOver_ch.bedmethyl_file_hg38, id, topProbes, trainingData, arrayFile, meth_threads)
+    methylation_classification = methylationClassification(methylationClassificationScript, liftover_ch.bedmethyl_file_hg38, id, topProbes, trainingData, arrayFile, meth_threads)
 
     //MGMT promoter
     check_mgmt_coverage(inputBam, mgmtBed, minimum_mgmt_cov, mgmt_threads)
 
-    mgmtPromoter_methyartist(inputBam, inputBai, ref, check_mgmt_coverage.out)
+    mgmtPromoter_methyartist(inputBam, inputBai, ref, check_mgmt_coverage.out[0])
 
-    mgmtPred(check_mgmt_coverage.out, mgmtScript, mgmtBed, mgmtProbes, mgmtModel, id)
+    mgmtPred(check_mgmt_coverage.out[0], mgmtScript, mgmtBed, mgmtProbes, mgmtModel, id)
 
     // CNV calling
     copyNumberVariants(inputBam, inputBai, id, cnvThreads)
     cnvAnnotated(copyNumberVariants.out, id, annotateScript)
 
     // SNV calling
-    deepVariant(subsetted_bam.subsetBam, subset_index.indexSubsetBam, ref, id, pbDVMode, pbPATH, tmpDir)
-    recodeVCF(deepVariant.dv_vcf)
+    deepVariant_ch = deepVariant(subsetted_bam.subsetBam, subset_index.indexSubsetBam, ref, id, pbDVMode, pbPATH, tmpDir)
+    recodeVCF_ch = recodeVCF(deepVariant_ch.dv_vcf)
 
     // ANNOVAR
-    convert2annovar(recodeVCF.pass_vcf)
-    tableAnnovar(convert2annovar.annovar_input)
-    filterReport(filter_report, tableAnnovar.dv_anno)
+    convert2annovar_ch = convert2annovar(recodeVCF_ch.pass_vcf)
+    tableAnnovar_ch = tableAnnovar(convert2annovar_ch.annovar_input)
+    filterReport_ch = filterReport(filterReportScript, tableAnnovar_ch.dv_anno)
 
     // IGV reports
     igv_reports(filterReport.out, id, ref, subsetted_bam.subsetBam, subset_index.indexSubsetBam, annotations)
 
     // SV calling
-    sniffles2(inputBam, inputBai, ref, id, snifflesThreads)
-    annotsvAnnot(sniffles2.sv_vcf, id)
+    sniffles2_ch = sniffles2(inputBam, inputBai, ref, id, snifflesThreads)
+    annotsvAnnot(sniffles2_ch.sv_vcf, id)
 
     if (params.run_human_variation){
     // Human variation SNP workflow //not included in report yet
@@ -294,7 +313,7 @@ workflow {
     }
 
     // Final report
-    makeReport(makereport, copyNumberVariants.out, mgmtPred.out, methylationClassification.out, filter_report.out, id, mosdepth.mosdepth_out, mgmt_coverage_ch.mgmt_avg_cov, mgmtPromoter_methyartist.out, igv_reports.out, nextflow_version, input_bam, params.seq, report_UKHD)
+    makeReport(makereport, copyNumberVariants.out, mgmtPred.out, methylation_classification.out, filterReport_ch.out, id, mosdepth.mosdepth_out, mgmt_coverage_ch.mgmt_avg_cov, mgmtPromoter_methyartist.out, igv_reports.out, nextflow_version, input_bam, params.seq, report_UKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, liftOver_ch.out, liftOver_ch.bedmethyl_file_hg38, params.mnpFlexBed)
@@ -303,8 +322,9 @@ workflow {
 
 workflow.onComplete {
     if(workflow.success) {
-    println ( "The Rapid-CNS2 workflow is now complete!\n Your outpus are located in : " + params.outDir )
+    println ( "The Rapid-CNS2 workflow is now complete!\n Your outputs are located in : " + params.outDir )
     }
     else {
     println ( "Oops .. something went wrong, please look into the log file, and error messages into " + workDir )
     }
+}

@@ -51,8 +51,6 @@ process methylationCalls {
         path(ref)
         val(id)
         val(modkitThreads)
-        path(liftOver)
-        path(liftOverChain)
 
     output:
         path "${id}.mods.bedmethyl", emit: bedmethyl_file
@@ -82,24 +80,24 @@ process liftOver_ch{
 
     script:
         """
-        ${liftOver}/liftOver ${bedmethyl_file} ${liftOverChain} ${params.outDir}/mods/${id}.mods.hg38.bedmethyl ${params.outDir}/mods/${id}.mods.5mC.unmapped.bed -bedPlus=3
+        ${liftOver} ${bedmethyl_file} ${liftOverChain} ${params.outDir}/mods/${id}.mods.hg38.bedmethyl ${params.outDir}/mods/${id}.mods.5mC.unmapped.bed -bedPlus=3
         """
 }
 
 process check_mgmt_coverage {
     input:
         path(inputBam)
-	    path(mgmtBed)
-	    val(minimum_mgmt_cov)
+	      path(mgmtBed)
+	      val(minimum_mgmt_cov)
         val(threads)
 
     publishDir("${params.outDir}/mgmt")
 
     output:
-	val true
-	path "*_cov.txt", emit: mgmt_avg_cov_file
-    path "mgmt_cov.mosdepth.summary.txt"	
-    stdout emit: mgmt_avg_cov
+	      val true
+	      path "*_cov.txt", emit: mgmt_avg_cov_file
+        path "mgmt_cov.mosdepth.summary.txt"	
+        stdout emit: mgmt_avg_cov
 
     script:
         """
@@ -126,7 +124,7 @@ process mgmtPromoter_methyartist {
         path(inputBam)
         path(inputBai)
         path(ref)
-	    val ready 
+	      val ready 
 
     publishDir("${params.outDir}/mgmt/")
     
