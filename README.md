@@ -65,12 +65,9 @@ This pipeline analyses CNS tumour data generated through Nanopore adaptive sampl
 | `--log_dir`          | Directory to store log files                                                                                       | `logDir`             |
 | `--minimum_mgmt_cov` | Minimum coverage for MGMT promoter methylation analysis                                                            | `5`                  |
 | `--model_config`     | Basecalling model to be used                                                                                       | `dna_r10.4.1_e8.2_400bps_hac@v4.1.0` |
-| `--remora_config`    | Modified basecalling modelto be used                                                                                            | `8887`               |
-| `--help`             | Show help message                                                                                                  | `null`               |
-| `--test`             | Run in test mode                                                                                                   | `null`               |
-| `--reads`            | Samtools addreplacerg -r option. Specify as `-r "SM:GM24385" -r "ID:GM24385"`                                      | `null`               |
+| `--remora_config`    | Modified basecalling modelto be used                                                                               | `dna_r10.4.1_e8.2_400bps_hac@v4.3.0_5mCG@v1` |
 | `--basecalling`      | Enable basecalling from raw ONT POD5 data. If provided, `--input` should point to the directory containing raw data. | `false`              |
-| `--mnp_flex`         | Prepare input file for the MNP-Flex classifier.                                                                   | `false`              |
+| `--mnp_flex`         | Prepare input file for the MNP-Flex classifier.                                                                    | `false`              |
 
 
 ## Acknowledgements
