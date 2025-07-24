@@ -1,29 +1,4 @@
-process basecalling {
-    input:
-        path(input)
-        path(inputRef)
-        val(id)
-        path(outDir)
-        val(modelConfig)
-        val(remoraConfig)
-
-    output:
-        path "*.pass.bam" , emit : inputBam
-        path "*.pass.bam.bai" , emit : inputBai
-    
-    script:
-        """
-        nextflow run epi2me-labs/wf-basecalling \
-        -profile singularity \
-        --input ${input} \
-        --ref ${ref} \    
-        --dorado_ext fast5 \
-        --sample_name ${id} \
-        --out_dir ${outDir}/basecalling/ \
-        --basecaller_cfg ${modelConfig} \
-        --remora_cfg ${remoraConfig}
-        """ 
-}
+// This file has been renamed to bamProcessing.nf. Please use that file for BAM processing steps.
 
 
 process addreplacerg {

@@ -27,8 +27,7 @@ opt = parse_args(opt_parser);
 #Create output directory
 dir.create(file.path(opt$out_dir), showWarnings = FALSE)
 
-#Read megalodon methylation values
-#filein <- paste0(opt$megalodon_dir,"/modified_bases.5mC.bed")
+#Read methylation values
 meth <- read.delim(opt$in_file,header=FALSE)
 
 #Keep relevant columns
@@ -134,45 +133,46 @@ write.table(details, file = paste0(opt$out_dir,"/",opt$sample,"_rf_details.tsv")
 
 ### predict case
 
-case <- as.data.frame(unique(case))
-case <- case[match(cols,case$cpg),]
-case <- case[,c("methylation","cpg")]
-case$methylation <- ((case$methylation >= .5) +0)
-df <- subset(case,select=methylation)
-df <- t(df)
-x_probs <- predict(rf, rbind(df[,cols],df[,cols]), predict.all=F)$predictions[1,]
-x_score <- x_probs[which(x_probs == max(x_probs))]
-x_pred <- attr(x_score, "name")
+# Prepare the case data for prediction
+case_df <- as.data.frame(unique(case))
+case_df <- case_df[match(cols, case_df$cpg), ]
+case_df <- case_df[, c("methylation", "cpg")]
+case_df$methylation <- ((case_df$methylation >= 0.5) + 0)
+methylation_matrix <- subset(case_df, select = methylation)
+methylation_matrix <- t(methylation_matrix)
 
+# Predict probabilities for each class
+predicted_probabilities <- predict(rf, rbind(methylation_matrix[, cols], methylation_matrix[, cols]), predict.all = FALSE)$predictions[1, ]
+max_probability <- predicted_probabilities[which(predicted_probabilities == max(predicted_probabilities))]
+predicted_class <- attr(max_probability, "name")
 
-votes <- data.frame(x_probs)
-colnames(votes) <- c("Freq")
+# Prepare votes data frame
+votes_df <- data.frame(Frequency = predicted_probabilities)
+votes_df$Frequency <- votes_df$Frequency / sum(votes_df$Frequency) * 100
 
-votes$Freq <- votes$Freq / sum(votes$Freq) * 100
-
-# Apply recalibration to case score
-x_scaled <- lapply(levels(ts$Dx), function(type){
-  x_scores <- x_probs[type]
-  scaled_scores <- glm_models[[which(classes == type)]]
-  x_scaled <- predict(scaled_scores, newdata = data.frame(score = x_scores), type = "response")
-  return(x_scaled)
+# Apply recalibration to the predicted probabilities
+recalibrated_scores_list <- lapply(levels(ts$Dx), function(class_label) {
+  class_score <- predicted_probabilities[class_label]
+  glm_model <- glm_models[[which(classes == class_label)]]
+  recalibrated_score <- predict(glm_model, newdata = data.frame(score = class_score), type = "response")
+  return(recalibrated_score)
 })
-x_mean_this <- unlist(x_scaled)
-x_calibrated_scores <- x_mean_this/sum(x_mean_this)
-x_calibrated_score <- x_calibrated_scores[x_pred]
+recalibrated_scores <- unlist(recalibrated_scores_list)
+normalized_recalibrated_scores <- recalibrated_scores / sum(recalibrated_scores)
+final_recalibrated_score <- normalized_recalibrated_scores[predicted_class]
 
-votes$cal_Freq <- x_calibrated_scores
-votes$cal_Freq <- votes$cal_Freq / sum(votes$cal_Freq) * 100
+votes_df$Recalibrated_Frequency <- normalized_recalibrated_scores
+votes_df$Recalibrated_Frequency <- votes_df$Recalibrated_Frequency / sum(votes_df$Recalibrated_Frequency) * 100
 
-votes <- votes[order(votes$Freq),, drop = FALSE] 
+votes_df <- votes_df[order(votes_df$Frequency), , drop = FALSE]
 
 ### Save calibration report
 
 report <- paste(paste0("Number of features: ", rf$num.independent.variables), 
-                paste0("Predicted Class: ", x_pred),
-                paste0("Initial Score: ", x_score),
-                paste0("Calibrated Score: ", x_calibrated_score),
+                paste0("Predicted Class: ", predicted_class),
+                paste0("Initial Score: ", max_probability),
+                paste0("Calibrated Score: ", final_recalibrated_score),
                 sep = "\n")
 write.table(report, file = paste0(opt$out_dir,"/",opt$sample,"_calibrated_classification.tsv"), row.names = F, col.names = F, quote = F)
 
-write.table(votes, file = paste0(opt$out_dir,"/",opt$sample,"_votes.tsv"), quote = F)
+write.table(votes_df, file = paste0(opt$out_dir,"/",opt$sample,"_votes.tsv"), quote = F)
