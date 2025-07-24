@@ -18,19 +18,6 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
   - Raw unaligned or pre-aligned BAM files with 5mC calling (preferably a hac/sup model)
   - Reference genome file (hg38 required)
 
-## Docker Image
-
-A pre-built Docker image is provided for reproducible and easy execution:
-
-- **Image:** `areebapatel/rapid_cns_3.0.0`
-- **Includes:**
-  - R and required R packages (`optparse`, `GenomicRanges`, `ranger`, `matrixStats`, `data.table`, `glmnet`, `rmarkdown`, `kableExtra`, `knitr`)
-  - Python 3.12 and packages: `pod5`, `igv-reports==1.0.5`, `cnvpytor==1.3.2`, `methylartist`, `requests`, `pandas`, `gnureadline`, `pathlib`, `pysam`, `numpy`, `scipy`, `matplotlib`, `h5py`, `xlsxwriter`, `seaborn`, `openpyxl`
-  - Bioinformatics tools: `samtools`, `bedtools`, `vcftools`, `mosdepth`, `dorado` (1.0.2)
-  - All system dependencies and UTF-8 locale
-
-**Note:** All pipeline scripts (in `scr/` and `nextflow/`) are automatically mounted into the container by Nextflow at runtime. You do not need to copy them into the image.
-
 ## Usage
 
 1. Clone this repository:
@@ -41,13 +28,7 @@ A pre-built Docker image is provided for reproducible and easy execution:
 
 2. Edit the `nextflow.config` file to configure pipeline parameters according to your requirements.
 
-3. Pull the Docker image (optional, will be pulled automatically by Nextflow if not present):
-
-    ```bash
-    docker pull areebapatel/rapid_cns_3.0.0
-    ```
-
-4. Run the pipeline using Nextflow:
+3. Run the pipeline using Nextflow:
 
     ```bash
     nextflow run main.nf --input <input_directory_or_bam> --id <sample_identifier> --outDir <output_directory> --ref <reference_fasta> -profile docker
@@ -57,7 +38,7 @@ A pre-built Docker image is provided for reproducible and easy execution:
 
     Additional options can be specified to customize pipeline behavior. Use the `--help` option to view available options and their descriptions.
 
-5. Monitor pipeline progress and access results in the specified output directory.
+4. Monitor pipeline progress and access results in the specified output directory.
 
 ## Basecalling
 
@@ -146,25 +127,19 @@ This project is licensed under the [MIT License](LICENSE).
 - Results will be in the output directory specified by `--outDir` (default: `output`).
 - For more options, run: `nextflow run main.nf --help`
 
-# Pipeline Structure
-
-The pipeline is modular and consists of several Nextflow modules and supporting scripts. Below is a high-level workflow diagram:
+## Pipeline Structure
 
 ```mermaid
 graph TD;
     A[Input Data (BAM)] --> B[Alignment];
     B --> C[Variant Calling];
     B --> D[Methylation Analysis];
-    B --> E[Copy Number Variation];
-    B --> F[Structural Variant Calling];
+    C --> E[Annotation & Filtering];
+    D --> F[MGMT Promoter Analysis];
     D --> G[Methylation Classification];
-    D --> H[MGMT Promoter Methylation];
-    G --> I[Report Generation];
-    C --> I;
-    E --> I;
-    F --> I;
-    H --> I;
-    I[Comprehensive Report]
+    E --> H[Report Generation];
+    F --> H;
+    G --> H;
 ```
 
 # Scripts and Modules
