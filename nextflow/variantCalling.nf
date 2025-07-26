@@ -82,7 +82,7 @@ process tableAnnovar {
         path(annovarDB)
     
     output:
-        path "*_multianno.csv", emit: dv_anno
+        path "*_multianno.csv", emit: dvAnno
       
     script:
         """
@@ -90,8 +90,8 @@ process tableAnnovar {
         ${annovarDB} \
         -buildver hg38 \
         -out ${params.id}_dv_panel \
-        -protocol refGene,cytoBand,avsnp147,dbnsfp30a,1000g2015aug_eur,cosmic70 \
-        -operation gx,r,f,f,f,f \
+        -protocol refGene,cytoBand,clinvar_20240917,avsnp151,1000g2015aug_eur,cosmic70,dbnsfp42c,allofus \
+        -operation gx,r,f,f,f,f,f \
         -nastring . \
         -csvout \
         -polish \
@@ -106,16 +106,16 @@ process filterReport {
 
     input:
         path(filterReportScript)
-        path(dv_anno)
+        path(dvAnno)
         val(id)
 
     output:
-        path "${id}_dv_report.csv", emit: dv_report
+        path "${id}_dv_report.csv", emit: dvReport
     
     script:
         """
         Rscript ${filterReportScript} \
-        --input ${dv_anno} \
+        --input ${dvAnno} \
         --output ${id}_dv_report.csv \
         --sample ${id}
         """        

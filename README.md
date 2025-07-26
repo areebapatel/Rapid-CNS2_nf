@@ -18,6 +18,48 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
   - Raw unaligned or pre-aligned BAM files with 5mC calling (preferably a hac/sup model)
   - Reference genome file (hg38 required)
 
+## Installation
+
+### ANNOVAR Installation
+
+ANNOVAR is required for variant annotation. Follow these steps to install and configure it:
+
+1. **Register and Download ANNOVAR:**
+   - Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
+   - Fill out the registration form with your institutional email
+   - You will receive a download link via email within 10 minutes
+   - Download the ANNOVAR package
+
+2. **Extract ANNOVAR:**
+   ```bash
+   tar -xzf annovar.latest.tar.gz
+   cd annovar
+   ```
+
+3. **Update your `nextflow.config`:**
+   ```groovy
+   params {
+       annovarPath = "/path/to/annovar/"
+       annovarDB = "/path/to/annovar/humandb/"
+   }
+   ```
+   **Note:** Replace `/path/to/annovar/` with the actual path where you extracted ANNOVAR.
+
+4. **Create humandb directory and download databases for hg38:**
+   ```bash
+   mkdir humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cytoBand humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar avsnp151 humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar 1000g2015aug humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cosmic70 humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp42c humandb/
+   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar allofus humandb/
+   ```
+
+**Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
+
 ## Usage
 
 1. Clone this repository:
