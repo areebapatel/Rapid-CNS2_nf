@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, variant calling, methylation analysis, structural variant calling, copy number variation calling, and provides a comprehensive molecular diagnostic-ready report.
+The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, SNV calling, structural variant calling, methylation analysis, copy number variation calling, and provides a comprehensive molecular diagnostic-ready report.
 
 This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
 
@@ -301,14 +301,17 @@ nextflow run main.nf \
 ```mermaid
 graph TD
     A[Input Data BAM] --> B[Alignment]
-    B --> C[Variant Calling]
+    B --> C[SNV Calling]
     B --> D[Methylation Analysis]
+    B --> I[Structural Variant Calling]
     C --> E[Annotation & Filtering]
     D --> F[MGMT Promoter Analysis]
     D --> G[Methylation Classification]
+    I --> J[Structural Variant Annotation]
     E --> H[Report Generation]
     F --> H
     G --> H
+    J --> H
 ```
 
 # Scripts and Modules
