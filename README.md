@@ -12,7 +12,7 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
 
 ## Requirements
 
-- Nextflow (version 3.0.0 or later)
+- Nextflow (version 20.10.0 or later, recommended 22.10.0+)
 - Docker (recommended) or Singularity
 - Required input data:
   - Raw unaligned or pre-aligned BAM files with 5mC calling (preferably a hac/sup model)
@@ -20,45 +20,203 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
 
 ## Installation
 
-### ANNOVAR Installation
+### 1. Prerequisites
 
-ANNOVAR is required for variant annotation. Follow these steps to install and configure it:
+Before installing the pipeline, ensure you have the following prerequisites:
 
-1. **Register and Download ANNOVAR:**
-   - Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
-   - Fill out the registration form with your institutional email
-   - You will receive a download link via email within 10 minutes
-   - Download the ANNOVAR package
+#### System Requirements
+- **Operating System:** Linux (Ubuntu 18.04+, CentOS 7+, or similar)
+- **Memory:** Minimum 8GB RAM, recommended 32GB+ for large datasets
+- **Storage:** At least 100GB free space for reference genomes and databases
+- **CPU:** Multi-core processor (8+ cores recommended)
 
-2. **Extract ANNOVAR:**
-   ```bash
-   tar -xzf annovar.latest.tar.gz
-   cd annovar
-   ```
+#### Software Dependencies
+- **Java:** OpenJDK 8 or later
+- **Git:** For cloning the repository
 
-3. **Update your `nextflow.config`:**
-   ```groovy
-   params {
-       annovarPath = "/path/to/annovar/"
-       annovarDB = "/path/to/annovar/humandb/"
-   }
-   ```
-   **Note:** Replace `/path/to/annovar/` with the actual path where you extracted ANNOVAR.
+### 2. Install Nextflow
 
-4. **Create humandb directory and download databases for hg38:**
-   ```bash
-   mkdir humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cytoBand humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar avsnp151 humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar 1000g2015aug humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cosmic70 humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp42c humandb/
-   ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar allofus humandb/
-   ```
+#### Option A: Using Conda (Recommended)
+```bash
+# Install Miniconda if you don't have it
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# Create a new environment and install Nextflow
+conda create -n nextflow python=3.9
+conda activate nextflow
+conda install -c bioconda nextflow
+```
+
+#### Option B: Manual Installation
+```bash
+# Download and install Nextflow
+curl -s https://get.nextflow.io | bash
+sudo mv nextflow /usr/local/bin/
+```
+
+### 3. Install Container Engine
+
+#### Docker (Recommended)
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Verify installation
+docker --version
+```
+
+#### Singularity (Alternative)
+```bash
+# Install Singularity (version 3.0+)
+sudo apt-get update
+sudo apt-get install -y singularity-container
+
+# Verify installation
+singularity --version
+```
+
+### 4. Download Reference Genome
+
+#### UCSC hg38
+```bash
+# Create reference directory
+mkdir -p /path/to/references/hg38
+
+# Download UCSC hg38 reference genome
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
+gunzip hg38.fa.gz
+mv hg38.fa /path/to/references/hg38/hg38.fa
+
+# Create index files
+samtools faidx /path/to/references/hg38/hg38.fa
+```
+
+### 5. Install ANNOVAR
+
+ANNOVAR is required for variant annotation. Follow these steps:
+
+#### 5.1 Register and Download
+1. Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
+2. Fill out the registration form with your institutional email
+3. You will receive a download link via email within 10 minutes
+4. Download the ANNOVAR package
+
+#### 5.2 Extract and Install
+```bash
+# Extract ANNOVAR
+tar -xzf annovar.latest.tar.gz
+cd annovar
+
+# Make scripts executable
+chmod +x *.pl
+```
+
+#### 5.3 Download Databases
+```bash
+# Create humandb directory
+mkdir humandb/
+
+# Download required databases for hg38
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cytoBand humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar avsnp151 humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar 1000g2015aug humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cosmic70 humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp42c humandb/
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar allofus humandb/
+```
 
 **Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
+
+### 6. Clone the Pipeline
+
+```bash
+# Clone the repository
+git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
+cd Rapid-CNS2_nf
+
+# Check out the latest release (if available)
+git checkout tags/v3.0.0  # or the latest version
+```
+
+### 7. Configure the Pipeline
+
+#### 7.1 Update nextflow.config
+Edit the `nextflow.config` file with your specific paths:
+
+```groovy
+params {
+    // Update these paths to match your system
+    ref = "/path/to/references/hg38/hg38.fa"
+    annovarPath = "/path/to/annovar/"
+    annovarDB = "/path/to/annovar/humandb/"
+    annotsvAnnot = "/path/to/AnnotSV/Annotations_Human/"
+    
+    // Set your preferred executor
+    process.executor = 'local'  // or 'lsf', 'slurm'
+}
+```
+
+#### 7.2 Test Installation
+```bash
+# Test Nextflow installation
+nextflow -version
+
+# Test Docker/Singularity
+docker run hello-world  # or singularity run docker://hello-world
+
+# Run a test with the pipeline
+nextflow run main.nf --help
+```
+
+
+
+### 8. Verify Installation
+
+Run a quick test to ensure everything is working:
+
+```bash
+# Test the pipeline with a small dataset
+nextflow run main.nf \
+    --input /path/to/test/sample.bam \
+    --id test_sample \
+    --ref /path/to/references/hg38/hg38.fa \
+    --outDir ./test_output \
+    -profile docker
+```
+
+### 9. Troubleshooting
+
+#### Common Issues:
+
+1. **Java not found:**
+   ```bash
+   sudo apt-get install openjdk-11-jdk
+   ```
+
+2. **Docker permission denied:**
+   ```bash
+   sudo usermod -aG docker $USER
+   # Log out and log back in
+   ```
+
+3. **Nextflow cache issues:**
+   ```bash
+   nextflow clean -f
+   ```
+
+4. **Memory issues:**
+   - Increase Java heap space: `export NXF_OPTS="-Xms500M -Xmx2G"`
+   - Reduce the number of concurrent processes in `nextflow.config`
+
+#### Getting Help:
+- Check the Nextflow documentation: https://www.nextflow.io/docs/
+- Review the pipeline logs in the `work/` directory
+- Check the `pipeline_info/` directory for execution reports
 
 ## Usage
 
@@ -123,37 +281,6 @@ ANNOVAR is required for variant annotation. Follow these steps to install and co
 | `--mgmtThreads`      | Threads for MGMT promoter analysis.                                                                               | `8`                  |
 | `--containerEngine`  | Container engine to use: 'docker' or 'singularity' (default: docker)                                              | `docker`        |
 
-## Acknowledgements
-We are extremely grateful to all our lab members and collaborators for their support! 
-Keeping up with AI to make our life easier and to compensate for our (Areeba's) art skills, our logo was generated by DALL-E.
-
-## Citation
-If you use this pipeline, please cite our work:
-
-Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
-
-## Contributions
-Contributions are welcome! If you encounter any issues, have suggestions for improvements, or would like to contribute new features, please open an issue or pull request on this repository.
-
-# Dockerfiles
-
-This project uses Docker to containerize its dependencies and ensure reproducibility. The `dockerfiles/` directory contains all the Dockerfiles used in the pipeline, organized by component.
-
-Each subdirectory in `dockerfiles/` corresponds to a specific tool or workflow step and contains:
-- `Dockerfile`: The instructions to build the Docker image.
-- Any necessary scripts or configuration files for that container.
-
-To build a specific Docker image, navigate to the relevant subdirectory and run:
-```bash
-docker build -t <image_name>:<tag> .
-```
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Nextflow](https://img.shields.io/badge/Nextflow-3.0%2B-brightgreen)](https://www.nextflow.io/)
 
 # Quick Start
 
@@ -172,16 +299,16 @@ This project is licensed under the [MIT License](LICENSE).
 ## Pipeline Structure
 
 ```mermaid
-graph TD;
-    A[Input Data (BAM)] --> B[Alignment];
-    B --> C[Variant Calling];
-    B --> D[Methylation Analysis];
-    C --> E[Annotation & Filtering];
-    D --> F[MGMT Promoter Analysis];
-    D --> G[Methylation Classification];
-    E --> H[Report Generation];
-    F --> H;
-    G --> H;
+graph TD
+    A[Input Data BAM] --> B[Alignment]
+    B --> C[Variant Calling]
+    B --> D[Methylation Analysis]
+    C --> E[Annotation & Filtering]
+    D --> F[MGMT Promoter Analysis]
+    D --> G[Methylation Classification]
+    E --> H[Report Generation]
+    F --> H
+    G --> H
 ```
 
 # Scripts and Modules
@@ -209,7 +336,7 @@ graph TD;
 1. **Clone and configure:**
     - Clone the repo and edit `nextflow.config` for your environment and paths.
 2. **Prepare input:**
-    - Place ONT POD5 files or BAMs in your input directory.
+    - Place BAMs in your input directory.
     - Ensure you have the required reference genome (hg38).
 3. **Run:**
     - See Quick Start above.
@@ -224,7 +351,7 @@ graph TD;
 # Frequently Asked Questions (FAQ)
 
 **Q: What input formats are supported?**
-A: Raw ONT POD5 files or pre-aligned BAM files.
+A: Unaligned or pre-aligned BAM files.
 
 **Q: Can I run only a subset of the pipeline?**
 A: Yes, you can modify the workflow or use Nextflow's `-resume` and `-entry` options.
@@ -236,9 +363,29 @@ A: Edit the `nextflow.config` file to set process-specific resources.
 A: In the directory specified by `--outDir` (default: `output`).
 
 **Q: How do I cite this pipeline?**
-A: See the Citation section above.
+A: See the Citation section below.
 
 
 > **Note:** Some paths in `nextflow.config` are system-specific and must be updated for your environment.
 
 > **Note:** You can now select either Docker or Singularity as the container engine using the `--containerEngine` parameter. Default is Docker.
+
+## Acknowledgements
+We are extremely grateful to all our lab members and collaborators for their support! 
+Keeping up with AI to make our life easier and to compensate for our (Areeba's) art skills, our logo was generated by DALL-E.
+
+## Citation
+If you use this pipeline, please cite our work:
+
+Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
+
+## Contributions
+Contributions are welcome! If you encounter any issues, have suggestions for improvements, or would like to contribute new features, please open an issue or pull request on this repository.
+
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Nextflow](https://img.shields.io/badge/Nextflow-3.0%2B-brightgreen)](https://www.nextflow.io/)
