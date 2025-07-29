@@ -217,7 +217,7 @@ workflow {
     .set {panel}
 
     // Set the cnv genes
-    Channel.fromPath(params.cnvGenes, checkIfExists: true)
+    Channel.fromPath("${projectDir}/data/genes.bed", checkIfExists: true)
     .set {cnvGenes}
 
     // Set the mgmt bed
@@ -354,7 +354,7 @@ workflow {
 
     // CNV calling
     cnvOut = copyNumberVariants(processedBam, indexedBam.indexBam, id, params.cnvThreads)
-    cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, params.cnvGenes, params.outDir)
+    cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, cnvGenes, params.outDir)
 
     // SNV calling
     variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
