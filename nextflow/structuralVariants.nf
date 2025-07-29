@@ -15,6 +15,7 @@ process structuralVariants {
         val true
 
     script:
+        mkdir -p ${params.outDir}/sv/
         """
         sniffles --threads ${snifflesThreads} --allow-overwrite \
                     --reference ${ref}  \

@@ -40,6 +40,7 @@ process checkMgmtCoverage {
 
     script:
         """
+        mkdir -p ${params.outDir}/mgmt/
         mosdepth \
         -t ${threads} \
         -n \
