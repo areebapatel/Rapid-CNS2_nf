@@ -357,11 +357,11 @@ workflow {
     cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, cnvGenes, params.outDir)
 
     // SNV calling
-    variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.tmpDir, params.numGpu)
-    recodeVCF(variantCalling.dvVcf)
+    variantCallingOut = variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.tmpDir, params.numGpu)
+    recodeVCFOut = recodeVCF(variantCallingOut.dvVcf)
 
     // ANNOVAR
-    convert2annovarOut = convert2annovar(recodeVCF.passVcf, annovarPath)
+    convert2annovarOut = convert2annovar(recodeVCFOut.passVcf, annovarPath)
     tableAnnovarOut = tableAnnovar(convert2annovarOut.annovarInput, annovarPath, annovarDB)
     filterReportOut = filterReport(filterReportScript, tableAnnovarOut.dvAnno, id)
 
