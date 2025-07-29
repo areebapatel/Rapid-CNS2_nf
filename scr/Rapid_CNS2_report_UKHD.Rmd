@@ -14,8 +14,8 @@ header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \fancyhead[L]{\includegraphics[height=0.5in]{logos/`r logo_file`}}
-- \fancyhead[R]{\includegraphics[height=0.5in]{logos/`r institution_logo`} \quad \thepage}
+- \fancyhead[L]{\includegraphics[height=0.5in]{logos/rapid_cns2_logo.png}}
+- \fancyhead[R]{\includegraphics[height=0.5in]{logos/institution_logo.png} \quad \thepage}
 - \renewcommand{\headrulewidth}{0.4pt}
 geometry: margin=0.2in
 always_allow_html: true

@@ -289,10 +289,12 @@ workflow {
     }
 
     def doAlignment = false
-    checkAlignment_out.view { result ->
-        if (!result || result.trim().isEmpty()) {
-            println "Input BAM file(s) are unaligned. Alignment will be performed."
-            doAlignment = true
+    checkAlignment_out.collect().view { results ->
+        results.each { result ->
+            if (!result || result.trim().isEmpty()) {
+                println "Input BAM file(s) are unaligned. Alignment will be performed."
+                doAlignment = true
+            }
         }
     }
 
@@ -300,30 +302,26 @@ workflow {
     def processedBam
     if (doAlignment) {
         alignedBams = alignBam(inputPath, ref, params.maxThreads, outDir).alignedBam
-        alignedBams.collect().set { bamList }
-        def mergedOrSingleBam = bamList.count().map { n ->
-            if (n > 1) {
-                return mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
-            } else if (n == 1) {
-                return Channel.value(bamList[0])
+        processedBam = alignedBams.collect().map { bamList ->
+            if (bamList.size() > 1) {
+                mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
+            } else if (bamList.size() == 1) {
+                Channel.value(bamList[0])
             } else {
                 error "No aligned BAM files found after alignment."
             }
-        }
-        processedBam = mergedOrSingleBam.flatten()
+        }.flatten()
     } else {
         inputBams = Channel.fromPath("${inputPath}/*.bam")
-        inputBams.collect().set { bamList }
-        def mergedOrSingleBam = bamList.count().map { n ->
-            if (n > 1) {
-                return mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
-            } else if (n == 1) {
-                return Channel.value(bamList[0])
+        processedBam = inputBams.collect().map { bamList ->
+            if (bamList.size() > 1) {
+                mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
+            } else if (bamList.size() == 1) {
+                Channel.value(bamList[0])
             } else {
                 error "No BAM files found in input directory."
             }
-        }
-        processedBam = mergedOrSingleBam.flatten()
+        }.flatten()
     }
 
     // Index the processed BAM  
@@ -381,7 +379,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut, igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, params.mnpFlexBed, id)
