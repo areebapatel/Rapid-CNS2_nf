@@ -273,9 +273,9 @@ workflow {
         bamToCheck = Channel.fromPath("${inputPath}/*.bam").first()
     }
     // Check alignment
-    checkAlignment_out = checkAlignment(bamToCheck, params.threads)
+    checkAlignment_out = checkAlignment(bamToCheck, params.maxThreads)
     // Check if the BAM file has methylation tags
-    checkMethylationTags_out = checkMethylationTags(bamToCheck, params.threads)
+    checkMethylationTags_out = checkMethylationTags(bamToCheck, params.maxThreads)
 
     // Check if methylation tags exist; if not, raise an error and provide guidance
     checkMethylationTags_out.view { result ->
@@ -295,11 +295,11 @@ workflow {
     // Conditionally run alignment and merging only if needed
     def processedBam
     if (doAlignment) {
-        alignedBams = alignBam(inputPath, ref, params.threads, outDir).alignedBam
+        alignedBams = alignBam(inputPath, ref, params.maxThreads, outDir).alignedBam
         alignedBams.collect().set { bamList }
         def mergedOrSingleBam = bamList.count().map { n ->
             if (n > 1) {
-                return mergeBam(bamList, params.threads, outDir, id).mergedBam
+                return mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
             } else if (n == 1) {
                 return Channel.value(bamList[0])
             } else {
@@ -312,7 +312,7 @@ workflow {
         inputBams.collect().set { bamList }
         def mergedOrSingleBam = bamList.count().map { n ->
             if (n > 1) {
-                return mergeBam(bamList, params.threads, outDir, id).mergedBam
+                return mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
             } else if (n == 1) {
                 return Channel.value(bamList[0])
             } else {
@@ -323,14 +323,14 @@ workflow {
     }
 
     // Index the processed BAM  
-    indexBam(processedBam, params.threads)
+    indexBam(processedBam, params.maxThreads)
 
     // All following processes are run on the processed BAM in parallel
 
     // Subset BAM to target regions
-    subsettedBam = subsetBam(processedBam, indexBam.indexBam, panel, id, params.threads)
+    subsettedBam = subsetBam(processedBam, indexBam.indexBam, panel, id, params.maxThreads)
 
-    subsetIndex = indexSubsettedBam(subsettedBam.subsetBam, params.threads)
+    subsetIndex = indexSubsettedBam(subsettedBam.subsetBam, params.maxThreads)
 
     // Coverage calculation
     mosdepth(params.covThreads, panel, processedBam, indexBam.indexBam, id)
