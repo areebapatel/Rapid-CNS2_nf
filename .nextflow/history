@@ -1,5 +1,0 @@
-2025-07-29 15:25:05	-	confident_volhard	-	ca7e14d69d614d133d92f8ae067fa9ad	55ec60d3-5352-4ec9-ade7-2caab4197475	nextflow run main.nf --help
-2025-07-29 15:25:13	2.3s	jolly_mcclintock	ERR	ca7e14d69d614d133d92f8ae067fa9ad	889629bc-5cc2-42d8-8e89-78e1aa5ae395	nextflow run main.nf --input test.bam --id test --ref test.fa
-2025-07-29 15:25:29	1.9s	reverent_gates	ERR	ca7e14d69d614d133d92f8ae067fa9ad	5834ee17-7481-4306-bd58-e96d679a6027	nextflow run main.nf --input test.bam --id test --ref test.fa
-2025-07-29 15:39:58	-	prickly_curran	-	0522ba54161cae9c421a53156ca0cdaf	696ff679-a05d-4cdc-8cc2-e3a84d75601a	nextflow run main.nf --help
-2025-07-29 15:53:05	-	romantic_kalam	-	775b7bf9759c10fda861da0923c764a4	44c622df-da67-4212-9c35-0160ec5879fb	nextflow run main.nf --help
