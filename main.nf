@@ -291,9 +291,12 @@ workflow {
     def doAlignment = false
     checkAlignment_out.collect().view { results ->
         results.each { result ->
-            if (!result || result.trim().isEmpty()) {
-                println "Input BAM file(s) are unaligned. Alignment will be performed."
+            def alignedCount = result.trim().toInteger()
+            if (alignedCount <= 2) {
+                println "Input BAM file(s) have ${alignedCount} aligned reads. Alignment will be performed."
                 doAlignment = true
+            } else {
+                println "Input BAM file(s) have ${alignedCount} aligned reads. Using existing alignment."
             }
         }
     }
@@ -379,7 +382,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut, igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, params.mnpFlexBed, id)

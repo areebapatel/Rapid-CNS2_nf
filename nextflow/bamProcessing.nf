@@ -11,7 +11,9 @@ process checkAlignment {
 
     script:
         """
-        samtools view -@${threads} ${inputBam} | grep '^@SQ'
+        # Count aligned reads (not unmapped reads)
+        aligned_count=\$(samtools view -@${threads} -F 4 ${inputBam} | wc -l)
+        echo "\${aligned_count}"
         """
 }
 
