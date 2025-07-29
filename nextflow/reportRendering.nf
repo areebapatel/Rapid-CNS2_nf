@@ -61,16 +61,16 @@ process reportRendering {
         Rscript ${reportScript} \
         --prefix ${id} \
         --mutations ${params.outDir}/snv/${params.id}_dv_report.csv \
-        --cnv_plot ${PWD}/${params.outDir}/cnv/${id}_cnvpytor_100k.global.0000.png \
-        --rf_details ${PWD}/${params.outDir}/methylation_classification/${id}_rf_details.tsv \
-        --votes ${PWD}/${params.outDir}/methylation_classification/${id}_votes.tsv \
-        --output_dir ${PWD}/${params.outDir}/report/ \
+        --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.global.0000.png \
+        --rf_details ${params.outDir}/methylation_classification/${id}_rf_details.tsv \
+        --votes ${params.outDir}/methylation_classification/${id}_votes.tsv \
+        --output_dir ${params.outDir}/report/ \
         --patient ${id} \
-        --coverage ${PWD}/${params.outDir}/coverage/${id}.mosdepth.summary.txt \
+        --coverage ${params.outDir}/coverage/${id}.mosdepth.summary.txt \
         --sample ${id} \
-        --methylartist ${PWD}/${params.outDir}/*.locus.meth.png \
-        --mgmt ${PWD}/${params.outDir}/mgmt/${id}_mgmt_status.csv \
-        --igv_report ${PWD}/${params.outDir}/snv/${id}_igv-report.html \
+        --methylartist ${params.outDir}/mgmt/*.locus.meth.png \
+        --mgmt ${params.outDir}/mgmt/${id}_mgmt_status.csv \
+        --igv_report ${params.outDir}/snv/${id}_igv-report.html \
         --nextflow_ver ${nextflow_version} \
         --seq \${seq} \
         --promoter_mgmt_coverage ${mgmt_cov} \
