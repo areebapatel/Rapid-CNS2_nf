@@ -344,13 +344,13 @@ workflow {
     //MGMT promoter
     mgmtCoverageOut = checkMgmtCoverage(processedBam, subsetIndex.indexSubsetBam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
 
-    mgmtPromoterOut = mgmtPromoterMethyartist(processedBam, subsetIndex.indexSubsetBam, ref, mgmtCoverageOut.out[0], id)
+    mgmtPromoterOut = mgmtPromoterMethyartist(processedBam, subsetIndex.indexSubsetBam, ref, mgmtCoverageOut, id)
 
-    mgmtPredOut = mgmtPred(mgmtCoverageOut.out[0], mgmtScript, mgmtBed, mgmtProbes, mgmtModel, methylationCalls.bedmethylFile, id)
+    mgmtPredOut = mgmtPred(mgmtCoverageOut, mgmtScript, mgmtBed, mgmtProbes, mgmtModel, methylationCalls.bedmethylFile, id)
 
     // CNV calling
     cnvOut = copyNumberVariants(processedBam, subsetIndex.indexSubsetBam, id, params.cnvThreads)
-    cnvAnnotatedOut = cnvAnnotated(cnvOut.out, id, annotateScript, params.outDir)
+    cnvAnnotatedOut = cnvAnnotated(cnvOut, id, annotateScript, params.outDir)
 
     // SNV calling
             variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
@@ -377,7 +377,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut.out, mgmtPredOut.out, methylationClassification.out, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut.out[0], mgmtPromoterOut.out, igvReportsOut.out, nextflow.version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut, mgmtPromoterOut, igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, params.mnpFlexBed, id)
