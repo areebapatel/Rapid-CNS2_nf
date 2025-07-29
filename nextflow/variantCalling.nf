@@ -18,14 +18,13 @@ process variantCalling {
 
     script:
     """
-    mkdir -p ${params.outDir}/snv/
     pbrun deepvariant \
     --tmp-dir ${tmpDir} \
     --in-bam ${bam} \
     --ref ${ref} \
     --out-variants ${id}.deepvariant.vcf \
     --mode ont \
-    --run-partition --norealign-reads \
+    --norealign-reads \
     --num-gpus ${numGpus}
     """
 
@@ -139,8 +138,6 @@ process human_variation_sv {
 
     script:
         """
-        mkdir -p ${params.outDir}/wf-human-variation/
-        mkdir -p ${params.outDir}/wf-human-variation/sv/
         nextflow run epi2me-labs/wf-human-variation \
         -with-report ${params.outDir}/human_variation_sv_cnv_nextflow_report.html \
         -profile standard \
@@ -173,8 +170,6 @@ process human_variation_snp {
 
     script:
         """
-        mkdir -p ${params.outDir}/wf-human-variation/
-        mkdir -p ${params.outDir}/wf-human-variation/snp/
         nextflow run epi2me-labs/wf-human-variation \
         -with-report ${params.outDir}/human_variation_snp_nextflow_report.html \
         -profile standard \

@@ -128,6 +128,28 @@ def isBamFile(path) {
     return path.toString().toLowerCase().endsWith('.bam')
 }
 
+// Create all required output directories before running any processes
+[
+    "${params.outDir}/bam",
+    "${params.outDir}/bam/alignedBams",
+    "${params.outDir}/snv",
+    "${params.outDir}/cnv",
+    "${params.outDir}/sv",
+    "${params.outDir}/mods",
+    "${params.outDir}/mgmt",
+    "${params.outDir}/methylation_classification",
+    "${params.outDir}/mnpflex",
+    "${params.outDir}/coverage",
+    "${params.outDir}/report",
+    "${params.outDir}/reports",
+    "${params.outDir}/wf-human-variation",
+    "${params.outDir}/wf-human-variation/sv",
+    "${params.outDir}/wf-human-variation/snp",
+    "${params.outDir}/pipeline_info"
+].each { dir ->
+    new File(dir).mkdirs()
+}
+
 workflow {
     // Set the reference genome
     Channel.fromPath(params.ref, checkIfExists: true)

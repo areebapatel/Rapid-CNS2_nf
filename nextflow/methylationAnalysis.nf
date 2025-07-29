@@ -15,7 +15,6 @@ process methylationCalls {
 
     script:
         """
-        mkdir -p ${params.outDir}/mods/
         modkit pileup ${bam} ${params.outDir}/mods/${id}.5mC.bedmethyl --ref ${ref} --preset traditional --only-tabs --threads ${modkitThreads}
         """
 }
@@ -40,7 +39,6 @@ process checkMgmtCoverage {
 
     script:
         """
-        mkdir -p ${params.outDir}/mgmt/
         mosdepth \
         -t ${threads} \
         -n \

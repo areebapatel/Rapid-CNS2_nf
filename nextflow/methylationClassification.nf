@@ -18,7 +18,6 @@ process methylationClassification {
 
     script:
         """
-        mkdir -p ${params.outDir}/methylation_classification/
         Rscript ${methylationClassificationScript} \
         --sample ${id} \
         --out_dir ${params.outDir}/methylation_classification \
@@ -47,7 +46,6 @@ process mnpFlex {
 
     script:
         """
-        mkdir -p ${params.outDir}/mnpflex/
         bash ${mnpFlexScript} ${bedmethylFile} ${mnpFlexBed} ${params.outDir}/mnpflex/ ${id}
         """
 }

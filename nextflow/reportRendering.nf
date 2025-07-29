@@ -26,7 +26,6 @@ process reportRendering {
 
     script:
         """
-        mkdir -p ${params.outDir}/report/
         # check for a specified sequencer, this overrides the checks below
         if [ "${seq}" != "false" ]
         then

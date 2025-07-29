@@ -53,7 +53,6 @@ process alignBam {
 
     script:
         """
-        mkdir -p alignedBams
         
         # Check if file is already aligned
         aligned_count=\$(samtools view -F 4 "\$input" | wc -l)

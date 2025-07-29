@@ -14,7 +14,6 @@ process copyNumberVariants {
 
     script:
         """
-        mkdir -p ${params.outDir}/cnv/
         cd ${params.outDir}/cnv/
         cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${cnvThreads}
         cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${cnvThreads} 
