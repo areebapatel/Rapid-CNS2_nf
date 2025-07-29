@@ -379,7 +379,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut, igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut, igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, params.mnpFlexBed, id)
