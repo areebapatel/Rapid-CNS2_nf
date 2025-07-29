@@ -59,7 +59,7 @@ process checkMgmtCoverage {
 	"""
 }
 
-process mgmtPromoter_methyartist {
+process mgmtPromoterMethyartist {
     label 'rapid_cns'
     
     input:

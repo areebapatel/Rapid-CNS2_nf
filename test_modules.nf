@@ -49,11 +49,11 @@ workflow test_snv_calling {
         filterReportScript
     
     main:
-        // Test DeepVariant
-        deepVariant_out = deepVariant(bam, bai, ref, id, tmpDir, numGpus)
+        // Test Variant Calling
+        variantCalling_out = variantCalling(bam, bai, ref, id, tmpDir, numGpus)
         
         // Test VCF recoding
-        recodeVCF_out = recodeVCF(deepVariant_out.dvVcf)
+        recodeVCF_out = recodeVCF(variantCalling_out.dvVcf)
         
         // Test ANNOVAR conversion
         convert2annovar_out = convert2annovar(recodeVCF_out.passVcf, annovarPath)
@@ -65,7 +65,7 @@ workflow test_snv_calling {
         filterReport_out = filterReport(filterReportScript, tableAnnovar_out.dvAnno, id)
     
     emit:
-        vcf = deepVariant_out.dvVcf
+        vcf = variantCalling_out.dvVcf
         pass_vcf = recodeVCF_out.passVcf
         annotated_variants = tableAnnovar_out.dvAnno
         filtered_report = filterReport_out.dvReport
@@ -81,14 +81,14 @@ workflow test_structural_variants {
         snifflesThreads
     
     main:
-        // Test Sniffles2
-        sniffles_out = sniffles2(bam, bai, ref, id, snifflesThreads)
+        // Test Structural Variants
+        structuralVariants_out = structuralVariants(bam, bai, ref, id, snifflesThreads)
         
         // Test AnnotSV annotation
-        annotsv_out = annotsvAnnot(sniffles_out.svVcf, id)
+        annotsv_out = annotSV(structuralVariants_out.svVcf, id)
     
     emit:
-        sv_vcf = sniffles_out.svVcf
+        sv_vcf = structuralVariants_out.svVcf
         sv_annotated = annotsv_out.svAnno
 }
 
@@ -116,7 +116,7 @@ workflow test_methylation_analysis {
         mgmtCoverage_out = checkMgmtCoverage(bam, bai, mgmtBed, minimumMgmtCov, threads)
         
         // Test MGMT promoter analysis
-        mgmtPromoter_out = mgmtPromoter_methyartist(bam, bai, ref, mgmtCoverage_out.mgmt_avg_cov, id)
+        mgmtPromoter_out = mgmtPromoterMethyartist(bam, bai, ref, mgmtCoverage_out.mgmt_avg_cov, id)
         
         // Test MGMT prediction
         mgmtPred_out = mgmtPred(methylation_out.bedmethylFile, mgmtScript, mgmtBed, mgmtProbes, mgmtModel, bedmethylFile, id)
@@ -197,7 +197,7 @@ workflow test_report_generation {
         id
         mosdepth_plot_data
         mgmt_cov
-        mgmtPromoter_methyartist
+        mgmtPromoterMethyartist
         igv_reports
         nextflow_version
         inputBam
@@ -206,7 +206,7 @@ workflow test_report_generation {
     
     main:
         // Test report rendering
-        report_out = reportRendering(reportScript, cnv_ready, mgmt_ready, meth_ready, filter_ready, id, mosdepth_plot_data, mgmt_cov, mgmtPromoter_methyartist, igv_reports, nextflow_version, inputBam, seq, report_UKHD)
+        report_out = reportRendering(reportScript, cnv_ready, mgmt_ready, meth_ready, filter_ready, id, mosdepth_plot_data, mgmt_cov, mgmtPromoterMethyartist, igv_reports, nextflow_version, inputBam, seq, report_UKHD)
     
     emit:
         report_generated = report_out
@@ -249,7 +249,7 @@ workflow test_all_modules {
         filter_ready
         mosdepth_plot_data
         mgmt_cov
-        mgmtPromoter_methyartist
+        mgmtPromoterMethyartist
         igv_reports
         nextflow_version
         seq
@@ -278,7 +278,7 @@ workflow test_all_modules {
         coverage_out = test_coverage_analysis(threads, panel, bam_processing_out.merged_bam, bam_processing_out.indexed_bam, id)
         
         // Test report generation
-        report_out = test_report_generation(reportScript, cnv_out.cnv_results, mgmt_ready, meth_class_out.classification_results, snv_out.filtered_report, id, coverage_out.coverage_summary, mgmt_cov, mgmtPromoter_methyartist, igv_reports, nextflow_version, input_bam, seq, report_UKHD)
+        report_out = test_report_generation(reportScript, cnv_out.cnv_results, mgmt_ready, meth_class_out.classification_results, snv_out.filtered_report, id, coverage_out.coverage_summary, mgmt_cov, mgmtPromoterMethyartist, igv_reports, nextflow_version, input_bam, seq, report_UKHD)
     
     emit:
         bam_results = bam_processing_out
@@ -293,9 +293,9 @@ workflow test_all_modules {
 
 // Include all the process definitions
 include { alignBam; mergeBam; indexBam; subsetBam; indexSubsettedBam } from './nextflow/bamProcessing.nf'
-include { deepVariant; recodeVCF; convert2annovar; tableAnnovar; filterReport } from './nextflow/variantCalling.nf'
-include { sniffles2; annotsvAnnot } from './nextflow/structuralVariants.nf'
-include { methylationCalls; checkMgmtCoverage; mgmtPromoter_methyartist; mgmtPred } from './nextflow/methylationAnalysis.nf'
+include { variantCalling; recodeVCF; convert2annovar; tableAnnovar; filterReport } from './nextflow/variantCalling.nf'
+include { structuralVariants; annotSV } from './nextflow/structuralVariants.nf'
+include { methylationCalls; checkMgmtCoverage; mgmtPromoterMethyartist; mgmtPred } from './nextflow/methylationAnalysis.nf'
 include { methylationClassification } from './nextflow/methylationClassification.nf'
 include { copyNumberVariants; cnvAnnotated } from './nextflow/copyNumberVariants.nf'
 include { mosdepth } from './nextflow/utils.nf'

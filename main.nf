@@ -101,19 +101,19 @@ include { indexSubsettedBam } from './nextflow/bamProcessing.nf'
 include { mosdepth } from './nextflow/utils.nf'
 include { methylationCalls } from './nextflow/methylationAnalysis.nf'
 include { checkMgmtCoverage } from './nextflow/methylationAnalysis.nf'
-include { mgmtPromoterMethylartist } from './nextflow/methylationAnalysis.nf'
+include { mgmtPromoterMethyartist } from './nextflow/methylationAnalysis.nf'
 include { mgmtPred } from './nextflow/methylationAnalysis.nf'
-include { mnpFlex } from './nextflow/methylationAnalysis.nf'
-include { deepVariant } from './nextflow/variantCalling.nf'
+include { mnpFlex } from './nextflow/methylationClassification.nf'
+include { variantCalling } from './nextflow/variantCalling.nf'
 include { recodeVCF } from './nextflow/variantCalling.nf'
 include { convert2annovar } from './nextflow/variantCalling.nf'
 include { tableAnnovar } from './nextflow/variantCalling.nf'
 include { filterReport } from './nextflow/variantCalling.nf'
-include { humanVariationSv } from './nextflow/variantCalling.nf'
-include { humanVariationSnp } from './nextflow/variantCalling.nf'
-include { igvReports } from './nextflow/variantCalling.nf'
-include { sniffles2 } from './nextflow/structuralVariants.nf'
-include { annotsvAnnot } from './nextflow/structuralVariants.nf'
+include { human_variation_sv } from './nextflow/variantCalling.nf'
+include { human_variation_snp } from './nextflow/variantCalling.nf'
+include { igv_reports } from './nextflow/variantCalling.nf'
+include { structuralVariants } from './nextflow/structuralVariants.nf'
+include { annotSV } from './nextflow/structuralVariants.nf'
 include { methylationClassification } from './nextflow/methylationClassification.nf'
 include { cnvAnnotated } from './nextflow/copyNumberVariants.nf'
 include { copyNumberVariants } from './nextflow/copyNumberVariants.nf'
@@ -344,7 +344,7 @@ workflow {
     //MGMT promoter
     checkMgmtCoverage(processedBam, subsetIndex.indexSubsetBam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
 
-    mgmtPromoterMethylartist(processedBam, subsetIndex.indexSubsetBam, ref, checkMgmtCoverage.out[0], id)
+            mgmtPromoterMethyartist(processedBam, subsetIndex.indexSubsetBam, ref, checkMgmtCoverage.out[0], id)
 
     mgmtPred(checkMgmtCoverage.out[0], mgmtScript, mgmtBed, mgmtProbes, mgmtModel, methylationCalls.bedmethylFile, id)
 
@@ -353,8 +353,8 @@ workflow {
     cnvAnnotated(copyNumberVariants.out, id, annotateScript, params.outDir)
 
     // SNV calling
-    deepVariant(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
-    recodeVCF(deepVariant.dvVcf)
+            variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
+            recodeVCF(variantCalling.dvVcf)
 
     // ANNOVAR
     convert2annovar(recodeVCF.passVcf, annovarPath)
@@ -362,18 +362,18 @@ workflow {
     filterReport(filterReportScript, tableAnnovar.dvAnno, id)
 
     // IGV reports
-    igvReports(filterReport.dvReport, id, ref, subsettedBam.subsetBam, subsetIndex.indexSubsetBam, annotations)
+            igv_reports(filterReport.dvReport, id, ref, subsettedBam.subsetBam, subsetIndex.indexSubsetBam, annotations)
 
     // SV calling
-    sniffles2(processedBam, subsetIndex.indexSubsetBam, ref, id, params.snifflesThreads)
-    annotsvAnnot(sniffles2.svVcf, id)
+            structuralVariants(processedBam, subsetIndex.indexSubsetBam, ref, id, params.snifflesThreads)
+            annotSV(structuralVariants.svVcf, id)
 
     if (params.runHumanVariation){
     // Human variation SNP workflow //not included in report yet
-        humanVariationSnp(processedBam, panel, ref, id, outDir, params.bamMinCoverage, params.snpThreads)
+        human_variation_snp(processedBam, panel, ref, id, outDir, params.bamMinCoverage, params.snpThreads)
 
     // Human variation SV workflow // not included in report yet
-        humanVariationSv(processedBam, ref, id, params.svThreads)
+        human_variation_sv(processedBam, ref, id, params.svThreads)
     }
 
     // Final report

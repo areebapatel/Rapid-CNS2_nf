@@ -12,7 +12,7 @@ process reportRendering {
         val(id)
         path(mosdepth_plot_data) // mosdepth
         val(mgmt_cov)
-        val(mgmtPromoter_methyartist)
+        val(mgmtPromoterMethyartist)
         val(igv_reports) //igv_reports has run
         val(nextflow_version)
         path(inputBam)

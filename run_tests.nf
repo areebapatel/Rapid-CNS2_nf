@@ -42,7 +42,7 @@ params {
     filter_ready = true
     mosdepth_plot_data = null
     mgmt_cov = null
-    mgmtPromoter_methyartist = null
+    mgmtPromoterMethyartist = null
     igv_reports = null
     nextflow_version = '23.10.0'
     seq = 'false'
@@ -152,11 +152,11 @@ if (params.mgmt_cov) {
     Channel.value(null).set { mgmt_cov }
 }
 
-if (params.mgmtPromoter_methyartist) {
-    Channel.from(params.mgmtPromoter_methyartist).set { mgmtPromoter_methyartist }
-} else {
-    Channel.value(null).set { mgmtPromoter_methyartist }
-}
+    if (params.mgmtPromoterMethyartist) {
+        Channel.from(params.mgmtPromoterMethyartist).set { mgmtPromoterMethyartist }
+    } else {
+        Channel.value(null).set { mgmtPromoterMethyartist }
+    }
 
 if (params.igv_reports) {
     Channel.from(params.igv_reports).set { igv_reports }
@@ -205,10 +205,10 @@ workflow {
             log.info "Coverage testing requires a processed BAM file. Please run BAM processing first or use 'all' mode."
             break
         case 'report':
-            test_report_generation(makereport, cnv_ready, mgmt_ready, meth_ready, filter_ready, id, mosdepth_plot_data, mgmt_cov, mgmtPromoter_methyartist, igv_reports, nextflow_version, input_bam, seq, report_UKHD)
+            test_report_generation(makereport, cnv_ready, mgmt_ready, meth_ready, filter_ready, id, mosdepth_plot_data, mgmt_cov, mgmtPromoterMethyartist, igv_reports, nextflow_version, input_bam, seq, report_UKHD)
             break
         case 'all':
-            test_all_modules(input_bam, ref, id, threads, outDir, tmpDir, numGpus, annovarPath, annovarDB, filterReportScript, snifflesThreads, modkitThreads, mgmtBed, minimumMgmtCov, mgmtScript, mgmtProbes, mgmtModel, bedmethylFile, methylationClassificationScript, topProbes, trainingData, arrayFile, methThreads, cnvThreads, annotateScript, cnvGenes, panel, makereport, cnv_ready, mgmt_ready, meth_ready, filter_ready, mosdepth_plot_data, mgmt_cov, mgmtPromoter_methyartist, igv_reports, nextflow_version, seq, report_UKHD)
+            test_all_modules(input_bam, ref, id, threads, outDir, tmpDir, numGpus, annovarPath, annovarDB, filterReportScript, snifflesThreads, modkitThreads, mgmtBed, minimumMgmtCov, mgmtScript, mgmtProbes, mgmtModel, bedmethylFile, methylationClassificationScript, topProbes, trainingData, arrayFile, methThreads, cnvThreads, annotateScript, cnvGenes, panel, makereport, cnv_ready, mgmt_ready, meth_ready, filter_ready, mosdepth_plot_data, mgmt_cov, mgmtPromoterMethyartist, igv_reports, nextflow_version, seq, report_UKHD)
             break
         default:
             error "Unknown test module: ${params.test_module}. Use --help to see available options."
