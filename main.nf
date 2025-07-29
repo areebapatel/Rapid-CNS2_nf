@@ -350,11 +350,11 @@ workflow {
 
     // CNV calling
     cnvOut = copyNumberVariants(processedBam, indexedBam.indexBam, id, params.cnvThreads)
-    cnvAnnotatedOut = cnvAnnotated(cnvOut, id, annotateScript, params.outDir)
+    cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, params.outDir)
 
     // SNV calling
-            variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
-            recodeVCF(variantCalling.dvVcf)
+    variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
+    recodeVCF(variantCalling.dvVcf)
 
     // ANNOVAR
     convert2annovarOut = convert2annovar(recodeVCF.passVcf, annovarPath)
