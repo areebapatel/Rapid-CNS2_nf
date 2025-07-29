@@ -276,8 +276,10 @@ workflow {
     } else {
         bamToCheck = Channel.fromPath("${inputPath}/*.bam").first()
     }
-    // Check alignment
+    
+    // Check alignment status
     checkAlignment_out = checkAlignment(bamToCheck, params.maxThreads)
+    
     // Check if the BAM file has methylation tags
     checkMethylationTags_out = checkMethylationTags(bamToCheck, params.maxThreads)
 
@@ -301,10 +303,12 @@ workflow {
         }
     }
 
-    // Conditionally run alignment and merging only if needed
+    // Conditionally run alignment and merging based on alignment status
     def processedBam
     if (doAlignment) {
-        alignedBams = alignBam(inputPath, ref, params.maxThreads, outDir).alignedBam
+        // Files are unaligned - need to align them
+        def inputBams = Channel.fromPath("${inputPath}/*.bam")
+        alignedBams = alignBam(inputBams, ref, params.maxThreads, outDir).alignedBam
         processedBam = alignedBams.collect().map { bamList ->
             if (bamList.size() > 1) {
                 mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
@@ -315,7 +319,8 @@ workflow {
             }
         }.flatten()
     } else {
-        inputBams = Channel.fromPath("${inputPath}/*.bam")
+        // Files are already aligned - use them directly
+        def inputBams = Channel.fromPath("${inputPath}/*.bam")
         processedBam = inputBams.collect().map { bamList ->
             if (bamList.size() > 1) {
                 mergeBam(bamList, params.maxThreads, outDir, id).mergedBam

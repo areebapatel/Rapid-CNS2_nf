@@ -247,10 +247,20 @@ nextflow run main.nf \
 - Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling)).
 - Provide the resulting BAM(s) as input to this pipeline.
 
+### Input Options
+
+The pipeline accepts:
+- **Single aligned BAM file**: Direct path to a single aligned and merged BAM file (e.g., `/path/to/sample.bam`)
+- **Directory with aligned BAM files**: Path to directory containing multiple aligned BAM files (will be merged automatically)
+- **Directory with unaligned BAM files**: Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
+
+**Requirements for input BAM files:**
+- Must contain methylation tags (MM:Z) from modified basecalling
+
 ## Features
 
 - Modular architecture for easy customization and extension.
-- Supports analysis of unaligned and pre-aligned BAM files.
+- Supports analysis of aligned and unaligned BAM files with automatic alignment detection.
 - Accelerated variant calling with Clara Parabricks supported Deepvariant and Sniffles2
 - Annotation and filtering of clinically relevant variants
 - Includes methylation analysis with Rapid-CNS² classifier and MGMT promoter methylation status determination.
@@ -261,7 +271,7 @@ nextflow run main.nf \
 
 | Parameter            | Description                                                                                                        | Default Value        |
 |----------------------|--------------------------------------------------------------------------------------------------------------------|----------------------|
-| `--input`            | Path to the directory with unaligned or pre-aligned bam files or single aligned and merged BAM file                | (Required) |
+| `--input`            | Path to a single aligned BAM file or directory containing aligned/unaligned BAM files                | (Required) |
 | `--id`               | Sample identifier                                                                                                  | (Required) |
 | `--ref`              | Path to hg38 reference file (default: see nextflow.config)                                                        | `hg38.fa` |
 | `--tmpDir`           | Directory to store temporary files. If it does not exist it will be created. Auto-set unless overridden.           | `${outDir}/tmp/`            |
@@ -300,18 +310,22 @@ nextflow run main.nf \
 
 ```mermaid
 graph TD
-    A[Input Data BAM] --> B[Alignment]
-    B --> C[SNV Calling]
-    B --> D[Methylation Analysis]
-    B --> I[Structural Variant Calling]
-    C --> E[Annotation & Filtering]
-    D --> F[MGMT Promoter Analysis]
-    D --> G[Methylation Classification]
-    I --> J[Structural Variant Annotation]
-    E --> H[Report Generation]
-    F --> H
-    G --> H
-    J --> H
+    A[Input Data BAM] --> B[Alignment Check]
+    B --> C[Alignment if needed]
+    B --> D[Direct Processing]
+    C --> E[Merge BAMs]
+    D --> E
+    E --> F[SNV Calling]
+    E --> G[Methylation Analysis]
+    E --> H[Structural Variant Calling]
+    F --> I[Annotation & Filtering]
+    G --> J[MGMT Promoter Analysis]
+    G --> K[Methylation Classification]
+    H --> L[Structural Variant Annotation]
+    I --> M[Report Generation]
+    J --> M
+    K --> M
+    L --> M
 ```
 
 # Scripts and Modules

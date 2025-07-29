@@ -54,7 +54,17 @@ process alignBam {
     script:
         """
         mkdir -p alignedBams
-        dorado aligner "$ref" "$input" --output-dir alignedBams/ --threads "$threads"
+        
+        # Check if file is already aligned
+        aligned_count=\$(samtools view -F 4 "\$input" | wc -l)
+        
+        if [ "\$aligned_count" -gt 2 ]; then
+            echo "File already aligned with \$aligned_count reads. Copying to alignedBams directory."
+            cp "\$input" alignedBams/
+        else
+            echo "File has \$aligned_count aligned reads. Performing alignment."
+            dorado aligner "\$ref" "\$input" --output-dir alignedBams/ --threads "\$threads"
+        fi
         """
 }
 
