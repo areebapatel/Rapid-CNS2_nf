@@ -1,0 +1,74 @@
+Jul-29 15:53:05.382 [main] DEBUG nextflow.cli.Launcher - $> nextflow run main.nf --help
+Jul-29 15:53:05.429 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.04.6
+Jul-29 15:53:05.443 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/areebapatel/.nextflow/plugins; core-plugins: nf-amazon@2.15.0,nf-azure@1.16.0,nf-cloudcache@0.4.3,nf-codecommit@0.2.3,nf-console@1.2.1,nf-google@1.21.1,nf-k8s@1.0.0,nf-tower@1.11.4,nf-wave@1.12.1
+Jul-29 15:53:05.454 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Jul-29 15:53:05.455 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Jul-29 15:53:05.456 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+Jul-29 15:53:05.463 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Jul-29 15:53:05.475 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /Users/areebapatel/Documents/development/Rapid-CNS2_nf/nextflow.config
+Jul-29 15:53:05.476 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/areebapatel/Documents/development/Rapid-CNS2_nf/nextflow.config
+Jul-29 15:53:05.492 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /Users/areebapatel/.nextflow/secrets/store.json
+Jul-29 15:53:05.494 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@7cb2651f] - activable => nextflow.secret.LocalSecretsProvider@7cb2651f
+Jul-29 15:53:05.503 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Jul-29 15:53:05.821 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
+Jul-29 15:53:05.831 [main] DEBUG nextflow.cli.CmdRun - Launching `main.nf` [romantic_kalam] DSL2 - revision: 775b7bf975
+Jul-29 15:53:05.831 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Jul-29 15:53:05.831 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+Jul-29 15:53:05.856 [main] DEBUG nextflow.Session - Session UUID: 44c622df-da67-4212-9c35-0160ec5879fb
+Jul-29 15:53:05.857 [main] DEBUG nextflow.Session - Run name: romantic_kalam
+Jul-29 15:53:05.858 [main] DEBUG nextflow.Session - Executor pool size: 14
+Jul-29 15:53:05.862 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+Jul-29 15:53:05.864 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=42; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Jul-29 15:53:05.882 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.04.6 build 5954
+  Created: 01-07-2025 11:27 UTC (13:27 CEST)
+  System: Mac OS X 15.5
+  Runtime: Groovy 4.0.26 on OpenJDK 64-Bit Server VM 17.0.10+7
+  Encoding: UTF-8 (UTF-8)
+  Process: 36068@Mac [192.168.137.132]
+  CPUs: 14 - Mem: 36 GB (507.4 MB) - Swap: 3 GB (1.6 GB)
+Jul-29 15:53:05.890 [main] DEBUG nextflow.Session - Work-dir: /Users/areebapatel/Documents/development/Rapid-CNS2_nf/work [Mac OS X]
+Jul-29 15:53:05.890 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /Users/areebapatel/Documents/development/Rapid-CNS2_nf/bin
+Jul-29 15:53:05.896 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Jul-29 15:53:05.901 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Jul-29 15:53:05.909 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+Jul-29 15:53:05.922 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Jul-29 15:53:05.928 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 15; maxThreads: 1000
+Jul-29 15:53:05.958 [main] DEBUG nextflow.Session - Session start
+Jul-29 15:53:05.960 [main] DEBUG nextflow.trace.TraceFileObserver - Workflow started -- trace file: /Users/areebapatel/Documents/development/Rapid-CNS2_nf/output/pipeline_info/20250729-15-53-05_trace.txt
+Jul-29 15:53:06.286 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Jul-29 15:53:06.293 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `sortThreads` -- Initialise it to a default value eg. `params.sortThreads = some_value`
+Jul-29 15:53:06.294 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `modThreads` -- Initialise it to a default value eg. `params.modThreads = some_value`
+Jul-29 15:53:06.294 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `modelConfig` -- Initialise it to a default value eg. `params.modelConfig = some_value`
+Jul-29 15:53:06.294 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `remoraConfig` -- Initialise it to a default value eg. `params.remoraConfig = some_value`
+Jul-29 15:53:06.294 [main] WARN  nextflow.script.ScriptBinding - Access to undefined parameter `port` -- Initialise it to a default value eg. `params.port = some_value`
+Jul-29 15:53:06.294 [main] INFO  nextflow.Nextflow - 
+    Usage: nextflow run nextflow/main.nf  [options]
+
+    Mandatory options:
+        --input            Path to the directory containing Pod5/FAST5 file or BAM file if available
+        --id                Sample identifier
+
+    Options:
+        --outDir          Directory path to store all the outputs. [default : output]
+        --ref             Path to hg38 reference file. [default : /b06x-isilon/b06x-m/mnp_nanopore/software/hg38/hg38.fa]
+        --tmpDir          Directory to store temporary files. If it does not exists it will be created. [default : output/tmp/]
+        --sortThreads     Number of threads to use for samtools sort [default : null]
+        --snifflesThreads  Numbers of threads to run sniffles2 [default : 32]
+        --cnvThreads Numbers of threads to run cnvpytor [default : 32]
+        --modThreads Numbers of threads to run modkit [default : null]
+        --modelConfig     Basecalling model to be used [default : null]
+        --remoraConfig    Remora model to be used [default: null]
+        --port             Port for basecall server [default : null] 
+        --reads            samtools addreplacerg -r option. It should be specified as this example :  --reads '-r "SM:GM24385" -r "ID:GM24385"'
+        --mnpFlex          Run MNP-Flex preprocessing [default : FALSE]
+        --runHumanVariation   Run the wf-human-variation SNP and SV pipeline [default : FALSE]
+        --numGpu           Number of GPUs to use [default: 1]
+
+    Example:
+      nextflow run main.nf  --input "/input/pod5" --ref "/Ref/Homo_sapiens_assembly38.fasta" --id "Sample_XYZ"
+
+    To run with LSF, add -process.executor='lsf' to your nextflow command.
+
+    To also prepare input file for the MNP-Flex classifier, add the --mnpFlex flag. (Default behaviour is to not prepare the input file)
+    

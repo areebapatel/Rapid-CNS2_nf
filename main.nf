@@ -291,6 +291,8 @@ workflow {
     }
 
     def doAlignment = false
+    def isSingleAlignedFile = false
+    
     checkAlignment_out.collect().view { results ->
         results.each { result ->
             def alignedCount = result.trim().toInteger()
@@ -299,6 +301,10 @@ workflow {
                 doAlignment = true
             } else {
                 println "Input BAM file(s) have ${alignedCount} aligned reads. Using existing alignment."
+                // Check if it's a single file (not a directory)
+                if (isBamFile(inputPath)) {
+                    isSingleAlignedFile = true
+                }
             }
         }
     }
@@ -307,29 +313,22 @@ workflow {
     def processedBam
     if (doAlignment) {
         // Files are unaligned - need to align them
-        def unalignedBams = Channel.fromPath("${inputPath}/*.bam")
-        alignedBams = alignBam(unalignedBams, ref, params.maxThreads, outDir).alignedBam
+        alignedBams = alignBam(inputPath, ref, params.maxThreads, outDir).alignedBam
         processedBam = alignedBams.collect().map { bamList ->
             if (bamList.size() > 1) {
                 mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
             } else if (bamList.size() == 1) {
-                Channel.value(bamList[0])
+                bamList[0]
             } else {
                 error "No aligned BAM files found after alignment."
             }
         }.flatten()
+    } else if (isSingleAlignedFile) {
+        // Single aligned BAM file - use bamToCheck directly
+        processedBam = bamToCheck
     } else {
-        // Files are already aligned - use them directly
-        def existingAlignedBams = Channel.fromPath("${inputPath}/*.bam")
-        processedBam = existingAlignedBams.collect().map { bamList ->
-            if (bamList.size() > 1) {
-                mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
-            } else if (bamList.size() == 1) {
-                Channel.value(bamList[0])
-            } else {
-                error "No BAM files found in input directory."
-            }
-        }.flatten()
+        // Multiple aligned BAM files - merge them
+        processedBam = mergeBam(inputPath, params.maxThreads, outDir, id).mergedBam
     }
 
     // Index the processed BAM  
