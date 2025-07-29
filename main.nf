@@ -323,17 +323,17 @@ workflow {
     }
 
     // Index the processed BAM  
-    indexBam(processedBam, params.maxThreads)
+    indexedBam = indexBam(processedBam, params.maxThreads)
 
     // All following processes are run on the processed BAM in parallel
 
     // Subset BAM to target regions
-    subsettedBam = subsetBam(processedBam, indexBam.indexBam, panel, id, params.maxThreads)
+    subsettedBam = subsetBam(processedBam, indexedBam.indexBam, panel, id, params.maxThreads)
 
     subsetIndex = indexSubsettedBam(subsettedBam.subsetBam, params.maxThreads)
 
     // Coverage calculation
-    mosdepth(params.covThreads, panel, processedBam, indexBam.indexBam, id)
+    coverageOut = mosdepth(params.covThreads, panel, processedBam, indexedBam.indexBam, id)
 
     // Call methylation
     methylationCalls = methylationCalls(processedBam, subsetIndex.indexSubsetBam, ref, id,  params.modkitThreads)
@@ -342,31 +342,31 @@ workflow {
     methylationClassification = methylationClassification(methylationClassificationScript, methylationCalls.bedmethylFile, id, topProbes, trainingData, arrayFile, params.methThreads)
 
     //MGMT promoter
-    checkMgmtCoverage(processedBam, subsetIndex.indexSubsetBam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
+    mgmtCoverageOut = checkMgmtCoverage(processedBam, subsetIndex.indexSubsetBam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
 
-            mgmtPromoterMethyartist(processedBam, subsetIndex.indexSubsetBam, ref, checkMgmtCoverage.out[0], id)
+    mgmtPromoterOut = mgmtPromoterMethyartist(processedBam, subsetIndex.indexSubsetBam, ref, mgmtCoverageOut.out[0], id)
 
-    mgmtPred(checkMgmtCoverage.out[0], mgmtScript, mgmtBed, mgmtProbes, mgmtModel, methylationCalls.bedmethylFile, id)
+    mgmtPredOut = mgmtPred(mgmtCoverageOut.out[0], mgmtScript, mgmtBed, mgmtProbes, mgmtModel, methylationCalls.bedmethylFile, id)
 
     // CNV calling
-    copyNumberVariants(processedBam, subsetIndex.indexSubsetBam, id, params.cnvThreads)
-    cnvAnnotated(copyNumberVariants.out, id, annotateScript, params.outDir)
+    cnvOut = copyNumberVariants(processedBam, subsetIndex.indexSubsetBam, id, params.cnvThreads)
+    cnvAnnotatedOut = cnvAnnotated(cnvOut.out, id, annotateScript, params.outDir)
 
     // SNV calling
             variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
             recodeVCF(variantCalling.dvVcf)
 
     // ANNOVAR
-    convert2annovar(recodeVCF.passVcf, annovarPath)
-    tableAnnovar(convert2annovar.annovarInput, annovarPath, annovarDB)
-    filterReport(filterReportScript, tableAnnovar.dvAnno, id)
+    convert2annovarOut = convert2annovar(recodeVCF.passVcf, annovarPath)
+    tableAnnovarOut = tableAnnovar(convert2annovarOut.annovarInput, annovarPath, annovarDB)
+    filterReportOut = filterReport(filterReportScript, tableAnnovarOut.dvAnno, id)
 
     // IGV reports
-            igv_reports(filterReport.dvReport, id, ref, subsettedBam.subsetBam, subsetIndex.indexSubsetBam, annotations)
+    igvReportsOut = igv_reports(filterReportOut.dvReport, id, ref, subsettedBam.subsetBam, subsetIndex.indexSubsetBam, annotations)
 
     // SV calling
-            structuralVariants(processedBam, subsetIndex.indexSubsetBam, ref, id, params.snifflesThreads)
-            annotSV(structuralVariants.svVcf, id)
+    structuralVariantsOut = structuralVariants(processedBam, subsetIndex.indexSubsetBam, ref, id, params.snifflesThreads)
+    annotSVOut = annotSV(structuralVariantsOut.svVcf, id)
 
     if (params.runHumanVariation){
     // Human variation SNP workflow //not included in report yet
@@ -377,7 +377,7 @@ workflow {
     }
 
     // Final report
-    makeReport(makereport, copyNumberVariants.out, mgmtPred.out, methylationClassification.out, filterReportCh.out, id, mosdepth.mosdepthOut, checkMgmtCoverage.out[0], mgmtPromoterMethylartist.out, igvReports.out, nextflowVersion, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut.out, mgmtPredOut.out, methylationClassification.out, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut.out[0], mgmtPromoterOut.out, igvReportsOut.out, nextflow.version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, params.mnpFlexBed, id)
