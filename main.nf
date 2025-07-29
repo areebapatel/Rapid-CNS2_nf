@@ -216,6 +216,10 @@ workflow {
     Channel.fromPath("${projectDir}/data/NPHD_panel.bed", checkIfExists: true)
     .set {panel}
 
+    // Set the cnv genes
+    Channel.fromPath(params.cnvGenes, checkIfExists: true)
+    .set {cnvGenes}
+
     // Set the mgmt bed
     Channel.fromPath("${projectDir}/data/mgmt_hg38.bed", checkIfExists: true)
     .set {mgmtBed}
@@ -350,7 +354,7 @@ workflow {
 
     // CNV calling
     cnvOut = copyNumberVariants(processedBam, indexedBam.indexBam, id, params.cnvThreads)
-    cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, params.outDir)
+    cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, params.cnvGenes, params.outDir)
 
     // SNV calling
     variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.pbDVMode, params.pbPATH, params.tmpDir, params.numGpu)
