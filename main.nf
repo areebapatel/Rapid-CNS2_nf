@@ -307,8 +307,8 @@ workflow {
     def processedBam
     if (doAlignment) {
         // Files are unaligned - need to align them
-        def inputBams = Channel.fromPath("${inputPath}/*.bam")
-        alignedBams = alignBam(inputBams, ref, params.maxThreads, outDir).alignedBam
+        def unalignedBams = Channel.fromPath("${inputPath}/*.bam")
+        alignedBams = alignBam(unalignedBams, ref, params.maxThreads, outDir).alignedBam
         processedBam = alignedBams.collect().map { bamList ->
             if (bamList.size() > 1) {
                 mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
@@ -320,8 +320,8 @@ workflow {
         }.flatten()
     } else {
         // Files are already aligned - use them directly
-        def inputBams = Channel.fromPath("${inputPath}/*.bam")
-        processedBam = inputBams.collect().map { bamList ->
+        def existingAlignedBams = Channel.fromPath("${inputPath}/*.bam")
+        processedBam = existingAlignedBams.collect().map { bamList ->
             if (bamList.size() > 1) {
                 mergeBam(bamList, params.maxThreads, outDir, id).mergedBam
             } else if (bamList.size() == 1) {
