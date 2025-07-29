@@ -291,7 +291,6 @@ workflow {
     }
 
     def doAlignment = false
-    def isSingleAlignedFile = false
     
     checkAlignment_out.collect().view { results ->
         results.each { result ->
@@ -301,10 +300,6 @@ workflow {
                 doAlignment = true
             } else {
                 println "Input BAM file(s) have ${alignedCount} aligned reads. Using existing alignment."
-                // Check if it's a single file (not a directory)
-                if (isBamFile(inputPath)) {
-                    isSingleAlignedFile = true
-                }
             }
         }
     }
@@ -323,12 +318,15 @@ workflow {
                 error "No aligned BAM files found after alignment."
             }
         }.flatten()
-    } else if (isSingleAlignedFile) {
-        // Single aligned BAM file - use bamToCheck directly
-        processedBam = bamToCheck
     } else {
-        // Multiple aligned BAM files - merge them
-        processedBam = mergeBam(inputPath, params.maxThreads, outDir, id).mergedBam
+        // Files are already aligned - check if single or multiple
+        if (isBamFile(inputPath)) {
+            // Single aligned BAM file - use bamToCheck directly
+            processedBam = bamToCheck
+        } else {
+            // Multiple aligned BAM files - merge them
+            processedBam = mergeBam(inputPath, params.maxThreads, outDir, id).mergedBam
+        }
     }
 
     // Index the processed BAM  
