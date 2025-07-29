@@ -110,6 +110,7 @@ process filterReport {
         val(id)
 
     output:
+        val true
         path "${id}_dv_report.csv", emit: dvReport
     
     script:
