@@ -213,7 +213,7 @@ workflow {
     .set {annotations}
 
     // Set the panel
-    Channel.fromPath("${projectDir}/data/NPHD_panel.bed", checkIfExists: true)
+    Channel.fromPath("${projectDir}/data/NPHD_panel_hg38.bed", checkIfExists: true)
     .set {panel}
 
     // Set the cnv genes

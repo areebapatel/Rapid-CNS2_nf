@@ -4,10 +4,19 @@ output:
     latex_engine: pdflatex
   html_document:
     df_print: paged
+params:
+  logo_file: "rapid_cns2_logo.png"
+  institution_logo: "institution_logo.png"
 header-includes:
 - \usepackage{palatino}
 - \renewcommand{\familydefault}{\sfdefault} % sans serif
 - \fontfamily{ppl}\selectfont
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhf{}
+- \fancyhead[L]{\includegraphics[height=0.5in]{logos/`r logo_file`}}
+- \fancyhead[R]{\includegraphics[height=0.5in]{logos/`r institution_logo`} \quad \thepage}
+- \renewcommand{\headrulewidth}{0.4pt}
 geometry: margin=0.2in
 always_allow_html: true
 ---
@@ -18,15 +27,32 @@ always_allow_html: true
 }
 </style>
 
-```{r, echo=FALSE,out.width="100%",warning=FALSE}
-knitr::include_graphics("logos/Screenshot 2022-03-17 at 6.28.43 PM.png")
-```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(kableExtra)
 library(ggplot2)
+```
+
+```{r params_setup, echo=FALSE}
+# Use the logo parameters from YAML header
+# To use custom logos, modify the params section in the YAML header above
+# Example: 
+# params:
+#   logo_file: "rapid_cns2_logo.png"
+#   institution_logo: "your_institution_logo.png"
+logo_file <- params$logo_file
+institution_logo <- params$institution_logo
+```
+
+```{r research_use_only, echo=FALSE, results='asis'}
+cat("\\begin{center}")
+cat("\\vspace{2cm}")
+cat("\\textcolor{red}{\\Huge\\textbf{RESEARCH USE ONLY}}")
+cat("\\vspace{2cm}")
+cat("\\end{center}")
 ```
 
 ```{r check_platform, echo=FALSE}
