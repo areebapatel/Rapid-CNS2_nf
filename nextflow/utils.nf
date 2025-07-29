@@ -68,7 +68,7 @@ process mosdepth {
     publishDir("${params.outDir}/coverage")
 	
     output:
-        path "*.mosdepth.summary.txt", emit: mosdepth_out
+        path "*.mosdepth.summary.txt", emit: mosdepthOut
 
     script:
         """
