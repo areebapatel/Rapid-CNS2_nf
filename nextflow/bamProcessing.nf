@@ -104,10 +104,10 @@ process addreplacerg {
         def r_args = params.reads ?: ''
         """
          samtools addreplacerg ${r_args} \
-                -@${threads} -o ${id}.pass.index.bam \
+                -@${threads} -o ${id}.addrg.bam \
                 ${inputBam}
 
-        samtools index -@ ${threads} ${params.outDir}/bam/${id}.pass.index.bam 
+        samtools index -@ ${threads} ${params.outDir}/bam/${id}.addrg.bam 
         """
 }
 
