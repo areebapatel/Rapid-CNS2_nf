@@ -30,6 +30,7 @@ process annotSV {
 
     input:
         path(svVcf)
+        path(annotSvAnnot)
         val(id)
 
     output:
@@ -37,7 +38,7 @@ process annotSV {
 
     script:
         """
-        AnnotSV -SVinputFile ${svVcf} -outputFile ${id}_sniffles_non_germline_annotsv.tsv   -svtBEDcol 4
+        AnnotSV -SVinputFile ${svVcf} -outputFile ${id}_sniffles_non_germline_annotsv.tsv -annotationsDir ${annotSvAnnot}   -svtBEDcol 4
         """
 
 }
