@@ -1,9 +1,24 @@
-for (package in c(optparse, GenomicRanges, ranger,matrixStats,data.table, glmnet )) {
-  #if (!require(package, character.only=T, quietly=T)) {
-  #  install.packages(package,repos = "http://cran.us.r-project.org")
-    library(package)
-  #}
-}
+##### Rscript to perform methylation classification using a random forest ad-hoc model developed under Rapid-CNS2
+
+# list all packages necessary
+pkgs <- c(
+  "optparse",
+  "GenomicRanges",
+  "ranger",
+  "matrixStats",
+  "data.table",
+  "glmnet"
+)
+
+## load each one, hiding startup banners
+invisible(
+  lapply(
+    pkgs,
+    \(p) suppressPackageStartupMessages(
+           library(p, character.only = TRUE, warn.conflicts = FALSE)
+         )
+  )
+)
 
 #Parse arguments
 option_list = list(
