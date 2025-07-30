@@ -382,7 +382,8 @@ workflow {
     cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, cnvGenes, params.outDir)
 
     // SNV calling
-    variantCallingOut = variantCalling(subsettedBam.subsetBam, subsetIndex.indexSubsetBam, ref, id, params.tmpDir, params.numGpu)
+    addReplaceRg = addreplacerg(subsettedBam.subsetBam, subsetIndex.indexSubsetBam)
+    variantCallingOut = variantCalling(addReplaceRg.deepVariantBam, addReplaceRg.deepVariantBai, ref, id, params.tmpDir, params.numGpu)
     recodeVCFOut = recodeVCF(variantCallingOut.dvVcf)
 
     // ANNOVAR
