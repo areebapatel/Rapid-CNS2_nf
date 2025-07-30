@@ -206,7 +206,7 @@ process human_variation_snp {
         ${params.outDir}/snv/${id}_dv_report.csv > ${params.outDir}/snv/${id}_dv_report.fmt.csv 
         
         create_report ${params.outDir}/snv/${id}_dv_report.fmt.csv \
-        --fasta ${ref} \
+        ${ref} \
         --sequence 1 \
         --begin 2 \
         --end 3 \
