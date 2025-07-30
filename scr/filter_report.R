@@ -1,4 +1,4 @@
-for (package in c('optparse')) {
+for (package in c('optparse', 'reshape2')) {
   if (!require(package, character.only=T, quietly=T)) {
     install.packages(package,repos = "http://cran.us.r-project.org")
     library(package, character.only=T)
