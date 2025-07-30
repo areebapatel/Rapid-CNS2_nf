@@ -20,13 +20,13 @@ opt = parse_args(opt_parser);
 var_file <- read.csv(opt$input)
 
 no_na <- var_file[which(var_file$cosmic70 != "." | var_file$X1000g2015aug_eur != "." | var_file$Func.refGene == "upstream"),]
-cosmic <- no_na[which(no_na$cosmic70 != "." | no_na$X1000g2015aug_eur < 0.01 | no_na$Func.refGene == "upstream"),]
+cosmic <- no_na[which(no_na$cosmic70 != "." | no_na$X1000g2015aug_eur < 0.001 | no_na$Func.refGene == "upstream"),]
 
 no_syn <- cosmic[which(cosmic$ExonicFunc.refGene != "synonymous SNV"),]
 
 no_syn <- no_syn[order(no_syn$X1000g2015aug_eur),]
 
-table <- no_syn[which(no_syn$X1000g2015aug_eur < 0.01),c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp151","X1000g2015aug_eur","cosmic70" )]
+table <- no_syn[which(no_syn$X1000g2015aug_eur < 0.001),c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp151","X1000g2015aug_eur","cosmic70","CLNSIG" )]
 
 var_list <- strsplit(table$AAChange.refGene[1],split = ":")
 alteration <- lapply(table$AAChange.refGene, function(x){
@@ -41,9 +41,9 @@ cosmic <- lapply(table$cosmic70, function(x){
   return(alter)
 })
 
-filtered <- cbind("Chr"=table$Chr,"Start"=table$Start,"End"=table$End,"Func"=table$Func.refGene,"Gene"=table$Gene.refGene,"ExonicFunc"=table$ExonicFunc.refGene,"AAChange"=reshape2::melt(alteration)["value"],"cytoBand"=table$cytoBand,"1000g_EUR"=table$X1000g2015aug_eur,"COSMIC"=reshape2::melt(cosmic)["value"])
+filtered <- cbind("Chr"=table$Chr,"Start"=table$Start,"End"=table$End,"Func"=table$Func.refGene,"Gene"=table$Gene.refGene,"ExonicFunc"=table$ExonicFunc.refGene,"AAChange"=reshape2::melt(alteration)["value"],"cytoBand"=table$cytoBand,"1000g_EUR"=table$X1000g2015aug_eur,"COSMIC"=reshape2::melt(cosmic)["value"], "CLNSIG" = table$CLNSIG)
 
-colnames(filtered) <- c("Chr","Start","End","Func","Gene","ExonicFunc","AAChange","cytoBand","1000g_EUR","COSMIC")
+colnames(filtered) <- c("Chr","Start","End","Func","Gene","ExonicFunc","AAChange","cytoBand","1000g_EUR","COSMIC", "CLNSIG")
 
 
 write.csv(filtered,file = opt$output,row.names = F)
