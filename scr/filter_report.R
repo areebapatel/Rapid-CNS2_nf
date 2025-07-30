@@ -19,14 +19,14 @@ opt = parse_args(opt_parser);
 
 var_file <- read.csv(opt$input)
 
-no_na <- var_file[which(var_file$cosmic68 != "." | var_file$X1000g2015aug_eur != "." | var_file$Func.refGene == "upstream"),]
-cosmic <- no_na[which(no_na$cosmic68 != "." | no_na$X1000g2015aug_eur < 0.01 | no_na$Func.refGene == "upstream"),]
+no_na <- var_file[which(var_file$cosmic70 != "." | var_file$X1000g2015aug_eur != "." | var_file$Func.refGene == "upstream"),]
+cosmic <- no_na[which(no_na$cosmic70 != "." | no_na$X1000g2015aug_eur < 0.001 | no_na$Func.refGene == "upstream"),]
 
 no_syn <- cosmic[which(cosmic$ExonicFunc.refGene != "synonymous SNV"),]
 
 no_syn <- no_syn[order(no_syn$X1000g2015aug_eur),]
 
-table <- no_syn[which(no_syn$X1000g2015aug_eur < 0.01),c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp147","X1000g2015aug_eur","cosmic68" )]
+table <- no_syn[which(no_syn$X1000g2015aug_eur < 0.001),c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp151","X1000g2015aug_eur","cosmic70" )]
 
 var_list <- strsplit(table$AAChange.refGene[1],split = ":")
 alteration <- lapply(table$AAChange.refGene, function(x){
@@ -35,7 +35,7 @@ alteration <- lapply(table$AAChange.refGene, function(x){
   return(alter)
 })
 
-cosmic <- lapply(table$cosmic68, function(x){
+cosmic <- lapply(table$cosmic70, function(x){
   var_list <- strsplit(x,split = ";")
   alter <- strsplit(var_list[[1]][1],split = ",")[[1]][1]
   return(alter)
