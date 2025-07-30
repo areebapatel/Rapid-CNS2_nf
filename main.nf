@@ -46,6 +46,7 @@ params.rParams = [] // Initialize an empty list to store -r parameters
 // DeepVariant mode. 
 params.pbDVMode = "ont"
 params.pbPATH = "pbrun"
+params.reads = ' "ID:12345" -r "SM:12345" -r "PL:ONT" '
 
 // set up and create an output directory
 //out_dir = path(params.outDir)
