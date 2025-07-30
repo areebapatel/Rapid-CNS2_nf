@@ -396,12 +396,12 @@ workflow {
     igvReportsOut = igv_reports(filterReportOut.dvReport, id, ref, subsettedBam.subsetBam, subsetIndex.indexSubsetBam, annotations)
 
     // SV calling
-    structuralVariantsOut = structuralVariants(processedBam, subsetIndex.indexSubsetBam, ref, id, params.snifflesThreads)
-    annotSVOut = annotSV(structuralVariantsOut.svVcf, id)
+    structuralVariantsOut = structuralVariants(processedBam, subsetIndex.indexSubsetBam, ref, id, snifflesThreads)
+    annotSVOut = annotSV(structuralVariantsOut.svVcf, annotsvAnnot, id)
 
     if (params.runHumanVariation){
     // Human variation SNP workflow //not included in report yet
-        human_variation_snp(processedBam, panel, ref, id, outDir, params.bamMinCoverage, params.snpThreads)
+        human_variation_snp(processedBam, panel, ref, id, outDir, bamMinCoverage, snpThreads)
 
     // Human variation SV workflow // not included in report yet
         human_variation_sv(processedBam, ref, id, params.svThreads)
@@ -411,7 +411,7 @@ workflow {
     reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
-        mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, params.mnpFlexBed, id)
+        mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)
     }
 }
 
