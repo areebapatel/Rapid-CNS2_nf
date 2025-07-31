@@ -10,23 +10,35 @@ software_version = "3.0.0"
 // Display startup message
 log.info """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                           Rapid-CNS² Nextflow Pipeline                      ║
-║                                    v${software_version}                                    ║
+║                    🧬 Rapid-CNS² Nextflow Pipeline 🧬                         ║
+║                              Version ${software_version}                     ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                              ║
-║  Developer: Areeba Patel                                                    ║
-║  Email: a.patel@dkfz.de                                                    ║
-║  Institution: German Cancer Research Center (DKFZ)                         ║
+║  📋 Pipeline Information:                                                    ║
+║  • Comprehensive CNS tumor molecular profiling                               ║
+║  • SNV, CNV, SV, and methylation analysis                                    ║
+║  • MGMT promoter methylation assessment                                      ║
+║  • Methylation-based tumor classification                                    ║
 ║                                                                              ║
-║  CITATION:                                                                  ║
-║  Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation ║
-║  of a platform for rapid molecular profiling of central nervous system      ║
-║  tumors. Nature Medicine 31, 1567–1577 (2025).                             ║
-║  https://doi.org/10.1038/s41591-025-03562-5                               ║
+║  • Developer: Areeba Patel                                                   ║
+║  • Email: a.patel@dkfz.de                                                    ║
+║  • Institution: German Cancer Research Center (DKFZ)                         ║  
 ║                                                                              ║
-║  GitHub: https://github.com/areebapatel/Rapid-CNS2_nf                      ║
-║  License: MIT                                                               ║
-║  Version: ${software_version}                                                ║
+║  📚 Citation (Please cite if used):                                           ║
+║  Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation   ║
+║  of a platform for rapid molecular profiling of central nervous system       ║
+║  tumors. Nature Medicine 31, 1567–1577 (2025).                               ║
+║  DOI: https://doi.org/10.1038/s41591-025-03562-5                             ║
+║                                                                              ║
+║  🔗 Additional Resources:                                                    ║
+║  • GitHub Repository: https://github.com/areebapatel/Rapid-CNS2_nf           ║
+║  • License: MIT (Open Source)                                                ║
+║  • Documentation: See README.md for detailed usage instructions              ║
+║                                                                              ║
+║  ⚠️  Important Notes:                                                        ║
+║  • This pipeline is for RESEARCH USE ONLY                                    ║
+║  • Not validated for clinical diagnostic use                                 ║
+║  • Results should be interpreted by qualified professionals                  ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
@@ -356,6 +368,10 @@ workflow {
     Channel.fromPath("${projectDir}/scr/Rapid_CNS2_report_UKHD_v3.0.0.Rmd", checkIfExists: true)
     .set {reportUKHD}
 
+    // Set the logos directory
+    Channel.fromPath("${projectDir}/logos", checkIfExists: true)
+    .set {logosDir}
+
     def inputPath = file(params.input)
     def bamToCheck
     // Check if the input is a BAM file or a directory containing BAM files
@@ -473,7 +489,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut, igvReportsOut, software_version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut, igvReportsOut, software_version, processedBam, params.seq, reportUKHD, logosDir)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)

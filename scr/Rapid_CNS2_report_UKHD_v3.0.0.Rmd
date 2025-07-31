@@ -14,8 +14,8 @@ header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \fancyhead[L]{\includegraphics[height=0.5in]{logos/`r logo_file`}}
-- \fancyhead[R]{\includegraphics[height=0.5in]{logos/`r institution_logo`} \quad \thepage}
+- \fancyhead[L]{\includegraphics[height=0.5in]{`r logo_file`}}
+- \fancyhead[R]{\includegraphics[height=0.5in]{`r institution_logo`} \quad \thepage}
 - \renewcommand{\headrulewidth}{0.4pt}
 geometry: margin=0.2in
 always_allow_html: true
@@ -205,8 +205,8 @@ cat(status)
 ```{r setup3, echo=FALSE}
 mgmt_too_low <- FALSE
 ## if methylartist and mgmt exist
-if (!file.exists(paste0(opt$methylartist)) 
-    & !file.exists(paste0(opt$mgmt)))
+if (!file.exists(methylartist_plot) 
+    & !file.exists(mgmt))
 mgmt_too_low <- TRUE
 ```
 ```{r, echo=FALSE, warning=FALSE, results='asis', eval=mgmt_too_low}
@@ -215,7 +215,7 @@ cat("#### MGMT promoter methylation status was not assessed in this sample due t
 
 ## MGMT Promoter methylation plot:
 ```{r, echo=FALSE, out.width="100%",warning=FALSE, eval=show_mgmt}
-knitr::include_graphics(opt$methylartist)
+knitr::include_graphics(methylartist_plot)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, results='asis', eval=mgmt_too_low}

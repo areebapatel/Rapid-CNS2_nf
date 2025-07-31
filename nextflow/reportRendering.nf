@@ -20,6 +20,7 @@ process reportRendering {
         path(inputBam)
         val(seq)
         path(report_UKHD)
+        path(logosDir) // logos directory
     
     output:
 	val true
@@ -73,6 +74,9 @@ process reportRendering {
         else
             echo "Info: Methylartist PNG file(s) not found or coverage below threshold, skipping methylartist argument."
         fi
+
+        # Copy logos to working directory for Rmd access
+        cp -r ${logosDir} ./
 
         Rscript ${reportScript} \
           --prefix ${id} \
