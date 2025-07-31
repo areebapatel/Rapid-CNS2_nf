@@ -1,10 +1,9 @@
 
-for (package in c('optparse', 'rmarkdown','kableExtra','knitr')) {
-  if (!require(package, character.only=T, quietly=T)) {
-    install.packages(package,repos = "http://cran.us.r-project.org")
-    library(package, character.only=T)
-  }
-}
+# Load required packages
+library(optparse)
+library(rmarkdown)
+library(kableExtra)
+library(knitr)
 
 #Parse arguments
 option_list = list(
