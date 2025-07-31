@@ -1,5 +1,5 @@
 process structuralVariants {
-    label 'gpu'
+    label 'rapid_cns'
 
     publishDir "${outDir}/sv", mode: 'copy', pattern: "*"
 
@@ -25,6 +25,7 @@ process structuralVariants {
 }
 
 process annotSV {
+    label 'rapid_cns'
     publishDir "${params.outDir}/sv", mode: 'copy', pattern: "*"
 
     input:

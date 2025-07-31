@@ -8,7 +8,10 @@ process copyNumberVariants {
         val(cnvThreads)
 
     output:
-        val true
+        path "${id}.cnvpytor.calls.1000.tsv", emit: cnvpytorCalls1000
+        path "${id}.cnvpytor.calls.10000.tsv", emit: cnvpytorCalls10000
+        path "${id}.cnvpytor.calls.100000.tsv", emit: cnvpytorCalls100000
+        path "${id}_cnvpytor_100k.pdf", emit: cnvpytorPlot
     
     publishDir("${params.outDir}/cnv/")
 

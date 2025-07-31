@@ -186,6 +186,7 @@ process human_variation_snp {
  }
 
  process igv_reports {
+    label 'rapid_cns'
     errorStrategy 'ignore'
     input:
         path(filteredReport)

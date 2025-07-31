@@ -90,6 +90,15 @@ RUN R -e "required_packages <- c('optparse', 'rmarkdown', 'kableExtra', 'knitr',
 RUN wget -O /usr/local/bin/mosdepth https://github.com/brentp/mosdepth/releases/download/v0.3.3/mosdepth && \
     chmod +x /usr/local/bin/mosdepth
 
+# Install AnnotSV
+RUN git clone https://github.com/lgmgeo/AnnotSV.git /opt/AnnotSV && \
+    cd /opt/AnnotSV && \
+    make PREFIX=. install && \
+    make PREFIX=. install-human-annotation
+
+# Add AnnotSV to PATH
+ENV PATH="/opt/AnnotSV/bin:$PATH"
+
 # Set working directory
 WORKDIR /data
 

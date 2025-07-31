@@ -445,7 +445,7 @@ workflow {
 
     // CNV calling
     cnvOut = copyNumberVariants(processedBam, indexedBam.indexBam, id, params.cnvThreads)
-    cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, cnvGenes, params.outDir)
+    cnvAnnotatedOut = cnvAnnotated(cnvOut.cnvpytorCalls1000, id, annotateScript, cnvGenes, params.outDir)
 
     // SNV calling
     addReplaceRgOut = addreplacerg(subsettedBam.subsetBam, subsetIndex.indexSubsetBam)
