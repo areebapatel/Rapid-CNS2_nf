@@ -62,46 +62,80 @@ params.patient = null
 // Show help message
 if (params.help) {
    log.info """
-    Usage: nextflow run nextflow/main.nf  [options]
+   ================================================================================
+   Rapid-CNS² Nextflow Pipeline v${software_version}
+   ================================================================================
+   
+   USAGE: nextflow run main.nf [options]
+   
+   MANDATORY PARAMETERS:
+       --input            Path to input BAM file(s)
+                         • Single aligned BAM: /path/to/sample.bam
+                         • Directory with aligned BAMs: /path/to/aligned_bams/
+                         • Directory with unaligned BAMs: /path/to/unaligned_bams/
+       --id               Sample identifier (alphanumeric, no spaces)
+   
+   SYSTEM-SPECIFIC PARAMETERS (configure in nextflow.config):
+       --ref              Path to hg38 reference genome FASTA file
+       --annovarPath      Path to ANNOVAR installation directory
+       --annovarDB        Path to ANNOVAR database directory (humandb/)
+       --annotsvAnnot     Path to AnnotSV annotations directory
+       --annotations      Path to annotation file for IGV reports (refGene.txt)
+   
+   OUTPUT PARAMETERS:
+       --outDir           Output directory for all results [default: output]
+       --tmpDir           Directory for temporary files [default: \${outDir}/tmp/]
+       --logDir           Directory for log files [default: logDir]
+       --patient          Patient name for reports [default: uses --id value]
+   
+   RESOURCE PARAMETERS:
+       --maxThreads       Maximum threads for general processes [default: 64]
+       --modkitThreads    Threads for modkit methylation calling [default: 32]
+       --cnvThreads       Threads for CNVpytor copy number analysis [default: 32]
+       --snifflesThreads  Threads for Sniffles2 structural variant calling [default: 32]
+       --snpThreads       Threads for SNV calling with DeepVariant [default: 64]
+       --svThreads        Threads for structural variant calling [default: 64]
+       --covThreads       Threads for coverage calculation [default: 8]
+       --methThreads      Threads for methylation classification [default: 64]
+       --mgmtThreads      Threads for MGMT promoter analysis [default: 8]
+   
+   ANALYSIS PARAMETERS:
+       --minimumMgmtCov   Minimum coverage for MGMT analysis [default: 5]
+       --bamMinCoverage   Minimum coverage for human variation workflow [default: 10]
+       --mnpFlex          Enable MNP-Flex classifier input preparation [default: false]
+       --runHumanVariation Enable wf-human-variation SNP and SV pipeline [default: false]
+   
+   CONTAINER PARAMETERS:
+       --containerEngine  Container engine: 'docker' or 'singularity' [default: docker]
+       --seq              Sequencer platform identifier [default: P2]
+   
+   PROFILES:
+       -profile lsf       Use LSF cluster scheduler
+       -profile slurm     Use SLURM cluster scheduler  
+       -profile local     Use local execution
+   
+   EXAMPLES:
+   
+   Basic run:
+       nextflow run main.nf --input /data/sample.bam --id SAMPLE001 -profile lsf
 
-    Mandatory options:
-        --input            Path to the directory containing Pod5/FAST5 file or BAM file if available
-        --id                Sample identifier
-
-    Options:
-        --outDir          Directory path to store all the outputs. [default : ${params.outDir}]
-        --ref             Path to hg38 reference file. [default : ${params.ref}]
-        --tmpDir          Directory to store temporary files. If it does not exists it will be created. [default : ${params.tmpDir}]
-        --sortThreads     Number of threads to use for samtools sort [default : ${params.sortThreads}]
-        --snifflesThreads  Numbers of threads to run sniffles2 [default : ${params.snifflesThreads}]
-        --cnvThreads Numbers of threads to run cnvpytor [default : ${params.cnvThreads}]
-        --modThreads Numbers of threads to run modkit [default : ${params.modThreads}]
-        --modelConfig     Basecalling model to be used [default : ${params.modelConfig}]
-        --remoraConfig    Remora model to be used [default: ${params.remoraConfig}]
-        --port             Port for basecall server [default : ${params.port}] 
-        --reads            samtools addreplacerg -r option. It should be specified as this example :  --reads '-r "SM:GM24385" -r "ID:GM24385"'
-        --mnpFlex          Run MNP-Flex preprocessing [default : FALSE]
-        --runHumanVariation   Run the wf-human-variation SNP and SV pipeline [default : FALSE]
-        --numGpu           Number of GPUs to use [default: ${params.numGpu}]
-
-    Example:
-      nextflow run main.nf  --input "/input/pod5" --ref "/Ref/Homo_sapiens_assembly38.fasta" --id "Sample_XYZ"
-
-    To run with LSF, add -process.executor='lsf' to your nextflow command.
-
-    To also prepare input file for the MNP-Flex classifier, add the --mnpFlex flag. (Default behaviour is to not prepare the input file)
-    """
+   
+   ================================================================================
+   For detailed parameter descriptions, see the README.md file.
+   ================================================================================
+   """
     exit 0
 }
 
 // Verify that the mandatory parameters are provided
-if (params.input == null) error "The path to the input POD5 files or BAM file is mandatory, please specify it with --input"
+if (params.input == null) error "The path to the input or BAM file(s) is mandatory, please specify it with --input"
 if (params.id == null) error "The sample identifier is mandatory, please specify it with --id"
 if (params.ref == null) error "The reference genome file is mandatory, please specify it with --ref"
 
 include { subsetBam } from './nextflow/bamProcessing.nf'
 include { indexBam } from './nextflow/bamProcessing.nf'
 include { indexSubsettedBam } from './nextflow/bamProcessing.nf'
+include { addreplacerg } from './nextflow/bamProcessing.nf'
 include { mosdepth } from './nextflow/utils.nf'
 include { methylationCalls } from './nextflow/methylationAnalysis.nf'
 include { checkMgmtCoverage } from './nextflow/methylationAnalysis.nf'
@@ -391,8 +425,8 @@ workflow {
     cnvAnnotatedOut = cnvAnnotated(cnvOut[0], id, annotateScript, cnvGenes, params.outDir)
 
     // SNV calling
-    addReplaceRg = addreplacerg(subsettedBam.subsetBam, subsetIndex.indexSubsetBam)
-    variantCallingOut = variantCalling(addReplaceRg.deepVariantBam, addReplaceRg.deepVariantBai, ref, id, params.tmpDir, params.numGpu)
+    addReplaceRgOut = addreplacerg(subsettedBam.subsetBam, subsetIndex.indexSubsetBam)
+    variantCallingOut = variantCalling(addReplaceRgOut.deepVariantBam, addReplaceRgOut.deepVariantBai, ref, id, params.tmpDir, params.numGpu)
     recodeVCFOut = recodeVCF(variantCallingOut.dvVcf)
 
     // ANNOVAR
@@ -416,7 +450,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, software_version, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, software_version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)

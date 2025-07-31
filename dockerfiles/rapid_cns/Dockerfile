@@ -26,14 +26,14 @@ RUN apt-get update && \
         ca-certificates \
         zlib1g-dev \
         locales \
-        && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 cnvpytor==1.3.2 methylartist requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
+        && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 cnvpytor==1.3.2 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
         && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set locale
 RUN locale-gen en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # Install Miniconda
 ENV CONDA_DIR=/opt/conda
@@ -42,8 +42,19 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
     rm /tmp/miniconda.sh
 ENV PATH=$CONDA_DIR/bin:$PATH
 
-# Create conda environment and install samtools and bedtools from bioconda with Python 3.12
-RUN conda install -y -c conda-forge -c bioconda python=3.12 samtools bedtools vcftools && conda clean -afy
+# Initialize conda and add channels
+RUN conda init bash && \
+    conda config --add channels conda-forge && \
+    conda config --add channels bioconda && \
+    conda config --set channel_priority strict && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# Create conda environment and install all tools from bioconda
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    conda install -y -c conda-forge -c bioconda python=3.12 samtools bedtools vcftools && \
+    conda clean -afy
 
 # Install dorado
 RUN curl -L "https://cdn.oxfordnanoportal.com/software/analysis/dorado-1.0.2-linux-x64.tar.gz" -o /tmp/dorado-1.0.2-linux-x64.tar.gz \
@@ -51,7 +62,7 @@ RUN curl -L "https://cdn.oxfordnanoportal.com/software/analysis/dorado-1.0.2-lin
     && ln -s /opt/dorado-1.0.2-linux-x64/bin/dorado /usr/local/bin/dorado \
     && rm -rf /tmp/dorado*
 
-ENV LD_LIBRARY_PATH="/opt/dorado-1.0.2-linux-x64/lib:${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH="/opt/dorado-1.0.2-linux-x64/lib"
 
 # Install R packages with dependencies
 RUN R -e "install.packages(c( \
