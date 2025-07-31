@@ -2,8 +2,9 @@
 # Load required packages
 library(optparse)
 library(rmarkdown)
-library(kableExtra)
 library(knitr)
+library(kableExtra)
+
 
 #Parse arguments
 option_list = list(
