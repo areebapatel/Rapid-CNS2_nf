@@ -53,8 +53,26 @@ RUN curl -L "https://cdn.oxfordnanoportal.com/software/analysis/dorado-1.0.2-lin
 
 ENV LD_LIBRARY_PATH="/opt/dorado-1.0.2-linux-x64/lib:${LD_LIBRARY_PATH}"
 
-# Install R packages
-RUN R -e "install.packages(c('optparse', 'GenomicRanges', 'ranger', 'matrixStats', 'data.table', 'glmnet', 'rmarkdown', 'kableExtra', 'knitr'), repos='http://cran.us.r-project.org')"
+# Install R packages with dependencies
+RUN R -e "install.packages(c( \
+    'optparse','ranger','matrixStats','data.table','glmnet', \
+    'rmarkdown','knitr','BiocManager' \
+  ), repos='https://cloud.r-project.org', INSTALL_opts='--no-test-load')"
+
+# Install kableExtra separately with its dependencies
+RUN R -e "install.packages('kableExtra', repos='https://cloud.r-project.org', dependencies=TRUE)"
+
+ 
+RUN R -e "BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)"
+
+# Test if all required R packages are installed
+RUN R -e "required_packages <- c('optparse', 'rmarkdown', 'kableExtra', 'knitr', 'ranger', 'matrixStats', 'data.table', 'glmnet', 'GenomicRanges'); \
+    missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]; \
+    if (length(missing_packages) > 0) { \
+        stop(paste('Missing R packages:', paste(missing_packages, collapse = ', '))); \
+    } else { \
+        cat('All required R packages are installed successfully\n'); \
+    }"
 
 # Add mosdepth (latest release)
 RUN wget -O /usr/local/bin/mosdepth https://github.com/brentp/mosdepth/releases/download/v0.3.3/mosdepth && \

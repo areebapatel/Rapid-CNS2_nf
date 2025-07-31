@@ -1,9 +1,12 @@
 
-# Load required packages
-library(optparse)
-library(rmarkdown)
-library(knitr)
-library(kableExtra)
+# Load required packages with error checking
+required_packages <- c('optparse', 'rmarkdown', 'kableExtra', 'knitr')
+
+for (package in required_packages) {
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    stop(paste("Required R package '", package, "' is not installed. Please ensure all required packages are installed in the container."))
+  }
+}
 
 
 #Parse arguments
