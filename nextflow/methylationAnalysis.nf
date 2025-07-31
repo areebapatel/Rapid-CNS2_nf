@@ -81,14 +81,14 @@ process mgmtPromoterMethyartist {
             """
             methylartist \
             locus \
-            -i chr10:129456536-129477536 \
+            -i chr10:129465536-129468536 \
             -l chr10:129466536-129467536 \
             -b ${bam} \
             --ref ${ref} \
             --motif CG \
             --mods m \
             --highlightpalette viridis \
-            --samplepalette magma > ${id}_mgmt.svg
+            --samplepalette magma > ${id}_mgmt.png
 
             """
         else

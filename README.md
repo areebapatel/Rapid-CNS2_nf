@@ -10,77 +10,59 @@ The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designe
 
 This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
 
+## Features
+
+- **Modular architecture** for easy customization and extension
+- **Flexible input handling** - supports aligned and unaligned BAM files with automatic alignment detection
+- **Accelerated variant calling** with Clara Parabricks supported DeepVariant and Sniffles2
+- **Comprehensive analysis** including methylation analysis with Rapid-CNS² classifier and MGMT promoter methylation status
+- **Automated reporting** with molecular diagnostic-ready reports
+- **MNP-Flex integration** for additional classifier input preparation (optional)
+
 ## Requirements
 
-- Nextflow (version 20.10.0 or later, recommended 22.10.0+)
-- Docker (recommended) or Singularity
-- Required input data:
-  - Raw unaligned or pre-aligned BAM files with 5mC calling (preferably a hac/sup model)
-  - Reference genome file (hg38 required)
-
-## Installation
-
-### 1. Prerequisites
-
-Before installing the pipeline, ensure you have the following prerequisites:
-
-#### System Requirements
-- **Operating System:** Linux (Ubuntu 18.04+, CentOS 7+, or similar)
+- **Nextflow:** version 20.10.0 or later (recommended 22.10.0+)
+- **Container Engine:** Docker (recommended) or Singularity
+- **Java:** OpenJDK 8 or later
+- **System:** Linux (Ubuntu 18.04+, CentOS 7+, or similar)
 - **Memory:** Minimum 8GB RAM, recommended 32GB+ for large datasets
 - **Storage:** At least 100GB free space for reference genomes and databases
-- **CPU:** Multi-core processor (8+ cores recommended)
 
-#### Software Dependencies
-- **Java:** OpenJDK 8 or later
-- **Git:** For cloning the repository
+## Quick Start
 
-### 2. Install Nextflow
-
-#### Option A: Using Conda (Recommended)
+### 1. Clone the Repository
 ```bash
-# Install Miniconda if you don't have it
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
+git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
+cd Rapid-CNS2_nf
+```
 
-# Create a new environment and install Nextflow
+### 2. Install Dependencies
+
+#### Install Nextflow
+```bash
+# Using Conda (recommended)
 conda create -n nextflow python=3.9
 conda activate nextflow
 conda install -c bioconda nextflow
-```
 
-#### Option B: Manual Installation
-```bash
-# Download and install Nextflow
+# Or manual installation
 curl -s https://get.nextflow.io | bash
 sudo mv nextflow /usr/local/bin/
 ```
 
-### 3. Install Container Engine
-
-#### Docker (Recommended)
+#### Install Container Engine
 ```bash
-# Install Docker
+# Docker (recommended)
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Verify installation
-docker --version
-```
-
-#### Singularity (Alternative)
-```bash
-# Install Singularity (version 3.0+)
+# Or Singularity
 sudo apt-get update
 sudo apt-get install -y singularity-container
-
-# Verify installation
-singularity --version
 ```
 
-### 4. Download Reference Genome
-
-#### UCSC hg38
+### 3. Download Reference Genome
 ```bash
 # Create reference directory
 mkdir -p /path/to/references/hg38
@@ -94,32 +76,24 @@ mv hg38.fa /path/to/references/hg38/hg38.fa
 samtools faidx /path/to/references/hg38/hg38.fa
 ```
 
-### 5. Install ANNOVAR
+### 4. Install ANNOVAR
 
-ANNOVAR is required for variant annotation. Follow these steps:
+ANNOVAR is required for variant annotation:
 
-#### 5.1 Register and Download
-1. Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
-2. Fill out the registration form with your institutional email
-3. You will receive a download link via email within 10 minutes
-4. Download the ANNOVAR package
+1. **Register and Download:**
+   - Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
+   - Fill out the registration form with your institutional email
+   - Download the package from the link sent to your email
 
-#### 5.2 Extract and Install
+2. **Install and Setup:**
 ```bash
 # Extract ANNOVAR
 tar -xzf annovar.latest.tar.gz
 cd annovar
-
-# Make scripts executable
 chmod +x *.pl
-```
 
-#### 5.3 Download Databases
-```bash
-# Create humandb directory
+# Create humandb directory and download databases
 mkdir humandb/
-
-# Download required databases for hg38
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cytoBand humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
@@ -132,21 +106,9 @@ mkdir humandb/
 
 **Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
 
-### 6. Clone the Pipeline
+### 5. Configure the Pipeline
 
-```bash
-# Clone the repository
-git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
-cd Rapid-CNS2_nf
-
-# Check out the latest release (if available)
-git checkout tags/v3.0.0  # or the latest version
-```
-
-### 7. Configure the Pipeline
-
-#### 7.1 Update nextflow.config
-Edit the `nextflow.config` file with your specific paths:
+Edit the `nextflow.config` file with your system-specific paths:
 
 ```groovy
 params {
@@ -155,156 +117,52 @@ params {
     annovarPath = "/path/to/annovar/"
     annovarDB = "/path/to/annovar/humandb/"
     annotsvAnnot = "/path/to/AnnotSV/Annotations_Human/"
-    
-    // Set your preferred executor
-    process.executor = 'local'  // or 'lsf', 'slurm'
 }
 ```
 
-#### 7.2 Test Installation
+### 6. Run the Pipeline
+
+#### Basic Run
 ```bash
-# Test Nextflow installation
-nextflow -version
-
-# Test Docker/Singularity
-docker run hello-world  # or singularity run docker://hello-world
-
-# Run a test with the pipeline
-nextflow run main.nf --help
-```
-
-
-
-### 8. Verify Installation
-
-Run a quick test to ensure everything is working:
-
-```bash
-# Test the pipeline with a small dataset
 nextflow run main.nf \
-    --input /path/to/test/sample.bam \
-    --id test_sample \
-    --ref /path/to/references/hg38/hg38.fa \
-    --outDir ./test_output \
-    -profile docker
+    --input /data/sample.bam \
+    --id SAMPLE001 \
+    --outDir ./results \
+    -profile lsf
 ```
 
-### 9. Troubleshooting
+#### Advanced Run
+```bash
+nextflow run main.nf \
+    --input /data/sample.bam \
+    --id SAMPLE001 \
+    --patient "John Doe" \
+    --outDir ./results \
+    --minimumMgmtCov 10 \
+    --mnpFlex true \
+    --runHumanVariation true \
+    --containerEngine singularity \
+    -profile slurm
+```
 
-#### Common Issues:
+## Input Requirements
 
-1. **Java not found:**
-   ```bash
-   sudo apt-get install openjdk-11-jdk
-   ```
+### Basecalling
 
-2. **Docker permission denied:**
-   ```bash
-   sudo usermod -aG docker $USER
-   # Log out and log back in
-   ```
-
-3. **Nextflow cache issues:**
-   ```bash
-   nextflow clean -f
-   ```
-
-4. **Memory issues:**
-   - Increase Java heap space: `export NXF_OPTS="-Xms500M -Xmx2G"`
-   - Reduce the number of concurrent processes in `nextflow.config`
-
-#### Getting Help:
-- Check the Nextflow documentation: https://www.nextflow.io/docs/
-- Review the pipeline logs in the `work/` directory
-- Check the `pipeline_info/` directory for execution reports
-
-## Usage
-
-1. Clone this repository:
-
-    ```bash
-    git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
-    ```
-
-2. Edit the `nextflow.config` file to configure pipeline parameters according to your requirements.
-
-3. Run the pipeline using Nextflow:
-
-    ```bash
-    nextflow run main.nf --input <input_directory_or_bam> --id <sample_identifier> --outDir <output_directory> --ref <reference_fasta> -profile docker
-    ```
-
-    Replace `<input_directory_or_bam>` with the path to your BAM file(s) and `<sample_identifier>` with a unique identifier for the sample.
-
-    Additional options can be specified to customize pipeline behavior. Use the `--help` option to view available options and their descriptions.
-
-4. Monitor pipeline progress and access results in the specified output directory.
-
-## Basecalling
-
-**Basecalling is now performed externally.**
-- Use [epi2me-labs/wf-basecalling](https://github.com/epi2me-labs/wf-basecalling) or Dorado directly to generate BAM files with 5mC calling.
-- Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling)).
-- Provide the resulting BAM(s) as input to this pipeline.
+**Basecalling is performed externally.**
+- Use [epi2me-labs/wf-basecalling](https://github.com/epi2me-labs/wf-basecalling) or Dorado directly
+- Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling))
+- Provide the resulting BAM(s) as input to this pipeline
 
 ### Input Options
 
 The pipeline accepts:
-- **Single aligned BAM file**: Direct path to a single aligned and merged BAM file (e.g., `/path/to/sample.bam`)
-- **Directory with aligned BAM files**: Path to directory containing multiple aligned BAM files (will be merged automatically)
-- **Directory with unaligned BAM files**: Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
+- **Single aligned BAM file:** Direct path to a single aligned and merged BAM file (e.g., `/path/to/sample.bam`)
+- **Directory with aligned BAM files:** Path to directory containing multiple aligned BAM files (will be merged automatically)
+- **Directory with unaligned BAM files:** Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
 
 **Requirements for input BAM files:**
 - Must contain methylation tags (MM:Z) from modified basecalling
-
-## Features
-
-- Modular architecture for easy customization and extension.
-- Supports analysis of aligned and unaligned BAM files with automatic alignment detection.
-- Accelerated variant calling with Clara Parabricks supported Deepvariant and Sniffles2
-- Annotation and filtering of clinically relevant variants
-- Includes methylation analysis with Rapid-CNS² classifier and MGMT promoter methylation status determination.
-- Automated report generation for summarizing analysis results.
-- Prepare input files for the MNP-Flex classifier (optional)
-
-## Parameters
-
-| Parameter            | Description                                                                                                        | Default Value        |
-|----------------------|--------------------------------------------------------------------------------------------------------------------|----------------------|
-| `--input`            | Path to a single aligned BAM file or directory containing aligned/unaligned BAM files                | (Required) |
-| `--id`               | Sample identifier                                                                                                  | (Required) |
-| `--ref`              | Path to hg38 reference file (default: see nextflow.config)                                                        | `hg38.fa` |
-| `--tmpDir`           | Directory to store temporary files. If it does not exist it will be created. Auto-set unless overridden.           | `${outDir}/tmp/`            |
-| `--outDir`           | Directory path to store all the outputs                                                                            | `output`             |
-| `--logDir`           | Directory to store log files                                                                                       | `logDir`             |
-| `--minimumMgmtCov`   | Minimum coverage for MGMT promoter methylation analysis                                                            | `5`                  |
-| `--mnpFlex`          | Prepare input file for the MNP-Flex classifier.                                                                    | `false`              |
-| `--runHumanVariation`| Run the wf-human-variation SNP and SV pipeline.                                                                    | `false`              |
-| `--annotations`      | Path to annotation files for SV/variant calling.                                                                   | (system-specific)    |
-| `--modkitThreads`    | Threads for modkit methylation calling.                                                                           | `32`                 |
-| `--cnvThreads`       | Threads for CNVpytor CNV calling.                                                                                 | `32`                 |
-| `--snifflesThreads`  | Threads for Sniffles2 SV calling.                                                                                 | `32`                 |
-| `--snpThreads`       | Threads for SNP calling.                                                                                          | `64`                 |
-| `--svThreads`        | Threads for SV calling.                                                                                           | `64`                 |
-| `--covThreads`       | Threads for coverage calculation.                                                                                 | `8`                  |
-| `--methThreads`      | Threads for methylation classification.                                                                           | `64`                 |
-| `--mgmtThreads`      | Threads for MGMT promoter analysis.                                                                               | `8`                  |
-| `--containerEngine`  | Container engine to use: 'docker' or 'singularity' (default: docker)                                              | `docker`        |
-
-
-# Quick Start
-
-```bash
-# Clone the repository
- git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
- cd Rapid-CNS2_nf
-
-# Run the pipeline (example)
- nextflow run main.nf --input <input_directory> --id <sample_identifier> --ref <reference.fasta>
-```
-
-- Results will be in the output directory specified by `--outDir` (default: `output`).
-- For more options, run: `nextflow run main.nf --help`
 
 ## Pipeline Structure
 
@@ -328,77 +186,141 @@ graph TD
     L --> M
 ```
 
-# Scripts and Modules
+## Parameters
 
-| Script/Module | Location | Description |
-|--------------|----------|-------------|
-| `annotate.py` | scr/ | Annotates CNV calls with gene information using a BED file. |
-| `filter_report.R` | scr/ | Filters and formats variant annotation reports for reporting. |
-| `make_report.R` | scr/ | Generates the final HTML report using RMarkdown. |
-| `methylation_classification.R` | scr/ | Performs methylation-based classification of samples. |
-| `mgmt_pred.R` | scr/ | Predicts MGMT promoter methylation status using a logistic regression model. |
-| `mnp-flex_preprocessing.sh` | scr/ | Prepares input files for the MNP-Flex classifier. |
-| `Rapid_CNS2_report_UKHD.Rmd` | scr/ | RMarkdown template for the final report. |
-| `bamProcessing.nf` | nextflow/ | Alignment and preprocessing of BAM files. |
-| `copyNumberVariants.nf` | nextflow/ | Copy number variation analysis using CNVpytor. |
-| `methylationAnalysis.nf` | nextflow/ | Methylation calling and processing. |
-| `methylationClassification.nf` | nextflow/ | Methylation classification workflow. |
-| `reportRendering.nf` | nextflow/ | Renders the final report. |
-| `structuralVariants.nf` | nextflow/ | Structural variant calling using Sniffles2. |
-| `utils.nf` | nextflow/ | Utility processes (compression, intersections, coverage, etc.). |
-| `variantCalling.nf` | nextflow/ | SNV/indel calling and annotation. |
+### Required Parameters
 
-# Usage (Expanded)
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `--input` | **Required.** Path to input BAM file(s). Can be:<br>• Single aligned BAM file: `/path/to/sample.bam`<br>• Directory with aligned BAMs: `/path/to/aligned_bams/`<br>• Directory with unaligned BAMs: `/path/to/unaligned_bams/` | `--input /data/sample.bam` |
+| `--id` | **Required.** Unique sample identifier used for naming output files and reports. Should be alphanumeric with no spaces. | `--id SAMPLE001` |
 
-1. **Clone and configure:**
-    - Clone the repo and edit `nextflow.config` for your environment and paths.
-2. **Prepare input:**
-    - Place BAMs in your input directory.
-    - Ensure you have the required reference genome (hg38).
-3. **Run:**
-    - See Quick Start above.
-4. **Monitor:**
-    - Nextflow will show progress. Results are in the output directory.
-5. **Troubleshooting:**
-    - If you see missing tool errors, check your Conda/Docker/Singularity setup.
-    - For memory or disk issues, adjust resource parameters in `nextflow.config`.
-    - For module-specific errors, check logs in the `logDir`.
-    - For help, run with `--help` or open an issue on GitHub.
+### System-Specific Parameters
 
-# Frequently Asked Questions (FAQ)
+**These parameters must be configured for your specific system and installation paths in the nextflow.config file:**
 
-**Q: What input formats are supported?**
-A: Unaligned or pre-aligned BAM files.
-
-**Q: Can I run only a subset of the pipeline?**
-A: Yes, you can modify the workflow or use Nextflow's `-resume` and `-entry` options.
-
-**Q: How do I customize resources (CPU, memory)?**
-A: Edit the `nextflow.config` file to set process-specific resources.
-
-**Q: Where are the results?**
-A: In the directory specified by `--outDir` (default: `output`).
-
-**Q: How do I cite this pipeline?**
-A: See the Citation section below.
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `--ref` | Path to hg38 reference genome FASTA file. Must be indexed with `samtools faidx`. | System-specific | `--ref /refs/hg38.fa` |
+| `--annovarPath` | Path to ANNOVAR installation directory. | System-specific | `--annovarPath /tools/annovar/` |
+| `--annovarDB` | Path to ANNOVAR database directory (humandb/). | System-specific | `--annovarDB /tools/annovar/humandb/` |
+| `--annotsvAnnot` | Path to AnnotSV annotations directory. | System-specific | `--annotsvAnnot /tools/AnnotSV/Annotations_Human/` |
+| `--annotations` | Path to annotation file for IGV reports (refGene.txt). | `data/refGene.txt` | `--annotations /refs/refGene.txt` |
 
 
-> **Note:** Some paths in `nextflow.config` are system-specific and must be updated for your environment.
+### Optional Parameters
 
-> **Note:** You can now select either Docker or Singularity as the container engine using the `--containerEngine` parameter. Default is Docker.
+#### Output Parameters
 
-## Acknowledgements
-We are extremely grateful to all our lab members and collaborators for their support! 
-Keeping up with AI to make our life easier and to compensate for our (Areeba's) art skills, our logo was generated by DALL-E.
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `--outDir` | Output directory for all pipeline results. Will be created if it doesn't exist. | `output` | `--outDir /results/analysis` |
+| `--tmpDir` | Directory for temporary files. Auto-set to `${outDir}/tmp/` unless overridden. | `${outDir}/tmp/` | `--tmpDir /scratch/tmp` |
+| `--logDir` | Directory for log files. | `logDir` | `--logDir /logs` |
+| `--patient` | Patient name for reports. If not specified, uses the `--id` value. | `null` (uses `--id`) | `--patient "John Doe"` |
+
+#### Resource Parameters
+
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `--maxThreads` | Maximum number of threads for general processes. | `64` | `--maxThreads 32` |
+| `--modkitThreads` | Number of threads for modkit methylation calling. | `32` | `--modkitThreads 16` |
+| `--cnvThreads` | Number of threads for CNVpytor copy number analysis. | `32` | `--cnvThreads 16` |
+| `--snifflesThreads` | Number of threads for Sniffles2 structural variant calling. | `32` | `--snifflesThreads 16` |
+| `--snpThreads` | Number of threads for SNV calling with DeepVariant. | `64` | `--snpThreads 32` |
+| `--svThreads` | Number of threads for structural variant calling. | `64` | `--svThreads 32` |
+| `--covThreads` | Number of threads for coverage calculation with mosdepth. | `8` | `--covThreads 4` |
+| `--methThreads` | Number of threads for methylation classification. | `64` | `--methThreads 32` |
+| `--mgmtThreads` | Number of threads for MGMT promoter analysis. | `8` | `--mgmtThreads 4` |
+
+#### Analysis Parameters
+
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `--minimumMgmtCov` | Minimum coverage threshold for MGMT promoter methylation analysis. If coverage is below this threshold, MGMT analysis will be skipped. | `5` | `--minimumMgmtCov 10` |
+| `--bamMinCoverage` | Minimum coverage threshold for human variation workflow. | `10` | `--bamMinCoverage 15` |
+| `--mnpFlex` | Enable MNP-Flex classifier input preparation. Creates files needed for external MNP-Flex analysis. | `false` | `--mnpFlex true` |
+| `--runHumanVariation` | Enable wf-human-variation SNP and SV pipeline. Adds additional variant calling workflows. | `false` | `--runHumanVariation true` |
+
+#### Container and System Parameters
+
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `--containerEngine` | Container engine to use: 'docker' or 'singularity'. | `docker` | `--containerEngine singularity` |
+| `--seq` | Sequencer platform identifier. Auto-detected from BAM headers, but can be manually set. | `P2` | `--seq F` |
+
+### Profile-Specific Parameters
+
+The pipeline supports different compute infrastructure profiles:
+
+#### LSF Profile (`-profile lsf`)
+- **Executor:** LSF
+- **Queue:** normal
+- **Memory:** 8 GB per process
+- **CPUs:** 2 per process
+- **GPU:** Available for variant calling and structural variant processes
+
+#### SLURM Profile (`-profile slurm`)
+- **Executor:** SLURM
+- **Queue:** batch
+- **Memory:** 8 GB per process
+- **CPUs:** 2 per process
+- **GPU:** Available for variant calling and structural variant processes
+
+#### Local Profile (`-profile local`)
+- **Executor:** Local
+- **Memory:** 4 GB per process
+- **CPUs:** 1 per process
+- **GPU:** Not available
+
+## Output
+
+The pipeline generates comprehensive outputs in the specified output directory:
+
+- **SNV Analysis:** Variant calls, annotations, and filtered reports
+- **Structural Variants:** SV calls with annotations
+- **Copy Number Variations:** CNV analysis with plots and annotations
+- **Methylation Analysis:** Methylation calls and classification results
+- **MGMT Analysis:** Promoter methylation status and predictions
+- **Coverage Analysis:** Depth of coverage summaries
+- **Reports:** HTML reports with comprehensive molecular diagnostic information
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Java not found:**
+   ```bash
+   sudo apt-get install openjdk-11-jdk
+   ```
+
+2. **Docker permission denied:**
+   ```bash
+   sudo usermod -aG docker $USER
+   # Log out and log back in
+   ```
+
+3. **Nextflow cache issues:**
+   ```bash
+   nextflow clean -f
+   ```
+
+4. **Memory issues:**
+   - Increase Java heap space: `export NXF_OPTS="-Xms500M -Xmx2G"`
+   - Reduce the number of concurrent processes in `nextflow.config`
+
+### Getting Help
+
+- Check the Nextflow documentation: https://www.nextflow.io/docs/
+- Review the pipeline logs in the `work/` directory
+- Check the `pipeline_info/` directory for execution reports
+- Run with `--help` for available options
 
 ## Citation
+
 If you use this pipeline, please cite our work:
 
 Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
-
-## Contributions
-Contributions are welcome! If you encounter any issues, have suggestions for improvements, or would like to contribute new features, please open an issue or pull request on this repository.
-
 
 ## License
 

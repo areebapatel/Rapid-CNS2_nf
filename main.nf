@@ -43,7 +43,7 @@ params.numGpu = 1
 
 params.rParams = [] // Initialize an empty list to store -r parameters
 
-// DeepVariant mode. 
+// DeepVariant mode, adding dummy read group information to the BAM file
 params.pbDVMode = "ont"
 params.pbPATH = "pbrun"
 params.reads = ' "ID:12345" -r "SM:12345" -r "PL:ONT" '
@@ -55,6 +55,9 @@ params.reads = ' "ID:12345" -r "SM:12345" -r "PL:ONT" '
 params.help = null
 params.test = null
 params.reads = null
+
+// Patient name (for report)
+params.patient = null
 
 // Show help message
 if (params.help) {
@@ -159,6 +162,11 @@ workflow {
     // Set the sample identifier
     Channel.from(params.id)
     .set {id}
+
+    // Set the patient name - use id if not specified
+    def patientName = params.patient ?: params.id
+    Channel.from(patientName)
+    .set {patient}
 
     // Set the output directory
     Channel.from(params.outDir)
@@ -408,7 +416,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, nextflow.version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, software_version, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)

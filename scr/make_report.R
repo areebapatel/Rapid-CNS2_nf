@@ -37,7 +37,9 @@ option_list = list(
   make_option(c("-i", "--seq"), type="character", default="Unknown",
              help="Platform used to sequencing; F=MinION/GridION, P=PromethION", metavar="character"),
   make_option(c("-j", "--nextflow_ver"), type="character", default=NULL,
-              help="Include the version of the Nextflow pipeline used to generate the report", metavar="character")
+              help="Include the version of the Nextflow pipeline used to generate the report", metavar="character"),
+  make_option(c("-k", "--report_UKHD"), type="character", default=NULL,
+              help="R Markdown template file", metavar="character")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -55,17 +57,19 @@ mgmt <- opt$mgmt
 methylartist_plot <- opt$methylartist
 cov <- opt$promoter_mgmt_coverage
 igv_report <- opt$igv_report
-report_full <- opt$report_full
 nextflow_ver <- opt$nextflow_ver
+report_UKHD <- opt$report_UKHD
 
-mgmt = "false"
+# Check if MGMT file exists
+mgmt_status = "false"
 if (file.exists(opt$mgmt)) {
-    mgmt="true"
+    mgmt_status = "true"
 }
 
-methylartist_plot = "false"
+# Check if methylartist plot exists
+methylartist_status = "false"
 if (file.exists(opt$methylartist)) {
-    methylartist_plot = "true"
+    methylartist_status = "true"
 }
 
 # generate the report
@@ -73,7 +77,6 @@ if (file.exists(opt$methylartist)) {
 inc_igvreport = FALSE
 exc_igvreport = TRUE
 # lite version
-mgmt = "true"
 render(report_UKHD, 
        output_format = "html_document", 
        output_dir = opt$output_dir,

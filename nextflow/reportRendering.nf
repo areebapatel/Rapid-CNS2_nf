@@ -14,9 +14,9 @@ process reportRendering {
         val(id)
         path(mosdepth_plot_data) // mosdepth
         val(mgmt_cov)
-        val(mgmtPromoterMethyartist)
+        val(mgmtPromoterMethyartist) 
         val(igv_reports) //igv_reports has run
-        val(nextflow_version)
+        val(software_version)
         path(inputBam)
         val(seq)
         path(report_UKHD)
@@ -32,7 +32,7 @@ process reportRendering {
             seq=${seq}
         else
             # try to get the sequencer model from the @RG group (if it exists)
-            RG_seq=\$(samtools view -@4 -H ${input_bam} | grep ^@RG | grep -Po "PM:.*?\t" | awk '{print substr(\$NF,4,3)}')
+            RG_seq=\$(samtools view -@4 -H ${inputBam} | grep ^@RG | grep -Po "PM:.*?\t" | awk '{print substr(\$NF,4,3)}')
             # if found it, save as seq
             if [ "\$RG_seq" ]
             then 
@@ -55,27 +55,41 @@ process reportRendering {
             fi
         fi
         ## if all else fails, set it as unknown
-        if [ "${seq}" != "false" ]
+        if [ -z "\${seq}" ] || [ "\${seq}" == "false" ]
         then
             seq="Unknown"
         fi
        
+        MGMT_ARG=""
+        if [ -f "${params.outDir}/mgmt/${id}_mgmt_status.csv" ]; then
+            MGMT_ARG="--mgmt ${params.outDir}/mgmt/${id}_mgmt_status.csv"
+        else
+            echo "Info: MGMT status file not found or coverage below threshold, skipping MGMT argument."
+        fi
+
+        METHYLARTIST_ARG=""
+        if compgen -G "${params.outDir}/mgmt/*.locus.meth.png" > /dev/null; then
+            METHYLARTIST_ARG="--methylartist ${params.outDir}/mgmt/*.locus.meth.png"
+        else
+            echo "Info: Methylartist PNG file(s) not found or coverage below threshold, skipping methylartist argument."
+        fi
+
         Rscript ${reportScript} \
-        --prefix ${id} \
-        --mutations ${params.outDir}/snv/${params.id}_dv_report.csv \
-        --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.global.0000.png \
-        --rf_details ${params.outDir}/methylation_classification/${id}_rf_details.tsv \
-        --votes ${params.outDir}/methylation_classification/${id}_votes.tsv \
-        --output_dir ${params.outDir}/report/ \
-        --patient ${id} \
-        --coverage ${params.outDir}/coverage/${id}.mosdepth.summary.txt \
-        --sample ${id} \
-        --methylartist ${params.outDir}/mgmt/*.locus.meth.png \
-        --mgmt ${params.outDir}/mgmt/${id}_mgmt_status.csv \
-        --igv_report ${params.outDir}/snv/${id}_igv-report.html \
-        --nextflow_ver ${nextflow_version} \
-        --seq \${seq} \
-        --promoter_mgmt_coverage ${mgmt_cov} \
-        --report_UKHD ${report_UKHD} 
+          --prefix ${id} \
+          --mutations ${params.outDir}/snv/${params.id}_dv_report.csv \
+          --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.pdf \
+          --rf_details ${params.outDir}/methylation_classification/${id}_rf_details.tsv \
+          --votes ${params.outDir}/methylation_classification/${id}_votes.tsv \
+          --output_dir ${params.outDir}/report/ \
+          --patient ${params.patient} \
+          --coverage ${params.outDir}/coverage/${id}.mosdepth.summary.txt \
+          --sample ${id} \
+          $MGMT_ARG \
+          $METHYLARTIST_ARG \
+          --igv_report ${params.outDir}/snv/${id}_igv-report.html \
+          --software_ver ${software_version} \
+          --seq \${seq} \
+          --promoter_mgmt_coverage ${mgmt_cov} \
+          --report_UKHD ${report_UKHD} 
         """
 }
