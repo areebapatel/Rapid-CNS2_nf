@@ -106,6 +106,28 @@ mkdir humandb/
 
 **Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
 
+### 5. Install AnnotSV
+
+AnnotSV is required for structural variant annotation:
+
+```bash
+# Navigate to installation directory
+cd /path/to/install/
+
+# Clone AnnotSV repository
+git clone https://github.com/lgmgeo/AnnotSV.git
+
+# Navigate to AnnotSV directory
+cd AnnotSV
+
+# Install AnnotSV
+make PREFIX=. install
+
+# Install human annotations
+make PREFIX=. install-human-annotation
+```
+
+**Note:** AnnotSV is freely available under the MIT license. See the [AnnotSV repository](https://github.com/lgmgeo/AnnotSV) for more information.
 
 ### 6. Configure the pipeline
 
