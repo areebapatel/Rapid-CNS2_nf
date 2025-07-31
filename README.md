@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, SNV calling, structural variant calling, methylation analysis, copy number variation calling, and provides a comprehensive molecular diagnostic-ready report.
+The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, SNV calling, structural variant calling, methylation analysis, copy number variation calling, and provides a comprehensive molecular report.
 
 This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
 
@@ -28,15 +28,15 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
 - **Memory:** Minimum 8GB RAM, recommended 32GB+ for large datasets
 - **Storage:** At least 100GB free space for reference genomes and databases
 
-## Quick Start
+## Quick start
 
-### 1. Clone the Repository
+### 1. Clone the repository
 ```bash
 git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
 cd Rapid-CNS2_nf
 ```
 
-### 2. Install Dependencies
+### 2. Install dependencies
 
 #### Install Nextflow
 ```bash
@@ -50,7 +50,7 @@ curl -s https://get.nextflow.io | bash
 sudo mv nextflow /usr/local/bin/
 ```
 
-#### Install Container Engine
+#### Install container engine
 ```bash
 # Docker (recommended)
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -62,7 +62,7 @@ sudo apt-get update
 sudo apt-get install -y singularity-container
 ```
 
-### 3. Download Reference Genome
+### 3. Download reference genome
 ```bash
 # Create reference directory
 mkdir -p /path/to/references/hg38
@@ -80,12 +80,12 @@ samtools faidx /path/to/references/hg38/hg38.fa
 
 ANNOVAR is required for variant annotation:
 
-1. **Register and Download:**
+1. **Register and download:**
    - Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
    - Fill out the registration form with your institutional email
    - Download the package from the link sent to your email
 
-2. **Install and Setup:**
+2. **Install and setup:**
 ```bash
 # Extract ANNOVAR
 tar -xzf annovar.latest.tar.gz
@@ -107,7 +107,7 @@ mkdir humandb/
 **Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
 
 
-### 6. Configure the Pipeline
+### 6. Configure the pipeline
 
 Edit the `nextflow.config` file with your system-specific paths:
 
@@ -121,9 +121,9 @@ params {
 }
 ```
 
-### 7. Run the Pipeline
+### 7. Run the pipeline
 
-#### Basic Run
+#### Basic run
 ```bash
 nextflow run main.nf \
     --input /data/sample.bam \
@@ -132,7 +132,7 @@ nextflow run main.nf \
     -profile lsf
 ```
 
-#### Advanced Run
+#### Advanced run
 ```bash
 nextflow run main.nf \
     --input /data/sample.bam \
@@ -146,26 +146,45 @@ nextflow run main.nf \
     -profile slurm
 ```
 
-## Input Requirements
+## Input requirements
+
+### Sequencing requirements
+
+**⚠️ IMPORTANT: This pipeline is specifically designed for Oxford Nanopore Technologies (ONT) data generated using adaptive sampling with the gene panel described in Patel et al. 2022 and Patel et al. 2025.**
+
+- **Platform:** Oxford Nanopore Technologies (MinION, GridION, PromethION)
+- **Sequencing Method:** Adaptive sampling with targeted gene panel
+- **Gene Panel:** NPHD panel (160 gene regions) as described in:
+  - Patel et al. (2022). Rapid-CNS²: rapid comprehensive adaptive nanopore-sequencing of CNS tumors. *Acta Neuropathologica* 143, 609–612
+  - Patel et al. (2025). Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577
+
+**⚠️ NOT SUITABLE FOR:**
+- Shallow whole genome sequencing (WGS)
+- Other sequencing platforms (Illumina, PacBio, etc.)
+- Non-targeted sequencing approaches
+
+**⚠️ WGS WARNING:**
+If using whole genome sequencing data, the average coverage should be at least **10X** for reliable reporting of variants. Lower coverage may result in:
+- Reduced sensitivity for variant detection
+- Increased false negative rates
+- Unreliable methylation analysis
+- Poor MGMT promoter methylation assessment
 
 ### Basecalling
 
-**Basecalling is performed externally.**
+**Basecalling must be performed externally.**
 - Use [epi2me-labs/wf-basecalling](https://github.com/epi2me-labs/wf-basecalling) or Dorado directly
 - Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling))
 - Provide the resulting BAM(s) as input to this pipeline
 
-### Input Options
+### Input options
 
 The pipeline accepts:
-- **Single aligned BAM file:** Direct path to a single aligned and merged BAM file (e.g., `/path/to/sample.bam`)
+- **(Preferred) Single aligned BAM file:** Direct path to a single aligned and merged BAM file (e.g., `/path/to/sample.bam`)
 - **Directory with aligned BAM files:** Path to directory containing multiple aligned BAM files (will be merged automatically)
 - **Directory with unaligned BAM files:** Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
 
-**Requirements for input BAM files:**
-- Must contain methylation tags (MM:Z) from modified basecalling
-
-## Pipeline Structure
+## Pipeline structure
 
 ```mermaid
 graph TD
@@ -189,29 +208,29 @@ graph TD
 
 ## Parameters
 
-### Required Parameters
+### Required parameters
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
 | `--input` | **Required.** Path to input BAM file(s). Can be:<br>• Single aligned BAM file: `/path/to/sample.bam`<br>• Directory with aligned BAMs: `/path/to/aligned_bams/`<br>• Directory with unaligned BAMs: `/path/to/unaligned_bams/` | `--input /data/sample.bam` |
 | `--id` | **Required.** Unique sample identifier used for naming output files and reports. Should be alphanumeric with no spaces. | `--id SAMPLE001` |
 
-### System-Specific Parameters
+### System-specific parameters
 
 **These parameters must be configured for your specific system and installation paths in the nextflow.config file:**
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
-| `--ref` | Path to hg38 reference genome FASTA file. Must be indexed with `samtools faidx`. | System-specific | `--ref /refs/hg38.fa` |
+| `--ref` | Path to hg38 reference genome FASTA file | System-specific | `--ref /refs/hg38.fa` |
 | `--annovarPath` | Path to ANNOVAR installation directory. | System-specific | `--annovarPath /tools/annovar/` |
 | `--annovarDB` | Path to ANNOVAR database directory (humandb/). | System-specific | `--annovarDB /tools/annovar/humandb/` |
 | `--annotsvAnnot` | Path to AnnotSV annotations directory. | System-specific | `--annotsvAnnot /tools/AnnotSV/Annotations_Human/` |
-| `--annotations` | Path to annotation file for IGV reports (refGene.txt). | `data/refGene.txt` | `--annotations /refs/refGene.txt` |
+| `--annotations` | Path to annotation file for IGV reports (refGene.txt.gz). | `data/refGene.txt` | `--annotations /refs/refGene.txt` |
 
 
-### Optional Parameters
+### Optional parameters
 
-#### Output Parameters
+#### Output parameters
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
@@ -220,7 +239,7 @@ graph TD
 | `--logDir` | Directory for log files. | `logDir` | `--logDir /logs` |
 | `--patient` | Patient name for reports. If not specified, uses the `--id` value. | `null` (uses `--id`) | `--patient "John Doe"` |
 
-#### Resource Parameters
+#### Resource parameters
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
@@ -234,7 +253,7 @@ graph TD
 | `--methThreads` | Number of threads for methylation classification. | `64` | `--methThreads 32` |
 | `--mgmtThreads` | Number of threads for MGMT promoter analysis. | `8` | `--mgmtThreads 4` |
 
-#### Analysis Parameters
+#### Analysis parameters
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
@@ -243,32 +262,32 @@ graph TD
 | `--mnpFlex` | Enable MNP-Flex classifier input preparation. Creates files needed for external MNP-Flex analysis. | `false` | `--mnpFlex true` |
 | `--runHumanVariation` | Enable wf-human-variation SNP and SV pipeline. Adds additional variant calling workflows. | `false` | `--runHumanVariation true` |
 
-#### Container and System Parameters
+#### Container and system parameters
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
 | `--containerEngine` | Container engine to use: 'docker' or 'singularity'. | `docker` | `--containerEngine singularity` |
 | `--seq` | Sequencer platform identifier. Auto-detected from BAM headers, but can be manually set. | `P2` | `--seq F` |
 
-### Profile-Specific Parameters
+### Profile-specific parameters
 
 The pipeline supports different compute infrastructure profiles:
 
-#### LSF Profile (`-profile lsf`)
+#### LSF profile (`-profile lsf`)
 - **Executor:** LSF
 - **Queue:** normal
 - **Memory:** 8 GB per process
 - **CPUs:** 2 per process
 - **GPU:** Available for variant calling and structural variant processes
 
-#### SLURM Profile (`-profile slurm`)
+#### SLURM profile (`-profile slurm`)
 - **Executor:** SLURM
 - **Queue:** batch
 - **Memory:** 8 GB per process
 - **CPUs:** 2 per process
 - **GPU:** Available for variant calling and structural variant processes
 
-#### Local Profile (`-profile local`)
+#### Local profile (`-profile local`)
 - **Executor:** Local
 - **Memory:** 4 GB per process
 - **CPUs:** 1 per process
@@ -278,12 +297,12 @@ The pipeline supports different compute infrastructure profiles:
 
 The pipeline generates comprehensive outputs in the specified output directory:
 
-- **SNV Analysis:** Variant calls, annotations, and filtered reports
-- **Structural Variants:** SV calls with annotations
-- **Copy Number Variations:** CNV analysis with plots and annotations
-- **Methylation Analysis:** Methylation calls and classification results
-- **MGMT Analysis:** Promoter methylation status and predictions
-- **Coverage Analysis:** Depth of coverage summaries
+- **SNV analysis:** Variant calls, annotations, and filtered reports
+- **Structural variants:** SV calls with annotations
+- **Copy Number variations:** CNV analysis with plots and annotations
+- **Methylation analysis:** Methylation calls and classification results
+- **MGMT analysis:** Promoter methylation status and predictions
+- **Coverage analysis:** Depth of coverage summaries
 - **Reports:** HTML reports with comprehensive molecular diagnostic information
 
 ## Troubleshooting

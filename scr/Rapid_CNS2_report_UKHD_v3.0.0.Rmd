@@ -16,7 +16,9 @@ header-includes:
 - \fancyhf{}
 - \fancyhead[L]{\includegraphics[height=0.5in]{`r logo_file`}}
 - \fancyhead[R]{\includegraphics[height=0.5in]{`r institution_logo`} \quad \thepage}
+- \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
 - \renewcommand{\headrulewidth}{0.4pt}
+- \renewcommand{\footrulewidth}{0.4pt}
 geometry: margin=0.2in
 always_allow_html: true
 ---
