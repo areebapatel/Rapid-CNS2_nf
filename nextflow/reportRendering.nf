@@ -13,7 +13,7 @@ process reportRendering {
         val(ready) // filter_report
         val(id)
         path(mosdepth_plot_data) // mosdepth
-        val(mgmt_cov)
+        val(mgmt_avg_cov)
         val(mgmtPromoterMethyartist) 
         val(igv_reports) //igv_reports has run
         val(software_version)
@@ -76,20 +76,20 @@ process reportRendering {
 
         Rscript ${reportScript} \
           --prefix ${id} \
-          --mutations ${id}_dv_report.csv \
-          --cnv_plot ${cnvpytorPlot} \
-          --rf_details ${id}_rf_details.tsv \
-          --votes ${id}_votes.tsv \
-          --output_dir . \
+          --mutations ${params.outDir}/snv/${id}_dv_report.csv \
+          --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.global.0000.pdf \
+          --rf_details ${params.outDir}/methylation_classification/${id}_rf_details.tsv \
+          --votes ${params.outDir}/methylation_classification/${id}_votes.tsv \
+          --output_dir ${params.outDir}/report/ \
           --patient ${params.patient} \
-          --coverage ${id}.mosdepth.summary.txt \
+          --coverage ${params.outDir}/coverage/${id}.mosdepth.summary.txt \
           --sample ${id} \
           $MGMT_ARG \
           $METHYLARTIST_ARG \
-          --igv_report ${id}_igv-report.html \
+          --igv_report ${params.outDir}/snv/${id}_igv-report.html \
           --software_ver ${software_version} \
           --seq \${seq} \
-          --promoter_mgmt_coverage ${mgmt_cov} \
+          --promoter_mgmt_coverage ${mgmt_avg_cov} \
           --report_UKHD ${report_UKHD} 
         """
 }

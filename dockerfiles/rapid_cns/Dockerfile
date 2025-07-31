@@ -18,8 +18,6 @@ RUN apt-get update && \
         python3 \
         python3-dev \
         python3-pip \
-        r-base \
-        r-base-dev \
         libcurl4-openssl-dev \
         libssl-dev \
         libxml2-dev \
@@ -28,6 +26,20 @@ RUN apt-get update && \
         locales \
         && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 cnvpytor==1.3.2 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
         && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install R from CRAN (latest version)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    wget \
+    ca-certificates \
+    gnupg \
+    && wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /usr/share/keyrings/r-project.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | tee -a /etc/apt/sources.list.d/r-project.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        r-base \
+        r-base-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set locale
 RUN locale-gen en_US.UTF-8
@@ -70,9 +82,20 @@ RUN R -e "install.packages(c( \
     'rmarkdown','knitr','BiocManager' \
   ), repos='https://cloud.r-project.org', INSTALL_opts='--no-test-load')"
 
-# Install kableExtra and its dependencies
-RUN R -e "install.packages(c('htmltools', 'webshot', 'magick', 'rmarkdown', 'knitr'), repos='https://cloud.r-project.org', dependencies=TRUE)" && \
-    R -e "install.packages('kableExtra', repos='https://cloud.r-project.org', dependencies=TRUE)"
+# Install system dependencies for devtools and kableExtra
+RUN apt-get update && apt-get install -y \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    libpng-dev \
+    libtiff5-dev \
+    libjpeg-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install kableExtra from GitHub using devtools
+RUN R -e "install.packages('devtools', repos='https://cloud.r-project.org')" && \
+    R -e "devtools::install_github('haozhu233/kableExtra', dependencies=TRUE)"
 
  
 RUN R -e "BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)"
@@ -93,8 +116,7 @@ RUN wget -O /usr/local/bin/mosdepth https://github.com/brentp/mosdepth/releases/
 # Install AnnotSV
 RUN git clone https://github.com/lgmgeo/AnnotSV.git /opt/AnnotSV && \
     cd /opt/AnnotSV && \
-    make PREFIX=. install && \
-    make PREFIX=. install-human-annotation
+    make PREFIX=. install 
 
 # Add AnnotSV to PATH
 ENV PATH="/opt/AnnotSV/bin:$PATH"

@@ -146,7 +146,7 @@ process human_variation_sv {
         --sv \
         --bam ${bam} \
         --sample_name ${id} \
-        --bam_min_coverage ${bamMinCoverage} \
+        --bam_min_coverage ${params.bamMinCoverage} \
         --out_dir ${params.outDir}/wf-human-variation/sv/ \
         --threads ${svThreads} \
         --sniffles_args="--non-germline"
@@ -162,7 +162,6 @@ process human_variation_snp {
         path(ref)
         val(id)
         val(outdir)
-        val(bamMinCoverage)
         val(snpThreads)
 
     output:
@@ -179,7 +178,7 @@ process human_variation_snp {
         --bam ${bam} \
         --bed ${panel} \
         --sample_name ${id} \
-        --bam_min_coverage ${bamMinCoverage} \
+        --bam_min_coverage ${params.bamMinCoverage} \
         --out_dir ${params.outDir}/wf-human-variation/snp/ \
         --threads ${snpThreads}
         """

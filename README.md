@@ -106,17 +106,6 @@ mkdir humandb/
 
 **Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
 
-### 5. Download AnnotSV annotations
-```bash
-# Clone AnnotSV
-git clone https://github.com/lgmgeo/AnnotSV.git
-
-# Install and download databases
-cd /path/to/install/AnnotSV
-make PREFIX=. install
-make PREFIX=. install-human-annotation
-# 
-```
 
 ### 6. Configure the Pipeline
 

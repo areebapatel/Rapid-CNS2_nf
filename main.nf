@@ -466,14 +466,14 @@ workflow {
 
     if (params.runHumanVariation){
     // Human variation SNP workflow //not included in report yet
-        human_variation_snp(processedBam, panel, ref, id, outDir, bamMinCoverage, snpThreads)
+        human_variation_snp(processedBam, panel, ref, id, outDir, params.bamMinCoverage, params.snpThreads)
 
     // Human variation SV workflow // not included in report yet
         human_variation_sv(processedBam, ref, id, params.svThreads)
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[0], mgmtPromoterOut[0], igvReportsOut, software_version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut, methylationClassification, filterReportOut.out, id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut, igvReportsOut, software_version, processedBam, params.seq, reportUKHD)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)
