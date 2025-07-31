@@ -7,7 +7,7 @@ process reportRendering {
 
     input:
         path(reportScript)
-        val(ready) // cnvpytor
+        path(cnvpytorPlot) // cnvpytor
         val(ready) // mgmt_pred
         val(ready) // meth_classification
         val(ready) // filter_report
@@ -76,17 +76,17 @@ process reportRendering {
 
         Rscript ${reportScript} \
           --prefix ${id} \
-          --mutations ${params.outDir}/snv/${params.id}_dv_report.csv \
-          --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.global.0000.pdf \
-          --rf_details ${params.outDir}/methylation_classification/${id}_rf_details.tsv \
-          --votes ${params.outDir}/methylation_classification/${id}_votes.tsv \
-          --output_dir ${params.outDir}/report/ \
+          --mutations ${id}_dv_report.csv \
+          --cnv_plot ${cnvpytorPlot} \
+          --rf_details ${id}_rf_details.tsv \
+          --votes ${id}_votes.tsv \
+          --output_dir . \
           --patient ${params.patient} \
-          --coverage ${params.outDir}/coverage/${id}.mosdepth.summary.txt \
+          --coverage ${id}.mosdepth.summary.txt \
           --sample ${id} \
           $MGMT_ARG \
           $METHYLARTIST_ARG \
-          --igv_report ${params.outDir}/snv/${id}_igv-report.html \
+          --igv_report ${id}_igv-report.html \
           --software_ver ${software_version} \
           --seq \${seq} \
           --promoter_mgmt_coverage ${mgmt_cov} \
