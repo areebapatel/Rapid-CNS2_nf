@@ -47,12 +47,12 @@ meth <- read.delim(opt$in_file,header=FALSE)
 
 #Keep relevant columns
 #meth_filter <- meth[,c(1:3,6,10:11)]
-meth_filter <- as.data.frame(cbind(meth[,c(1:3,6)], t(as.data.frame(strsplit(meth$V10, " ")))[,1:2]))
+meth_filter <- as.data.frame(cbind(meth[,c(1:3,5,6,10)]))
 
 rm(meth)
 
 #Set colnames
-colnames(meth_filter) <- c("chr","start","end","strand","cov","methylation_percent")
+colnames(meth_filter) <- c("chr","start","end","cov","strand","methylation_percent")
 
 #Remove X and Y chromosomes
 meth_filter <- subset(meth_filter, !(chr %in% c("chrX","chrY")))
