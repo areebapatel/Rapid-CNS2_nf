@@ -18,7 +18,6 @@ process structuralVariants {
         """
         sniffles --threads ${snifflesThreads} --allow-overwrite \
                     --reference ${ref}  \
-                    --non-germline \
                     --input ${inputBam} \
                     --vcf ${id}.sniffles2.vcf
         """
@@ -38,7 +37,7 @@ process annotSV {
 
     script:
         """
-        AnnotSV -SVinputFile ${svVcf} -outputFile ${id}_sniffles_non_germline_annotsv.tsv -annotationsDir ${annotSvAnnot}   -svtBEDcol 4
+        AnnotSV -SVinputFile ${svVcf} -outputFile ${id}_sniffles_annotsv.tsv -annotationsDir ${annotSvAnnot}   -svtBEDcol 4
         """
 
 }

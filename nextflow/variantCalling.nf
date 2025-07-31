@@ -188,7 +188,7 @@ process human_variation_snp {
  process igv_reports {
     errorStrategy 'ignore'
     input:
-        val(ready)  // filter-report ready
+        path(filteredReport)
         val(id)
         path(reference)
         path(bam)
@@ -203,16 +203,16 @@ process human_variation_snp {
     script:
         """
         sed -e 's/,/\t/g' -e 's/\"//g' \
-        ${params.outDir}/snv/${id}_dv_report.csv > ${params.outDir}/snv/${id}_dv_report.fmt.csv 
+        ${filteredReport} > ${id}_dv_report.fmt.csv 
         
-        create_report ${params.outDir}/snv/${id}_dv_report.fmt.csv \
+        create_report ${id}_dv_report.fmt.csv \
         ${ref} \
         --sequence 1 \
         --begin 2 \
         --end 3 \
         --flanking 1000 \
         --info-columns Chr Start End Func Gene ExonicFunc AAChange cytoBand 1000g_EUR COSMIC \
-        --output ${params.outDir}/reports/${id}_igv-report.html \
+        --output ${id}_igv-report.html \
         --standalone \
         --tracks ${bam} ${annotations}
         """

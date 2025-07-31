@@ -106,7 +106,19 @@ mkdir humandb/
 
 **Note:** ANNOVAR is freely available for personal, academic, and non-profit use only. Commercial users must purchase a license from [QIAGEN](https://digitalinsights.qiagen.com/).
 
-### 5. Configure the Pipeline
+### 5. Download AnnotSV annotations
+```bash
+# Clone AnnotSV
+git clone https://github.com/lgmgeo/AnnotSV.git
+
+# Install and download databases
+cd /path/to/install/AnnotSV
+make PREFIX=. install
+make PREFIX=. install-human-annotation
+# 
+```
+
+### 6. Configure the Pipeline
 
 Edit the `nextflow.config` file with your system-specific paths:
 
@@ -120,7 +132,7 @@ params {
 }
 ```
 
-### 6. Run the Pipeline
+### 7. Run the Pipeline
 
 #### Basic Run
 ```bash

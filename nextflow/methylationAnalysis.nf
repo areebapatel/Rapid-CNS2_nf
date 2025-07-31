@@ -15,7 +15,7 @@ process methylationCalls {
 
     script:
         """
-        modkit pileup ${bam} ${params.outDir}/mods/${id}.5mC.bedmethyl --ref ${ref} --preset traditional --only-tabs --threads ${modkitThreads}
+        modkit pileup ${bam} ${id}.5mC.bedmethyl --ref ${ref} --preset traditional --only-tabs --threads ${modkitThreads}
         """
 }
 
@@ -126,7 +126,7 @@ process mgmtPred {
             --input ${params.outDir}/mgmt/${id}_mgmt.bed \
             --probes ${mgmtProbes} \
             --model ${mgmtModel} \
-            --out_dir ${params.outDir}/mgmt/ \
+            --out_dir . \
             --sample ${id} \
             """
         else

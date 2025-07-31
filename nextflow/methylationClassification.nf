@@ -20,7 +20,7 @@ process methylationClassification {
         """
         Rscript ${methylationClassificationScript} \
         --sample ${id} \
-        --out_dir ${params.outDir}/methylation_classification \
+        --out_dir . \
         --in_file ${bedmethylFile} \
         --probes ${topProbes} \
         --training_data ${trainingData} \
@@ -46,6 +46,6 @@ process mnpFlex {
 
     script:
         """
-        bash ${mnpFlexScript} ${bedmethylFile} ${mnpFlexBed} ${params.outDir}/mnpflex/ ${id}
+        bash ${mnpFlexScript} ${bedmethylFile} ${mnpFlexBed} . ${id}
         """
 }

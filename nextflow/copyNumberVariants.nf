@@ -41,6 +41,6 @@ process cnvAnnotated{
         
     script:
     """
-    python3 ${annotateScript} ${outDir}/cnv/${id}.cnvpytor.calls.1000.tsv ${cnvGenes} ${outDir}/cnv/${id}.annotation.1000.xlsx
+    python3 ${annotateScript} ${outDir}/cnv/${id}.cnvpytor.calls.1000.tsv ${cnvGenes} ${id}.annotation.1000.xlsx
     """
 }

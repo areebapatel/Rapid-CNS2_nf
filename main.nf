@@ -6,6 +6,30 @@
 // and provide the resulting BAM files as input to this pipeline.
 nextflow.enable.dsl = 2
 software_version = "3.0.0"
+
+// Display startup message
+log.info """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           Rapid-CNS² Nextflow Pipeline                      ║
+║                                    v${software_version}                                    ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  Developer: Areeba Patel                                                    ║
+║  Email: a.patel@dkfz.de                                                    ║
+║  Institution: German Cancer Research Center (DKFZ)                         ║
+║                                                                              ║
+║  CITATION:                                                                  ║
+║  Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation ║
+║  of a platform for rapid molecular profiling of central nervous system      ║
+║  tumors. Nature Medicine 31, 1567–1577 (2025).                             ║
+║  https://doi.org/10.1038/s41591-025-03562-5                               ║
+║                                                                              ║
+║  GitHub: https://github.com/areebapatel/Rapid-CNS2_nf                      ║
+║  License: MIT                                                               ║
+║  Version: ${software_version}                                                ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
 /**
  ********************************** Rapid-CNS2 NextFlow ******************************************
  * 1 - Base calling, alligment and data preparation
@@ -54,7 +78,6 @@ params.reads = ' "ID:12345" -r "SM:12345" -r "PL:ONT" '
 
 params.help = null
 params.test = null
-params.reads = null
 
 // Patient name (for report)
 params.patient = null

@@ -70,8 +70,9 @@ RUN R -e "install.packages(c( \
     'rmarkdown','knitr','BiocManager' \
   ), repos='https://cloud.r-project.org', INSTALL_opts='--no-test-load')"
 
-# Install kableExtra separately with its dependencies
-RUN R -e "install.packages('kableExtra', repos='https://cloud.r-project.org', dependencies=TRUE)"
+# Install kableExtra and its dependencies
+RUN R -e "install.packages(c('htmltools', 'webshot', 'magick', 'rmarkdown', 'knitr'), repos='https://cloud.r-project.org', dependencies=TRUE)" && \
+    R -e "install.packages('kableExtra', repos='https://cloud.r-project.org', dependencies=TRUE)"
 
  
 RUN R -e "BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)"
