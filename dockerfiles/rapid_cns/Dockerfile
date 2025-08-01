@@ -24,6 +24,7 @@ RUN apt-get update && \
         ca-certificates \
         zlib1g-dev \
         locales \
+        pandoc \
         && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
         && apt-get clean && rm -rf /var/lib/apt/lists/*
 
