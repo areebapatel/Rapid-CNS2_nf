@@ -11,6 +11,7 @@ process copyNumberVariants {
         path "${id}.cnvpytor.calls.10000.tsv", emit: cnvpytorCalls10000
         path "${id}.cnvpytor.calls.100000.tsv", emit: cnvpytorCalls100000
         path "${id}_cnvpytor_100k.pdf", emit: cnvpytorPlot
+        path "${id}_cnvpytor_100k.png", emit: cnvpytorPlotPng
     
     publishDir("${params.outDir}/cnv/")
 
@@ -23,6 +24,7 @@ process copyNumberVariants {
         cnvpytor -root ${id}_CNV.pytor -call 10000 -j ${cnvThreads} > ${id}.cnvpytor.calls.10000.tsv
         cnvpytor -root ${id}_CNV.pytor -call 100000 -j ${cnvThreads} > ${id}.cnvpytor.calls.100000.tsv
         cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY -o ${id}_cnvpytor_100k.pdf
+        cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY -o ${id}_cnvpytor_100k.png
         """
 }
 

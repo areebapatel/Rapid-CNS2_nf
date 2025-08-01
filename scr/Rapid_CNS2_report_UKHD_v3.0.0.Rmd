@@ -43,12 +43,12 @@ always_allow_html: true
   }
   
                 .logo {
-                height: 120px;
+                height: 150px;
                 width: auto;
               }
               
               .sample-info {
-                font-size: 1em;
+                font-size: 14pt;
                 color: #666;
                 margin: 10px 0;
               }
@@ -257,7 +257,7 @@ kable(d, booktabs = TRUE) %>%
 ## Copy number profile
 
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.width=12, fig.height=8}
 knitr::include_graphics(cnv_plot)
 ```
 </div>
@@ -336,18 +336,14 @@ cat("#### An MGMT promoter plot was not produced in this sample due to sequence 
 <div class="smaller-text">
 
 #### The Rapid CNS2 classification and report generation followed the protocol designed and published by Patel _et_ _al._ (2022) and Patel _et_ _al._ (2025).
-
 #### Patel, A., Dogan, H., Payne, A., Krause, E., Sievers, P., Schoebe, N., Schrimpf, D., Blume, C., Stichel, D., Holmes, N., Euskirchen, P., Hench, J., Frank, S., Rosenstiel-Goidts, V., Ratliff, M., Etminan, N., Unterberg, A., Dieterich, C., Herold-Mende, C., Pfister, S. M., … Sahm, F. (2022). Rapid-CNS^2^: rapid comprehensive adaptive nanopore-sequencing of CNS tumors, a proof-of-concept study. _Acta_ _neuropathologica_, _143_(5), 609–612. https://doi.org/10.1007/s00401-022-02415-6 \
-
 #### Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
-
 #### **The information contained with this report is intended for research use only and is not for use in diagnostic procedures.**
 
 #### For any questions, please contact:  
 #### **Areeba Patel, PhD**  
 #### Department of Neuropathology, German Cancer Research Center  
 #### a.patel@dkfz.de  
-
 #### **Prof Dr. Dr. med Felix Sahm**  
 #### Head of Molecular Neuropathology, University Hospital Heidelberg  
 #### felix.sahm@med.uni-heidelberg.de  \

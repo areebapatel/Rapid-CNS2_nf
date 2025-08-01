@@ -48,7 +48,7 @@ always_allow_html: true
               }
               
               .sample-info {
-                font-size: 1em;
+                font-size: 14pt;
                 color: #666;
                 margin: 10px 0;
               }
@@ -253,20 +253,20 @@ kable(d, booktabs = TRUE) %>%
 ## Copy number profile
 
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.width=12, fig.height=8}
 knitr::include_graphics(cnv_plot)
 ```
 </div>
 
 <div class="section">
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.width=12, fig.height=8}
 x <- rf_details
 oob <- read.delim(x,header = F, sep = ":")
 mc <- read.delim(votes,sep=" ")
 ```
 
-## Rapid CNS^2^ Methylation classification
+## Rapid CNS^2^ methylation classification
 #### Methylation-based classification is based on `r as.integer(oob[1,2])` sites. The Brier score of this ad-hoc classifier is `r paste0(round(oob[3,2]*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$cal_Freq),])`**. This prediction has a confidence score of **`r paste0(round(mc$cal_Freq[which.max(mc$cal_Freq)],digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
 
 ```{r,echo=FALSE,warning=FALSE}
@@ -345,7 +345,7 @@ cat("#### An MGMT promoter plot was not produced in this sample due to sequence 
 #### **Prof Dr. Dr. med Felix Sahm**  
 #### Head of Molecular Neuropathology, University Hospital Heidelberg  
 #### felix.sahm@med.uni-heidelberg.de  \
-#### Date: `r format(Sys.time(), '%d %B, %Y at %H:%M')`
+#### Report generated on `r format(Sys.time(), '%d %B, %Y at %H:%M')`
 
 </div>
 

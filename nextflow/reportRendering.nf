@@ -82,7 +82,7 @@ process reportRendering {
         Rscript ${reportScript} \
           --prefix ${id} \
           --mutations ${params.outDir}/snv/${id}_dv_report.csv \
-          --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.global.0000.pdf \
+          --cnv_plot ${params.outDir}/cnv/${id}_cnvpytor_100k.png \
           --rf_details ${params.outDir}/methylation_classification/${id}_rf_details.tsv \
           --votes ${params.outDir}/methylation_classification/${id}_votes.tsv \
           --patient ${params.patient} \

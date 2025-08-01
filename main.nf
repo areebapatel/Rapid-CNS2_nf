@@ -489,7 +489,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut[0], methylationClassificationOut[0], filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut[0], igvReportsOut[0], software_version, processedBam, params.seq, reportUKHD, logosDir)
+    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlotPng, mgmtPredOut[0], methylationClassificationOut[0], filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut[0], igvReportsOut[0], software_version, processedBam, params.seq, reportUKHD, logosDir)
 
     if (params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)
