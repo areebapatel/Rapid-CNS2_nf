@@ -19,8 +19,8 @@ process reportRendering {
         val(software_version)
         path(inputBam)
         val(seq)
-        path(report_UKHD)
-        path(logosDir) // logos directory
+        path(report_PDF)
+        path(report_HTML)
     
     output:
 	val true
@@ -94,6 +94,7 @@ process reportRendering {
           --software_ver ${software_version} \
           --seq \${seq} \
           --promoter_mgmt_coverage ${mgmt_avg_cov} \
-          --report_UKHD ${report_UKHD} 
+          --report_PDF ${report_PDF} \
+          --report_HTML ${report_HTML} 
         """
 }

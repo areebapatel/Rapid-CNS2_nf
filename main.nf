@@ -364,9 +364,13 @@ workflow {
     Channel.fromPath("${projectDir}/scr/make_report.R", checkIfExists: true)
     .set {makereport}
 
-    // Set the report UKHD script
-    Channel.fromPath("${projectDir}/scr/Rapid_CNS2_report_UKHD_v3.0.0.Rmd", checkIfExists: true)
-    .set {reportUKHD}
+    // Set the report PDF script
+    Channel.fromPath("${projectDir}/scr/Rapid_CNS2_report_UKHD_PDF.Rmd", checkIfExists: true)
+    .set {reportPDF}
+
+    // Set the report HTML script
+    Channel.fromPath("${projectDir}/scr/Rapid_CNS2_report_UKHD_HTML.Rmd", checkIfExists: true)
+    .set {reportHTML}
 
     // Set the logos directory
     Channel.fromPath("${projectDir}/logos", checkIfExists: true)
@@ -489,7 +493,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlotPng, mgmtPredOut[0], methylationClassificationOut[0], filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut[0], igvReportsOut[0], software_version, processedBam, params.seq, reportUKHD, logosDir)
+    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlotPng, mgmtPredOut[0], methylationClassificationOut[0], filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut[0], igvReportsOut[0], software_version, processedBam, params.seq, logosDir, reportPDF, reportHTML)
 
     if (params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)

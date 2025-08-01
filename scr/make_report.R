@@ -37,7 +37,9 @@ option_list = list(
               help="IGV-report html output", metavar="character"),
   make_option(c("-i", "--seq"), type="character", default="Unknown",
              help="Platform used to sequencing; F=MinION/GridION, P=PromethION", metavar="character"),
-  make_option(c("-k", "--report_UKHD"), type="character", default="scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
+  make_option(c("-k", "--report_PDF"), type="character", default="scr/Rapid_CNS2_report_UKHD_PDF.Rmd",
+              help="R Markdown template file", metavar="character"),
+  make_option(c("-l", "--report_HTML"), type="character", default="scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
               help="R Markdown template file", metavar="character"),
   make_option(c("-l", "--software_ver"), type="character", default=NULL,
               help="Software version", metavar="character")
@@ -88,18 +90,18 @@ mgmt_too_low <- !file.exists(mgmt) && !file.exists(methylartist_plot)
 inc_igvreport = FALSE
 exc_igvreport = TRUE
 # lite version - HTML
-render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd", 
+render(opt$report_HTML, 
        output_format = "html_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"))
 
 # lite version - PDF
-render("scr/Rapid_CNS2_report_UKHD_PDF.Rmd", 
+render(opt$report_PDF, 
        output_format = "pdf_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
 # full version - HTML
-render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
+render(opt$report_HTML,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))
