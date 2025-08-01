@@ -85,27 +85,7 @@ exc_igvreport = TRUE
 render(report_UKHD, 
        output_format = "html_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
-       params = list(
-         logo_file = logo_file, 
-         institution_logo = institution_logo,
-         sample = sample,
-         patient = patient,
-         seq = seq,
-         coverage = coverage,
-         mutations = mutations,
-         cnv_plot = cnv_plot,
-         rf_details = rf_details,
-         votes = votes,
-         mgmt = mgmt,
-         methylartist_plot = methylartist_plot,
-         cov = cov,
-         igv_report = igv_report,
-         software_ver = software_ver,
-         mgmt_status = mgmt_status,
-         methylartist_status = methylartist_status,
-         inc_igvreport = FALSE,
-         exc_igvreport = TRUE
-       ))
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
@@ -113,24 +93,4 @@ exc_igvreport = FALSE
 render(report_UKHD,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
-       params = list(
-         logo_file = logo_file, 
-         institution_logo = institution_logo,
-         sample = sample,
-         patient = patient,
-         seq = seq,
-         coverage = coverage,
-         mutations = mutations,
-         cnv_plot = cnv_plot,
-         rf_details = rf_details,
-         votes = votes,
-         mgmt = mgmt,
-         methylartist_plot = methylartist_plot,
-         cov = cov,
-         igv_report = igv_report,
-         software_ver = software_ver,
-         mgmt_status = mgmt_status,
-         methylartist_status = methylartist_status,
-         inc_igvreport = TRUE,
-         exc_igvreport = FALSE
-       ))
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
