@@ -24,7 +24,7 @@ RUN apt-get update && \
         ca-certificates \
         zlib1g-dev \
         locales \
-        && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 cnvpytor==1.3.2 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
+        && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
         && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install R from CRAN (latest version)
@@ -120,6 +120,16 @@ RUN git clone https://github.com/lgmgeo/AnnotSV.git /opt/AnnotSV && \
 
 # Add AnnotSV to PATH
 ENV PATH="/opt/AnnotSV/bin:$PATH"
+
+# Install cnvpytor with user flag and download data
+RUN pip3 install --user git+https://github.com/abyzovlab/CNVpytor.git && \
+    export PATH="/root/.local/bin:$PATH" 
+
+# Set matplotlib config directory to avoid warnings
+ENV MPLCONFIGDIR=/tmp/matplotlib
+
+# Add user bin directory to PATH for pip --user installations
+ENV PATH="/root/.local/bin:$PATH"
 
 # Set working directory
 WORKDIR /data
