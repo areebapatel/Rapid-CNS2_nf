@@ -92,9 +92,9 @@ always_allow_html: true
 </style>
 
 ```{r logo_paths, echo=FALSE, results='asis'}
-# Get absolute paths for logos
-rapid_logo_path <- normalizePath("rapid_cns2_logo.png", mustWork = FALSE)
-ukhd_logo_path <- normalizePath("ukhd_logo.png", mustWork = FALSE)
+# Get absolute paths for logos in working directory
+rapid_logo_path <- file.path(getwd(), "rapid_cns2_logo.png")
+ukhd_logo_path <- file.path(getwd(), "ukhd_logo.png")
 ```
 
 <div class="header">
