@@ -21,7 +21,6 @@ option_list = list(
               help="RF details tsv", metavar="character"),
   make_option(c("-v", "--votes"), type="character", default=NULL,
               help="votes file", metavar="character"),
-
   make_option(c("-n", "--patient"), type="character", default=NULL, 
               help="patient", metavar="character"),
   make_option(c("-e", "--coverage"), type="character", default=NULL,
@@ -86,7 +85,27 @@ exc_igvreport = TRUE
 render(report_UKHD, 
        output_format = "html_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
-       params = list(logo_file = logo_file, institution_logo = institution_logo))
+       params = list(
+         logo_file = logo_file, 
+         institution_logo = institution_logo,
+         sample = sample,
+         patient = patient,
+         seq = seq,
+         coverage = coverage,
+         mutations = mutations,
+         cnv_plot = cnv_plot,
+         rf_details = rf_details,
+         votes = votes,
+         mgmt = mgmt,
+         methylartist_plot = methylartist_plot,
+         cov = cov,
+         igv_report = igv_report,
+         software_ver = software_ver,
+         mgmt_status = mgmt_status,
+         methylartist_status = methylartist_status,
+         inc_igvreport = FALSE,
+         exc_igvreport = TRUE
+       ))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
@@ -94,4 +113,24 @@ exc_igvreport = FALSE
 render(report_UKHD,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
-       params = list(logo_file = logo_file, institution_logo = institution_logo))
+       params = list(
+         logo_file = logo_file, 
+         institution_logo = institution_logo,
+         sample = sample,
+         patient = patient,
+         seq = seq,
+         coverage = coverage,
+         mutations = mutations,
+         cnv_plot = cnv_plot,
+         rf_details = rf_details,
+         votes = votes,
+         mgmt = mgmt,
+         methylartist_plot = methylartist_plot,
+         cov = cov,
+         igv_report = igv_report,
+         software_ver = software_ver,
+         mgmt_status = mgmt_status,
+         methylartist_status = methylartist_status,
+         inc_igvreport = TRUE,
+         exc_igvreport = FALSE
+       ))
