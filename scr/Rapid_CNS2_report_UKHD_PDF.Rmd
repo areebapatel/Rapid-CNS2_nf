@@ -6,22 +6,22 @@ output:
       header: |
         \usepackage{fontspec}
         \setmainfont{Arial}
+        \setsansfont{Arial}
+        \setmonofont{Arial}
         \renewcommand{\familydefault}{\sfdefault}
+        \renewcommand{\rmdefault}{\sfdefault}
         \usepackage{fancyhdr}
         \pagestyle{fancy}
         \fancyhf{}
-        \fancyhead[L]{\includegraphics[height=3cm]{rapid_cns2_logo.png}}
-        \fancyhead[R]{\includegraphics[height=3cm]{ukhd_logo.png} \quad \thepage}
+        \fancyhead[L]{\includegraphics[height=3cm]{logos/rapid_cns2_logo.png}}
+        \fancyhead[R]{\includegraphics[height=3cm]{logos/ukhd_logo.png} \quad \thepage}
         \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
         \usepackage{graphicx}
         \usepackage{geometry}
         \geometry{margin=0.5in, top=1in, bottom=1in}
-        \graphicspath{{./}{./logos/}{./scr/}{../report/}{../}}
-params:
-  logo_file: null
-  institution_logo: null
+
 ---
 
 ```{r setup, include=FALSE}
@@ -29,11 +29,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(kableExtra)
 library(ggplot2)
-```
-
-```{r params_setup, echo=FALSE}
-logo_file <- params$logo_file
-institution_logo <- params$institution_logo
 ```
 
 ```{r check_platform, echo=FALSE}
