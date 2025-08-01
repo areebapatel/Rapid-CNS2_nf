@@ -12,6 +12,7 @@ output:
         \fancyhf{}
         \fancyhead[L]{\includegraphics[height=0.5in]{rapid_cns2_logo.png}}
         \fancyhead[R]{\includegraphics[height=0.5in]{ukhd_logo.png} \quad \thepage}
+        \graphicspath{{./}{../report/}{./scr/}}
         \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
@@ -120,6 +121,16 @@ always_allow_html: true
                 padding-top: 0px;
                 padding-bottom: 0px;
                 line-height: 1.0;
+              }
+              
+              .contact-section h4 {
+                margin-top: 0px;
+                margin-bottom: 0px;
+                padding-top: 0px;
+                padding-bottom: 0px;
+                line-height: 1.0;
+                font-size: 0.85em;
+                font-style: italic;
               }
 </style>
 
@@ -340,8 +351,7 @@ knitr::include_graphics(opt$methylartist)
 cat("#### An MGMT promoter plot was not produced in this sample due to sequence coverage at the MGMT site being too low.")
 ```
 
-<div class="smaller-text">
-
+<div class="contact-section">
 #### The Rapid CNS2 classification and report generation followed the protocol designed and published by Patel _et_ _al._ (2022).
 
 #### Patel, A., Dogan, H., Payne, A., Krause, E., Sievers, P., Schoebe, N., Schrimpf, D., Blume, C., Stichel, D., Holmes, N., Euskirchen, P., Hench, J., Frank, S., Rosenstiel-Goidts, V., Ratliff, M., Etminan, N., Unterberg, A., Dieterich, C., Herold-Mende, C., Pfister, S. M., … Sahm, F. (2022). Rapid-CNS^2^: rapid comprehensive adaptive nanopore-sequencing of CNS tumors, a proof-of-concept study. _Acta_ _neuropathologica_, _143_(5), 609–612. https://doi.org/10.1007/s00401-022-02415-6 \
@@ -356,6 +366,7 @@ cat("#### An MGMT promoter plot was not produced in this sample due to sequence 
 #### Head of Molecular Neuropathology, University Hospital Heidelberg  
 #### felix.sahm@med.uni-heidelberg.de  \
 #### Report generated on `r format(Sys.time(), '%d %B, %Y at %H:%M')`
+</div>
 
 </div>
 
