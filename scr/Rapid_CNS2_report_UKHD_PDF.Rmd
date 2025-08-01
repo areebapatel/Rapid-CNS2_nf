@@ -1,17 +1,17 @@
 ---
 output:
   pdf_document:
-    latex_engine: pdflatex
+    latex_engine: xelatex
     includes:
       header: |
-        \usepackage{helvet}
+        \usepackage{fontspec}
+        \setmainfont{Arial}
         \renewcommand{\familydefault}{\sfdefault}
-        \fontfamily{phv}\selectfont
         \usepackage{fancyhdr}
         \pagestyle{fancy}
         \fancyhf{}
-        \fancyhead[L]{\includegraphics[height=0.5in]{rapid_cns2_logo.png}}
-        \fancyhead[R]{\includegraphics[height=0.5in]{ukhd_logo.png} \quad \thepage}
+        \fancyhead[L]{\includegraphics[height=3cm]{rapid_cns2_logo.png}}
+        \fancyhead[R]{\includegraphics[height=3cm]{ukhd_logo.png} \quad \thepage}
         \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
