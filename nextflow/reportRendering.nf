@@ -21,6 +21,7 @@ process reportRendering {
         val(seq)
         path(report_PDF)
         path(report_HTML)
+        path(logosDir) // logos directory
     
     output:
 	val true
