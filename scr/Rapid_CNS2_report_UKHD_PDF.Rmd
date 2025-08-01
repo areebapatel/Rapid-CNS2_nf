@@ -1,14 +1,12 @@
 ---
 output:
   pdf_document:
-    latex_engine: xelatex
+    latex_engine: pdflatex
     includes:
       header: |
         \usepackage{helvet}
         \renewcommand{\familydefault}{\sfdefault}
         \fontfamily{phv}\selectfont
-        \usepackage{fontspec}
-        \setmainfont{Arial}
         \usepackage{fancyhdr}
         \pagestyle{fancy}
         \fancyhf{}
@@ -20,7 +18,7 @@ output:
         \usepackage{graphicx}
         \usepackage{geometry}
         \geometry{margin=0.5in, top=1in, bottom=1in}
-        \graphicspath{{./}{./logos/}{./scr/}}
+        \graphicspath{{./}{./logos/}{./scr/}{../report/}{../}}
 params:
   logo_file: null
   institution_logo: null
@@ -219,6 +217,7 @@ Department of Neuropathology, German Cancer Research Center
 \textbf{Prof Dr. Dr. med Felix Sahm}
 
 Head of Molecular Neuropathology, University Hospital Heidelberg
+
 \href{mailto:felix.sahm@med.uni-heidelberg.de}{felix.sahm@med.uni-heidelberg.de}
 
 Report generated on `r format(Sys.time(), '%d %B, %Y at %H:%M')` 

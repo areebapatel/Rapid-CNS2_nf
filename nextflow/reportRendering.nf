@@ -86,6 +86,8 @@ process reportRendering {
         cp ${logosDir}/* ./
         # Also copy logos to output directory for PDF access
         cp ${logosDir}/* ${params.outDir}/report/
+        # Copy logos to parent directory for PDF access
+        cp ${logosDir}/* ../
         
 
         Rscript ${reportScript} \
