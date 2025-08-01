@@ -89,16 +89,28 @@ mgmt_too_low <- !file.exists(mgmt) && !file.exists(methylartist_plot)
 
 inc_igvreport = FALSE
 exc_igvreport = TRUE
-# lite version
+# lite version - HTML
 render(report_UKHD, 
        output_format = "html_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))
 
+# lite version - PDF
+render(report_UKHD, 
+       output_format = "pdf_document", 
+       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"),
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
+
 inc_igvreport = TRUE
 exc_igvreport = FALSE
-# full version
+# full version - HTML
 render(report_UKHD,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
+
+# full version - PDF
+render(report_UKHD,
+       output_format = "pdf_document",
+       output_file = paste0(prefix,"_Rapid-CNS2_report_full.pdf"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))

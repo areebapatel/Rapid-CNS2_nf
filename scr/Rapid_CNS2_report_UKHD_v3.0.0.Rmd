@@ -4,9 +4,9 @@ output:
     latex_engine: pdflatex
     includes:
       header: |
-        \usepackage{palatino}
-        \renewcommand{\familydefault}{\rmdefault}
-        \fontfamily{ppl}\selectfont
+        \usepackage{helvet}
+        \renewcommand{\familydefault}{\sfdefault}
+        \fontfamily{phv}\selectfont
         \usepackage{fancyhdr}
         \pagestyle{fancy}
         \fancyhf{}
@@ -15,7 +15,10 @@ output:
         \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
-    geometry: margin=0.2in
+        \usepackage{graphicx}
+        \usepackage{geometry}
+        \geometry{margin=0.5in, top=1in, bottom=1in}
+    geometry: margin=0.5in
   html_document:
     df_print: paged
     toc: true
@@ -29,7 +32,7 @@ always_allow_html: true
     body{
   font-size: 14pt;
   text-align: justify;
-  font-family: "Palatino", "Palatino Linotype", "Palatino LT STD", "Book Antiqua", Georgia, serif;
+  font-family: "Arial", "Helvetica", sans-serif;
   }
 
   .header {
@@ -92,8 +95,8 @@ always_allow_html: true
   }
 
   p {
-    margin-bottom: 15px;
-    line-height: 1.6;
+    margin-bottom: 8px;
+    line-height: 1.3;
   }
 
   .section {
@@ -107,10 +110,10 @@ always_allow_html: true
     padding-top: 5px;
   }
   
-  .smaller-text p {
-    margin-bottom: 5px;
-    line-height: 1.3;
-  }
+                .smaller-text p {
+                margin-bottom: 0px;
+                line-height: 1.0;
+              }
 </style>
 
 ```{r logo_paths, echo=FALSE, results='asis'}
