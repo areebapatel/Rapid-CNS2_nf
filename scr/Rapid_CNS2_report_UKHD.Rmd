@@ -18,7 +18,6 @@ output:
         \usepackage{graphicx}
         \usepackage{geometry}
         \geometry{margin=0.5in, top=1in, bottom=1in}
-    geometry: margin=0.5in
   html_document:
     df_print: paged
     toc: true
@@ -112,6 +111,14 @@ always_allow_html: true
   
                 .smaller-text p {
                 margin-bottom: 0px;
+                line-height: 1.0;
+              }
+              
+              .smaller-text h4 {
+                margin-top: 0px;
+                margin-bottom: 0px;
+                padding-top: 0px;
+                padding-bottom: 0px;
                 line-height: 1.0;
               }
 </style>
