@@ -21,8 +21,7 @@ option_list = list(
               help="RF details tsv", metavar="character"),
   make_option(c("-v", "--votes"), type="character", default=NULL,
               help="votes file", metavar="character"),
-  make_option(c("-o", "--output_dir"), type="character", default=NULL,
-              help="output directory", metavar="character"),
+
   make_option(c("-n", "--patient"), type="character", default=NULL, 
               help="patient", metavar="character"),
   make_option(c("-e", "--coverage"), type="character", default=NULL,
@@ -86,7 +85,6 @@ exc_igvreport = TRUE
 # lite version
 render(report_UKHD, 
        output_format = "html_document", 
-       output_dir = opt$output_dir,
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))
 
@@ -95,6 +93,5 @@ exc_igvreport = FALSE
 # full version
 render(report_UKHD,
        output_format = "html_document",
-       output_dir = opt$output_dir,
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))
