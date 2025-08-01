@@ -450,7 +450,7 @@ workflow {
     methylationCalls = methylationCalls(processedBam, indexedBam.indexBam, ref, id,  params.modkitThreads)
 
     // Methylation classification
-    methylationClassification = methylationClassification(methylationClassificationScript, methylationCalls.bedmethylFile, id, topProbes, trainingData, arrayFile, params.methThreads)
+    methylationClassificationOut = methylationClassification(methylationClassificationScript, methylationCalls.bedmethylFile, id, topProbes, trainingData, arrayFile, params.methThreads)
 
     //MGMT promoter
     mgmtCoverageOut = checkMgmtCoverage(processedBam, indexedBam.indexBam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
@@ -489,7 +489,7 @@ workflow {
     }
 
     // Final report
-    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut, methylationClassification, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut, igvReportsOut, software_version, processedBam, params.seq, reportUKHD)
+    reportRenderingOut = reportRendering(makereport, cnvOut.cnvpytorPlot, mgmtPredOut, methylationClassificationOut, filterReportOut[0], id, coverageOut.mosdepthOut, mgmtCoverageOut[3], mgmtPromoterOut, igvReportsOut, software_version, processedBam, params.seq, reportUKHD, logosDir)
 
     if ( params.mnpFlex) {
         mnpFlex(mnpFlexScript, methylationCalls.bedmethylFile, mnpFlexBed, id)
