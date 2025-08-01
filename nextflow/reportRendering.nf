@@ -77,6 +77,9 @@ process reportRendering {
 
         # Copy logos to working directory for Rmd access
         cp ${logosDir}/* ./
+        
+        # Also copy logos to output directory for HTML access
+        cp ${logosDir}/* ${params.outDir}/report/
 
         Rscript ${reportScript} \
           --prefix ${id} \

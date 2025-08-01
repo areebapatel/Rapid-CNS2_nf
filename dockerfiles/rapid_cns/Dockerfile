@@ -80,7 +80,7 @@ ENV LD_LIBRARY_PATH="/opt/dorado-1.0.2-linux-x64/lib"
 # Install R packages with dependencies
 RUN R -e "install.packages(c( \
     'optparse','ranger','matrixStats','data.table','glmnet', \
-    'rmarkdown','knitr','BiocManager','ggplot2','reshape2' \
+    'rmarkdown','knitr','BiocManager','ggplot2','reshape2','base64enc' \
   ), repos='https://cloud.r-project.org', INSTALL_opts='--no-test-load')"
 
 # Install system dependencies for devtools and kableExtra
@@ -102,7 +102,7 @@ RUN R -e "install.packages('devtools', repos='https://cloud.r-project.org')" && 
 RUN R -e "BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)"
 
 # Test if all required R packages are installed
-RUN R -e "required_packages <- c('optparse', 'rmarkdown', 'kableExtra', 'knitr', 'ranger', 'ggplot2', 'matrixStats', 'data.table', 'glmnet', 'GenomicRanges', 'reshape2'); \
+RUN R -e "required_packages <- c('optparse', 'rmarkdown', 'kableExtra', 'knitr', 'ranger', 'ggplot2', 'matrixStats', 'data.table', 'glmnet', 'GenomicRanges', 'reshape2', 'base64enc'); \
     missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]; \
     if (length(missing_packages) > 0) { \
         stop(paste('Missing R packages:', paste(missing_packages, collapse = ', '))); \
