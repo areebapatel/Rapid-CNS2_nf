@@ -13,8 +13,8 @@ output:
         \usepackage{fancyhdr}
         \pagestyle{fancy}
         \fancyhf{}
-        \fancyhead[L]{\includegraphics[height=3cm]{logos/rapid_cns2_logo.png}}
-        \fancyhead[R]{\includegraphics[height=3cm]{logos/ukhd_logo.png} \quad \thepage}
+        \fancyhead[L]{\includegraphics[height=3cm]{rapid_cns2_logo.png}}
+        \fancyhead[R]{\includegraphics[height=3cm]{ukhd_logo.png} \quad \thepage}
         \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
