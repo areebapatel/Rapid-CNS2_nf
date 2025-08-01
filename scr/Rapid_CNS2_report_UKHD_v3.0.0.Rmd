@@ -12,7 +12,7 @@ output:
         \fancyhf{}
         \fancyhead[L]{\includegraphics[height=0.5in]{rapid_cns2_logo.png}}
         \fancyhead[R]{\includegraphics[height=0.5in]{ukhd_logo.png} \quad \thepage}
-        \graphicspath{{./}{../report/}{./scr/}}
+        \graphicspath{{./}}
         \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
@@ -123,7 +123,7 @@ always_allow_html: true
                 padding-top: 0px;
                 padding-bottom: 0px;
                 line-height: 1.0;
-                font-size: 0.85em;
+                font-size: 12pt;
                 font-style: italic;
               }
 </style>
@@ -195,7 +195,7 @@ if (seq=="GXB") {
 
 <div class="section">
 
-## **RapidCNS^2^ Report**
+## **Rapid-CNS^2^ report**
 
 <div class="sample-info">
 **Sample ID:** `r sample`  
@@ -285,10 +285,10 @@ oob <- read.delim(x,header = F, sep = ":")
 mc <- read.delim(votes,sep=" ")
 ```
 
-## Rapid CNS^2^ Methylation classification
+## Rapid CNS^2^ methylation classification
 #### Methylation-based classification is based on `r as.integer(oob[1,2])` sites. The Brier score of this ad-hoc classifier is `r paste0(round(as.numeric(oob[3,2])*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$Recalibrated_Frequency),])`**. This prediction has a confidence score of **`r paste0(round(as.numeric(mc$cal_Freq[which.max(mc$cal_Freq)]),digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
 
-```{r,echo=FALSE,warning=FALSE}
+```{r,echo=FALSE,warning=FALSE, fig.pos="h"}
 mc$methClass <- rownames(mc)
 ggplot(data=mc, aes(x=methClass, y=Recalibrated_Frequency)) +
   geom_bar(stat="identity", fill="#dc143c") +
@@ -366,6 +366,7 @@ cat("#### An MGMT promoter plot was not produced in this sample due to sequence 
 </div>
 
 </div>
+
 
 <div class="footer">
   Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY
