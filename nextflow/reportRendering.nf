@@ -20,7 +20,6 @@ process reportRendering {
         path(inputBam)
         val(seq)
         path(report_UKHD)
-        path(logosDir) // logos directory
     
     output:
 	val true
@@ -76,7 +75,7 @@ process reportRendering {
         fi
 
         # Copy logos to working directory for Rmd access
-        cp -r ${logosDir} ./
+        cp -r ${params.logosDir} ./
 
         Rscript ${reportScript} \
           --prefix ${id} \
