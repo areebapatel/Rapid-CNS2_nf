@@ -327,7 +327,7 @@ The pipeline generates comprehensive outputs in the specified output directory:
 - **Coverage analysis:** Depth of coverage summaries
 - **Reports:** HTML reports with comprehensive molecular diagnostic information
 
-### MNP-Flex Integration
+### MNP-Flex integration
 
 **MNP-Flex** is a methylation-based tumor classifier that provides detailed molecular classification of CNS tumours. The Rapid-CNS² pipeline can prepare the necessary input files for MNP-Flex analysis.
 
@@ -335,7 +335,7 @@ The pipeline generates comprehensive outputs in the specified output directory:
 
 MNP-Flex is a methylation classifier compatible with the latest version of the Heidelberg CNS tumour methylation classifier. It can classify CNS tumours into 184 subclasses according to the 2021 WHO classification.
 
-#### How to Use MNP-Flex
+#### How to use MNP-Flex
 
 1. **Enable MNP-Flex in the pipeline:**
    ```bash
@@ -368,30 +368,6 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
 - **`${id}.MNPFlex.subset.bed`:** Methylation data in MNP-Flex compatible format
 
 **Note:** MNP-Flex analysis is performed externally on the mnp-flex.org platform. The pipeline only prepares the input files. For detailed information about MNP-Flex, visit [mnp-flex.org](https://mnp-flex.org).
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Java not found:**
-   ```bash
-   sudo apt-get install openjdk-11-jdk
-   ```
-
-2. **Docker permission denied:**
-   ```bash
-   sudo usermod -aG docker $USER
-   # Log out and log back in
-   ```
-
-3. **Nextflow cache issues:**
-   ```bash
-   nextflow clean -f
-   ```
-
-4. **Memory issues:**
-   - Increase Java heap space: `export NXF_OPTS="-Xms500M -Xmx2G"`
-   - Reduce the number of concurrent processes in `nextflow.config`
 
 ### Getting Help
 
