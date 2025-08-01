@@ -91,9 +91,15 @@ always_allow_html: true
   }
 </style>
 
+```{r logo_paths, echo=FALSE, results='asis'}
+# Get absolute paths for logos
+rapid_logo_path <- normalizePath("rapid_cns2_logo.png", mustWork = FALSE)
+ukhd_logo_path <- normalizePath("ukhd_logo.png", mustWork = FALSE)
+```
+
 <div class="header">
-  <img src="rapid_cns2_logo.png" alt="Rapid-CNS² Logo" class="logo">
-  <img src="ukhd_logo.png" alt="Institution Logo" class="logo">
+  <img src="`r rapid_logo_path`" alt="Rapid-CNS² Logo" class="logo">
+  <img src="`r ukhd_logo_path`" alt="Institution Logo" class="logo">
 </div>
 
 <div class="research-warning">

@@ -77,6 +77,14 @@ if (file.exists(opt$methylartist)) {
 logo_file <- "rapid_cns2_logo.png"
 institution_logo <- "ukhd_logo.png"
 
+# Set variables for Rmd environment
+nextflow_ver <- software_ver
+platform <- seq
+
+# Set additional variables that Rmd files expect
+show_mgmt <- mgmt_status == "true" && methylartist_status == "true"
+mgmt_too_low <- !file.exists(mgmt) && !file.exists(methylartist_plot)
+
 # generate the report
 
 inc_igvreport = FALSE
