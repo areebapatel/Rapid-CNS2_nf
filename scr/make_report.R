@@ -90,13 +90,13 @@ mgmt_too_low <- !file.exists(mgmt) && !file.exists(methylartist_plot)
 inc_igvreport = FALSE
 exc_igvreport = TRUE
 # lite version - HTML
-render(report_UKHD, 
+render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd", 
        output_format = "html_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))
 
 # lite version - PDF
-render(report_UKHD, 
+render("scr/Rapid_CNS2_report_UKHD_PDF.Rmd", 
        output_format = "pdf_document", 
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))
@@ -104,13 +104,8 @@ render(report_UKHD,
 inc_igvreport = TRUE
 exc_igvreport = FALSE
 # full version - HTML
-render(report_UKHD,
+render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
        params = list(logo_file = logo_file, institution_logo = institution_logo))
 
-# full version - PDF
-render(report_UKHD,
-       output_format = "pdf_document",
-       output_file = paste0(prefix,"_Rapid-CNS2_report_full.pdf"),
-       params = list(logo_file = logo_file, institution_logo = institution_logo))
