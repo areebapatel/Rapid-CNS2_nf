@@ -76,7 +76,7 @@ process reportRendering {
         fi
 
         # Copy logos to working directory for Rmd access
-        cp -r ${logosDir} ./
+        cp ${logosDir}/* ./
 
         Rscript ${reportScript} \
           --prefix ${id} \

@@ -1,12 +1,12 @@
 ---
-output:
-  pdf_document:
-    latex_engine: pdflatex
-  html_document:
-    df_print: paged
+output: pdf_document
+pdf_document:
+  latex_engine: pdflatex
+html_document:
+  df_print: paged
 params:
-  logo_file: "rapid_cns2_logo.png"
-  institution_logo: "institution_logo.png"
+  logo_file: null
+  institution_logo: null
 header-includes:
 - \usepackage{palatino}
 - \renewcommand{\familydefault}{\sfdefault} % sans serif
@@ -14,8 +14,8 @@ header-includes:
 - \usepackage{fancyhdr}
 - \pagestyle{fancy}
 - \fancyhf{}
-- \fancyhead[L]{\includegraphics[height=0.5in]{logos/rapid_cns2_logo.png}}
-- \fancyhead[R]{\includegraphics[height=0.5in]{logos/institution_logo.png} \quad \thepage}
+- \fancyhead[L]{\includegraphics[height=0.5in]{rapid_cns2_logo.png}}
+- \fancyhead[R]{\includegraphics[height=0.5in]{institution_logo.png} \quad \thepage}
 - \renewcommand{\headrulewidth}{0.4pt}
 geometry: margin=0.2in
 always_allow_html: true

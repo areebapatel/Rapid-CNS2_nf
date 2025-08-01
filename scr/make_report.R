@@ -75,6 +75,10 @@ if (file.exists(opt$methylartist)) {
     methylartist_status = "true"
 }
 
+# Define logo files
+logo_file <- "rapid_cns2_logo.png"
+institution_logo <- "ukhd_logo.png"
+
 # generate the report
 
 inc_igvreport = FALSE
@@ -83,7 +87,8 @@ exc_igvreport = TRUE
 render(report_UKHD, 
        output_format = "html_document", 
        output_dir = opt$output_dir,
-       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
@@ -91,4 +96,5 @@ exc_igvreport = FALSE
 render(report_UKHD,
        output_format = "html_document",
        output_dir = opt$output_dir,
-       output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
