@@ -81,8 +81,8 @@ always_allow_html: true
   }
 
   .section {
-    margin-bottom: 40px;
-    padding-bottom: 20px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
   }
   
   .smaller-text h4 {
