@@ -1,31 +1,102 @@
 ---
-output: pdf_document
-pdf_document:
-  latex_engine: pdflatex
-html_document:
-  df_print: paged
+output:
+  pdf_document:
+    latex_engine: pdflatex
+    includes:
+      header: |
+        \usepackage{palatino}
+        \renewcommand{\familydefault}{\sfdefault}
+        \fontfamily{ppl}\selectfont
+        \usepackage{fancyhdr}
+        \pagestyle{fancy}
+        \fancyhf{}
+        \fancyhead[L]{\includegraphics[height=0.5in]{`r logo_file`}}
+        \fancyhead[R]{\includegraphics[height=0.5in]{`r institution_logo`} \quad \thepage}
+        \fancyfoot[C]{\small\textit{Generated using Rapid-CNS² pipeline - RESEARCH USE ONLY}}
+        \renewcommand{\headrulewidth}{0.4pt}
+        \renewcommand{\footrulewidth}{0.4pt}
+    geometry: margin=0.2in
+  html_document:
+    df_print: paged
+    css: styles.css
 params:
   logo_file: null
   institution_logo: null
-header-includes:
-- \usepackage{palatino}
-- \renewcommand{\familydefault}{\sfdefault} % sans serif
-- \fontfamily{ppl}\selectfont
-- \usepackage{fancyhdr}
-- \pagestyle{fancy}
-- \fancyhf{}
-- \fancyhead[L]{\includegraphics[height=0.5in]{rapid_cns2_logo.png}}
-- \fancyhead[R]{\includegraphics[height=0.5in]{institution_logo.png} \quad \thepage}
-- \renewcommand{\headrulewidth}{0.4pt}
-geometry: margin=0.2in
 always_allow_html: true
 ---
 <style type="text/css">
   body{
   font-size: 14pt;
   text-align: justify;
-}
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+  }
+  
+  .logo {
+    height: 50px;
+    width: auto;
+  }
+  
+  .footer {
+    text-align: center;
+    font-style: italic;
+    font-size: 12px;
+    color: #666;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 20px;
+  }
+  
+  .research-warning {
+    background-color: #ffebee;
+    border: 2px solid #f44336;
+    color: #d32f2f;
+    padding: 20px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 20px 0;
+    border-radius: 5px;
+  }
+  
+  h1, h2, h3, h4 {
+    margin-top: 40px;
+    margin-bottom: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+  
+  h1:first-child, h2:first-child, h3:first-child, h4:first-child {
+    border-top: none;
+    margin-top: 20px;
+  }
+  
+  p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+  }
+  
+  .section {
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+  }
 </style>
+
+<div class="header">
+  <img src="`r logo_file`" alt="Rapid-CNS² Logo" class="logo">
+  <img src="`r institution_logo`" alt="Institution Logo" class="logo">
+</div>
+
+<div class="research-warning">
+  RESEARCH USE ONLY
+</div>
 
 
 

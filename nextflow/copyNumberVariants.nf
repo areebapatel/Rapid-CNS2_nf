@@ -1,6 +1,5 @@
 process copyNumberVariants {
     label 'rapid_cns'
-
     input:
         path(bam)
         path(bai)
