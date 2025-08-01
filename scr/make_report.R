@@ -95,12 +95,14 @@ render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
 # lite version - PDF
 render("scr/Rapid_CNS2_report_UKHD_PDF.Rmd", 
        output_format = "pdf_document", 
-       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"),
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
 # full version - HTML
 render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
        output_format = "html_document",
-       output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
+       params = list(logo_file = logo_file, institution_logo = institution_logo))
 

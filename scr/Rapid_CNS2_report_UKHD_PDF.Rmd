@@ -22,6 +22,9 @@ output:
         \usepackage{geometry}
         \geometry{margin=0.5in, top=1in, bottom=1in}
 
+params:
+  software_ver: null
+
 ---
 
 ```{r setup, include=FALSE}
