@@ -5,6 +5,10 @@ output:
     toc: true
     toc_float: true
 always_allow_html: true
+params:
+  software_ver: null
+  inc_igvreport: false
+  igv_report: null
 ---
 <style type="text/css">
   body{
@@ -212,6 +216,16 @@ if (file.exists(mutations)) {
 } else {
   cat("Mutations file not found.")
 }
+```
+
+</div>
+
+<div class="section">
+
+## IGV Report
+
+```{r, echo=FALSE, results='asis', eval=inc_igvreport}
+xfun::file_string(igv_report)
 ```
 
 </div>

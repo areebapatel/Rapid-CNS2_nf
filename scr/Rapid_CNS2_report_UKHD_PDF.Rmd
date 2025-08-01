@@ -24,6 +24,7 @@ output:
         \usepackage{tabu}
         \geometry{margin=0.5in, top=1in, bottom=1in}
 
+
 ---
 
 ```{r setup, include=FALSE}
