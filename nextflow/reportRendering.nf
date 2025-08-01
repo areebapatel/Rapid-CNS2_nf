@@ -79,6 +79,9 @@ process reportRendering {
         cp ${logosDir}/* ./
         # Copy logos to scr directory where Rmd files are located
         cp ${logosDir}/* scr/
+        # Create logos directory and copy logos there for PDF
+        mkdir -p logos
+        cp ${logosDir}/* logos/
         # Copy logos to current working directory for PDF rendering
         cp ${logosDir}/* ./
         # Also copy logos to output directory for PDF access

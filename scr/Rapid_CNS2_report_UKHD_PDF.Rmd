@@ -18,8 +18,7 @@ output:
         \usepackage{graphicx}
         \usepackage{geometry}
         \geometry{margin=0.5in, top=1in, bottom=1in}
-        \graphicspath{{./}}
-    geometry: margin=0.5in
+        \graphicspath{{./}{./logos/}}
 params:
   logo_file: null
   institution_logo: null

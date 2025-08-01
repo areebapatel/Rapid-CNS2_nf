@@ -37,7 +37,7 @@ option_list = list(
               help="IGV-report html output", metavar="character"),
   make_option(c("-i", "--seq"), type="character", default="Unknown",
              help="Platform used to sequencing; F=MinION/GridION, P=PromethION", metavar="character"),
-  make_option(c("-k", "--report_UKHD"), type="character", default=NULL,
+  make_option(c("-k", "--report_UKHD"), type="character", default="scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
               help="R Markdown template file", metavar="character"),
   make_option(c("-l", "--software_ver"), type="character", default=NULL,
               help="Software version", metavar="character")
