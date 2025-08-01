@@ -1,4 +1,5 @@
 ---
+title: "Rapid-CNS² Report"
 output:
   pdf_document:
     latex_engine: pdflatex
@@ -18,7 +19,8 @@ output:
     geometry: margin=0.2in
   html_document:
     df_print: paged
-    css: styles.css
+    toc: true
+    toc_float: true
 params:
   logo_file: null
   institution_logo: null
