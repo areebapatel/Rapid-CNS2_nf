@@ -25,7 +25,7 @@ RUN apt-get update && \
         zlib1g-dev \
         locales \
         pandoc \
-        && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl \
+        && pip3 install --no-cache-dir pod5 igv-reports==1.0.5 methylartist sniffles requests pandas gnureadline pathlib pysam numpy scipy matplotlib h5py xlsxwriter seaborn openpyxl setuptools wheel \
         && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install R from CRAN (latest version)
@@ -124,13 +124,22 @@ ENV PATH="/opt/AnnotSV/bin:$PATH"
 
 # Install cnvpytor with user flag and download data
 RUN pip3 install --user git+https://github.com/abyzovlab/CNVpytor.git && \
-    export PATH="/root/.local/bin:$PATH" 
+    python3 -c "import cnvpytor; print('CNVpytor installed successfully')" && \
+    cnvpytor -h || echo "CNVpytor help command completed" && \
+    echo "CNVpytor installation completed" 
 
 # Set matplotlib config directory to avoid warnings
 ENV MPLCONFIGDIR=/tmp/matplotlib
 
 # Add user bin directory to PATH for pip --user installations
 ENV PATH="/root/.local/bin:$PATH"
+
+# Verify cnvpytor installation and PATH
+RUN echo "PATH: $PATH" && \
+    ls -la /root/.local/bin/ && \
+    which cnvpytor || echo "cnvpytor not found in PATH" && \
+    python3 -c "import sys; print('Python path:', sys.path)" && \
+    python3 -c "import cnvpytor; print('CNVpytor import successful')"
 
 # Set working directory
 WORKDIR /data

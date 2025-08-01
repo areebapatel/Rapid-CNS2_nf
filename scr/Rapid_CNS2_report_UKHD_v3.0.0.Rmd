@@ -5,8 +5,8 @@ output:
   html_document:
     df_print: paged
 params:
-  logo_file: "rapid_cns2_logo.png"
-  institution_logo: "ukhd_logo.png"
+  logo_file: "logos/rapid_cns2_logo.png"
+  institution_logo: "logos/ukhd_logo.png"
 header-includes:
 - \usepackage{palatino}
 - \renewcommand{\familydefault}{\sfdefault} % sans serif
