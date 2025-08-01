@@ -1,6 +1,7 @@
-process deepVariant {
-    label 'GPU'
-    publishDir "${out_dir}/snv/", mode: 'copy', pattern: "*"
+process variantCalling {
+    label 'gpu'
+
+    publishDir "${outDir}/snv/", mode: 'copy', pattern: "*"
 
     //stageInMode "copy"
 
@@ -9,80 +10,88 @@ process deepVariant {
     path(bai)
     path(ref)
     val(id)
-    val(pbDVMode)
-    val(pbPATH)
     val(tmpDir)
+    val(numGpus)
 
     output:
-    path "${params.ouDir}/snv/${id}.dv.vcf", emit: dv_vcf
+    path "*.deepvariant.vcf", emit: dvVcf
 
     script:
     """
-    mkdir -p ${tmpDir} && \
-    time ${pbPATH} deepvariant \
+    pbrun deepvariant \
     --tmp-dir ${tmpDir} \
     --in-bam ${bam} \
     --ref ${ref} \
-    --out-variants ${id}.dv.vcf \
-    --mode ${pbDVMode} \
-    --run-partition --norealign-reads
+    --out-variants ${id}.deepvariant.vcf \
+    --mode ont \
+    --norealign-reads \
+    --num-gpus ${numGpus}
     """
 
 }
 
 process recodeVCF {
+    label 'rapid_cns'
+    
     publishDir "${params.outDir}/snv", mode: 'copy', pattern: "*"
 
     input:
-        path(dv_vcf)
+        path(dvVcf)
 
     output:
-        path "${params.outDir}/snv/${id}.dv.PASS.vcf.gz", emit: pass_vcf
+        path "${id}.deepvariant.PASS.vcf.gz", emit: passVcf
 
     script:
     """
-    bgzip ${params.outDir}/${params.id}.dv.vcf
-	vcftools --gzvcf ${params.outDir}/${params.id}.dv.vcf.gz --remove-filtered-all --recode --stdout | gzip -c > ${params.outDir}/snv/${params.id}.dv.PASS.vcf.gz
+    bgzip ${id}.deepvariant.vcf
+	vcftools --gzvcf ${id}.deepvariant.vcf.gz --remove-filtered-all --recode --stdout | gzip -c > ${id}.deepvariant.PASS.vcf.gz
     """
 
 }
 
 
 process convert2annovar{
+    label 'rapid_cns'
+    
     publishDir "${params.outDir}/snv", mode: 'copy', pattern: "*"
     input:
-        path(input)
+        path(inputVcf)
+        path(annovarPath)
 
     output:
-        path "*.avinput", emit: annovar_input
+        path "*.avinput", emit: annovarInput
 
     script:
         """
         ${annovarPath}/convert2annovar.pl \
-        -format vcf4 ${input} \
+        -format vcf4 ${inputVcf} \
         -withfreq \
         -includeinfo \
-        > ${params.id}_dv_panel.avinput
+        > ${id}_dv_panel.avinput
         """
 }
 
 process tableAnnovar {
+    label 'rapid_cns'
+    
     publishDir "${params.outDir}/snv", mode: 'copy', pattern: "*"
+    
     input:
-    input:
-        path(annovar_input)
+        path(annovarInput)
+        path(annovarPath)
+        path(annovarDB)
     
     output:
-        path "*_multianno.csv", emit: dv_anno
+        path "*_multianno.csv", emit: dvAnno
       
     script:
         """
-        /annovar/table_annovar.pl ${annovar_input} \
-        /annovar/humandb/ \
-        -buildver hg19 \
+        ${annovarPath}/table_annovar.pl ${annovar_input} \
+        ${annovarDB} \
+        -buildver hg38 \
         -out ${params.id}_dv_panel \
-        -protocol refGene,cytoBand,avsnp147,dbnsfp30a,1000g2015aug_eur,cosmic70 \
-        -operation gx,r,f,f,f,f \
+        -protocol refGene,cytoBand,clinvar_20240917,avsnp151,1000g2015aug_eur,cosmic70,dbnsfp42c,allofus \
+        -operation gx,r,f,f,f,f,f \
         -nastring . \
         -csvout \
         -polish \
@@ -91,25 +100,25 @@ process tableAnnovar {
 }
 
 process filterReport {
-    errorStrategy { sleep(Math.pow(2, task.attempt) * 200 as long); return 'retry' }
-    maxRetries 5
-
+    label 'rapid_cns'
+    
     publishDir "${params.outDir}/snv", mode: 'copy', pattern: "*"
-    input:
 
     input:
         path(filterReportScript)
-        path(dv_anno)
+        path(dvAnno)
+        val(id)
 
     output:
-        path "${params.outDir}/snv/${params.id}_dv_report.csv", emit: dv_report
+        val true
+        path "${id}_dv_report.csv", emit: dvReport
     
     script:
         """
         Rscript ${filterReportScript} \
-        --input ${dv_anno} \
-        --output ${params.id}_dv_report.csv \
-        --sample ${params.id}
+        --input ${dvAnno} \
+        --output ${id}_dv_report.csv \
+        --sample ${id}
         """        
 }
 
@@ -117,10 +126,10 @@ process filterReport {
 process human_variation_sv {
     errorStrategy 'ignore'
     input:
-        path(inputBam)
+        path(bam)
         path(ref)
         val(id)
-        val(sv_threads)
+        val(svThreads)
 
     publishDir("${params.outDir}/wf-human-variation/sv/")
 
@@ -135,11 +144,11 @@ process human_variation_sv {
         -w ${params.outDir}/wf-human-variation/sv/workspace \
         --ref ${ref} \
         --sv \
-        --bam ${inputBam} \
-        --sample_name ${params.id} \
-        --bam_min_coverage ${params.bam_min_coverage} \
-        --out_dir ${params.outDir} \
-        --threads ${sv_threads} \
+        --bam ${bam} \
+        --sample_name ${id} \
+        --bam_min_coverage ${params.bamMinCoverage} \
+        --out_dir ${params.outDir}/wf-human-variation/sv/ \
+        --threads ${svThreads} \
         --sniffles_args="--non-germline"
         """
 }
@@ -153,8 +162,7 @@ process human_variation_snp {
         path(ref)
         val(id)
         val(outdir)
-        val(bam_min_coverage)
-        val(snp_threads)
+        val(snpThreads)
 
     output:
         val true
@@ -164,29 +172,30 @@ process human_variation_snp {
         nextflow run epi2me-labs/wf-human-variation \
         -with-report ${params.outDir}/human_variation_snp_nextflow_report.html \
         -profile standard \
-        -w ${PWD}/${params.outDir}/wf-human-variation/workspace \
+        -w ${params.outDir}/wf-human-variation/workspace \
         --ref ${ref} \
         --snp \
         --bam ${bam} \
         --bed ${panel} \
         --sample_name ${id} \
-        --bam_min_coverage ${bam_min_coverage} \
-        --out_dir ${PWD}/${params.outDir}/wf-human-variation/snp/ \
-        --threads ${snp_threads}
+        --bam_min_coverage ${params.bamMinCoverage} \
+        --out_dir ${params.outDir}/wf-human-variation/snp/ \
+        --threads ${snpThreads}
         """
  }
 
  process igv_reports {
+    label 'rapid_cns'
     errorStrategy 'ignore'
     input:
-        val(ready)  // filter-report ready
+        path(filteredReport)
         val(id)
         path(reference)
         path(bam)
         path(indexedBam)
         path(annotations)
 
-    publishDir("${params.outDir}/snv")
+    publishDir("${params.outDir}/reports")
 
     output:
         val true
@@ -194,15 +203,16 @@ process human_variation_snp {
     script:
         """
         sed -e 's/,/\t/g' -e 's/\"//g' \
-        ${PWD}/${params.outDir}/snv/${params.id}_dv_report.csv > ${PWD}/${params.outdir}/snv/${params.id}_dv_report.fmt.csv 
-        create_report ${PWD}/${params.outDir}/${id}_clair3_report.fmt.csv \
-        --fasta ${ref} \
+        ${filteredReport} > ${id}_dv_report.fmt.csv 
+        
+        create_report ${id}_dv_report.fmt.csv \
+        ${ref} \
         --sequence 1 \
         --begin 2 \
         --end 3 \
         --flanking 1000 \
         --info-columns Chr Start End Func Gene ExonicFunc AAChange cytoBand 1000g_EUR COSMIC \
-        --output ${PWD}/${params.outDir}/${id}_igv-report.html \
+        --output ${id}_igv-report.html \
         --standalone \
         --tracks ${bam} ${annotations}
         """

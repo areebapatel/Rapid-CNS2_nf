@@ -8,7 +8,7 @@ cnv = pd.read_csv(sys.argv[1], sep="\t", names=["type", "pos", "size", "cnv", "p
 cnv["chr"] = cnv["pos"].str.split(":").str[0]
 cnv["start"] = cnv["pos"].str.split(":").str[1].str.split("-").str[0].astype(int)
 cnv["end"] = cnv["pos"].str.split(":").str[1].str.split("-").str[1].astype(int)
-bed = pd.read_csv("/genes.bed", sep="\t", names=["chr", "start", "end", "annotation"])
+bed = pd.read_csv(sys.argv[2], sep="\t", names=["chr", "start", "end", "annotation"])
 
 chr_of_interest = set(bed["chr"].tolist())
 
@@ -53,4 +53,4 @@ for index, (chr, start, end, anno) in bed.iterrows():
             index_alt+=1
 
 alterations = alterations.sort_values("gene")
-alterations.to_excel(sys.argv[2], index=False)
+alterations.to_excel(sys.argv[3], index=False)

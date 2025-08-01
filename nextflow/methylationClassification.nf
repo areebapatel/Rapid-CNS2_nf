@@ -1,12 +1,15 @@
+// This process runs the methylation classification script
 process methylationClassification {
+    label 'rapid_cns'
+    
     input:
         path(methylationClassificationScript)
-        path(bedmethyl_file)
+        path(bedmethylFile)
         val(id)
         path(topProbes)
         path(trainingData)
         path(arrayFile)
-        val(meth_threads)
+        val(methThreads)
 
     publishDir("${params.outDir}/methylation_classification")
 
@@ -17,48 +20,32 @@ process methylationClassification {
         """
         Rscript ${methylationClassificationScript} \
         --sample ${id} \
-        --out_dir ${params.outDir}/methylation_classification \
-        --in_file ${bedmethyl_file} \
+        --out_dir . \
+        --in_file ${bedmethylFile} \
         --probes ${topProbes} \
         --training_data ${trainingData} \
         --array_file ${arrayFile} \
-        --threads ${meth_threads}
+        --threads ${methThreads}
         """
 }
 
+// This is a separate process to create the MNP-Flex compatible file
+process mnpFlex {
+    label 'rapid_cns'
 
-process methylartistMGMT {
     input:
-        path(inputBam)
-        path(inputBai)
-        path(ref)
-        val(params.outDir)
-	val ready // mgmt_coverage has run
-
-    publishDir("${params.outDir}/mgmt")
+        path(mnpFlexScript)
+        path(bedmethylFile)
+        path(mnpFlexBed)
+        val(id)
     
     output:
         val true
-        path "*.png", emit: mgmt_plot optional true
     
-    script:
-        cov_file = file("${params.outDir}/mgmt/mgmt_avg_cov.txt")
-        if ( cov_file.exists() == true )    
-            """
-            methylartist \
-            locus \
-            -i chr10:129466536-129467536 \
-            --samplepalette magma \
-            -l 101126888-101129371 \
-            --highlightpalette viridis \
-            -b ${inputBam} \
-            --ref ${ref} \
-            --motif CG \
-            --mods m
-            """
-        else
+    publishDir("${params.outDir}/mnpflex/")
 
-            """
-            exit 1
-            """
+    script:
+        """
+        bash ${mnpFlexScript} ${bedmethylFile} ${mnpFlexBed} . ${id}
+        """
 }

@@ -56,17 +56,19 @@ process bedmethyl_intersect {
 }
 
 process mosdepth {
+    label 'rapid_cns'
+
     input:
         val(threads)
         path(panel)
-        path(inputBam)
+        path(bam)
+        path(bai)
         val(id)
-        path(inputBai)
-    
+        
     publishDir("${params.outDir}/coverage")
 	
     output:
-        path "*.mosdepth.summary.txt", emit: mosdepth_out
+        path "*.mosdepth.summary.txt", emit: mosdepthOut
 
     script:
         """
@@ -76,7 +78,7 @@ process mosdepth {
         --by ${panel} \
         --fast-mode \
         ${id} \
-        ${inputBam}
+        ${bam}
         """
 }
 

@@ -1,43 +1,44 @@
-process sniffles2 {
-    label 'GPU'
+process structuralVariants {
+    label 'rapid_cns'
 
-    publishDir "${out_dir}/sv", mode: 'copy', pattern: "*"
+    publishDir "${outDir}/sv", mode: 'copy', pattern: "*"
 
     input:
         path(inputBam)
         path(inputBai)
         path(ref)
         val(id)
-        val(sniffles_threads)
+        val(snifflesThreads)
 
     output:
-        path "${id}.sniffles2.vcf", emit: sv_vcf
+        path "${id}.sniffles2.vcf", emit: svVcf
         val true
 
     script:
         """
-        sniffles --threads ${sniffles_threads} --allow-overwrite \
+        sniffles --threads ${snifflesThreads} --allow-overwrite \
                     --reference ${ref}  \
-                    --non-germline \
                     --input ${inputBam} \
-                    --vcf ${params.outDir}/sv/${id}.sniffles2.vcf
+                    --vcf ${id}.sniffles2.vcf
         """
 
 }
 
-process annotsvAnnot {
+process annotSV {
+    label 'rapid_cns'
     publishDir "${params.outDir}/sv", mode: 'copy', pattern: "*"
 
     input:
-        path(sv_vcf)
+        path(svVcf)
+        path(annotSvAnnot)
         val(id)
 
     output:
-        path "${id}_sniffles_non_germline_annotsv.tsv", emit: sv_anno
+        path "${id}_sniffles_non_germline_annotsv.tsv", emit: svAnno
 
     script:
         """
-        ${annotsvPath}/bin/AnnotSV -SVinputFile ${sv_vcf} -outputFile ${params.outDir}/sv/${id}_sniffles_non_germline_annotsv.tsv   -svtBEDcol 4
+        AnnotSV -SVinputFile ${svVcf} -outputFile ${id}_sniffles_annotsv.tsv -annotationsDir ${annotSvAnnot}   -svtBEDcol 4
         """
 
 }

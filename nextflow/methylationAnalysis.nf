@@ -1,101 +1,39 @@
-process check_bam_has_meth_tags {
-    input:
-        path(inputBam)
-        val(threads)
-    
-    output:
-        stdout emit: meth_check
-
-    script:
-        """
-        samtools \
-        view \
-        -@${threads} \
-        ${inputBam} \
-        | grep -m 1 MM:Z
-        """
-}
-
-process modkit_adjust_mods {
-    input:
-        path(inputBam)
-        val(id)
-        val(modkit_threads)
-
-    publishDir("${params.outDir}/bam")
-
-    output:
-        path "*_modkit_merge.bam", emit: modkit_merged_bam
-        path "*_modkit_merge.bam.bai", emit: modkit_merged_bai
-
-    script:
-        """
-        modkit \
-        adjust-mods \
-        --convert h m \
-        ${inputBam} \
-        ${id}_modkit_merge.bam \
-        --threads ${modkit_threads}
-
-        samtools index ${id}_modkit_merge.bam
-        """
-}
-
 process methylationCalls {
-    maxRetries 1
-    errorStrategy = {task.exitStatus in [137,140] ? 'retry' : 'finish'}
-    publishDir("${params.outDir}/mods/")
+    label 'mods'
+
     input:
-        path(inputBam)
-        path(inputBai)
+        path(bam)
+        path(bai)
         path(ref)
         val(id)
         val(modkitThreads)
 
+    publishDir("${params.outDir}/mods/")
+
     output:
-        path "${id}.mods.bedmethyl", emit: bedmethyl_file
+        path "${id}.5mC.bedmethyl", emit: bedmethylFile
 
     script:
         """
-        mkdir ${params.outDir}/mods/
-        modkit pileup \
-        ${inputBam} \
-        ${id}.mods.bedmethyl \
-        --ref ${ref} \
-        --threads ${modkitThreads}
-    
+        modkit pileup ${bam} ${id}.5mC.bedmethyl --ref ${ref} --preset traditional --only-tabs --threads ${modkitThreads}
         """
 }
 
+process checkMgmtCoverage {
+    label 'rapid_cns'
 
-process liftOver_ch{
     input:
-        path(bedmethyl_file)
-        path(liftOver)
-        path(liftOverChain)
-        val(id)
-    
-    output:
-        path "${id}.mods.hg38.bedmethyl", emit: bedmethyl_file_hg38
-
-    script:
-        """
-        ${liftOver} ${bedmethyl_file} ${liftOverChain} ${params.outDir}/mods/${id}.mods.hg38.bedmethyl ${params.outDir}/mods/${id}.mods.5mC.unmapped.bed -bedPlus=3
-        """
-}
-
-process check_mgmt_coverage {
-    input:
-        path(inputBam)
-	      path(mgmtBed)
-	      val(minimum_mgmt_cov)
+        path(bam)
+        path(bai)
+        path(mgmtBed)
+        val(minimumMgmtCov)
         val(threads)
 
     publishDir("${params.outDir}/mgmt")
 
     output:
-	      val true
-	      path "*_cov.txt", emit: mgmt_avg_cov_file
+	    val true
+	    path "*_cov.txt", emit: mgmt_avg_cov_file
         path "mgmt_cov.mosdepth.summary.txt"	
         stdout emit: mgmt_avg_cov
 
@@ -105,12 +43,13 @@ process check_mgmt_coverage {
         -t ${threads} \
         -n \
         --by ${mgmtBed} \
-        mgmt_cov ${inputBam}
+        mgmt_cov ${bam}
         
+        # Check if the coverage is below the threshold
         cov="\$(grep "^chr10_region" mgmt_cov.mosdepth.summary.txt | awk '{ print \$4 }')"
         
         echo \${cov}
-        if awk 'BEGIN{exit ARGV[1]>ARGV[2]}' "\$cov" ${minimum_mgmt_cov}
+        if awk 'BEGIN{exit ARGV[1]>ARGV[2]}' "\$cov" ${minimumMgmtCov}
         then
             echo \${cov} > mgmt_below_thresh_cov.txt
         else
@@ -119,12 +58,15 @@ process check_mgmt_coverage {
 	"""
 }
 
-process mgmtPromoter_methyartist {
+process mgmtPromoterMethyartist {
+    label 'rapid_cns'
+    
     input:
-        path(inputBam)
-        path(inputBai)
+        path(bam)
+        path(bai)
         path(ref)
-	      val ready 
+        val(ready)
+        val(id)
 
     publishDir("${params.outDir}/mgmt/")
     
@@ -134,34 +76,38 @@ process mgmtPromoter_methyartist {
     
     script:
         cov_file = file("${params.outDir}/mgmt/mgmt_avg_cov.txt")
+        // Check if the coverage is above the threshold
         if ( cov_file.exists() == true )    
             """
             methylartist \
             locus \
-            -i chr10:131263800-131266800 \
-            -l chr10:131264800-131265800 \
-            -b ${inputBam} \
+            -i chr10:129465536-129468536 \
+            -l chr10:129466536-129467536 \
+            -b ${bam} \
             --ref ${ref} \
             --motif CG \
             --mods m \
             --highlightpalette viridis \
-            --samplepalette magma > ${id}_mgmt.svg
+            --samplepalette magma > ${id}_mgmt.png
 
             """
         else
-
+            // If the coverage is below the threshold, do nothing
             """
-            exit 1
+            echo "MGMT coverage is below the threshold, skipping MGMT promoter methylation analysis"
             """
 }
 
 process mgmtPred {
+    label 'rapid_cns'
+    
     input:
-        val ready
+        val(ready)
         path(mgmtScript)
         path(mgmtBed)
         path(mgmtProbes)
         path(mgmtModel)
+        path(bedmethylFile)
         val(id)
 
     output:
@@ -173,36 +119,18 @@ process mgmtPred {
             """
             bedtools \
             intersect \
-            -a ${PWD}/${params.outDir}/mods/${id}.mods.hg38.bedmethyl
-            -b ${mgmtBed} > ${PWD}/${params.outDir}/mgmt/${id}_mgmt_hg38.bed \
+            -a ${bedmethylFile} \
+            -b ${mgmtBed} > ${params.outDir}/mgmt/${id}_mgmt.bed \
 
             Rscript ${mgmtScript} \
-            --input ${PWD}/${params.outDir}/mgmt/${id}_mgmt_hg38.bed \
+            --input ${params.outDir}/mgmt/${id}_mgmt.bed \
             --probes ${mgmtProbes} \
             --model ${mgmtModel} \
-            --out_dir ${params.outDir}/mgmt/ \
+            --out_dir . \
             --sample ${id} \
             """
         else
             """
+            echo "MGMT coverage is below the threshold, skipping MGMT promoter methylation analysis"   
             """
-}
-
-process mnpFlex {
-    errorStrategy 'ignore'
-    input:
-        path(mnpFlexScript)
-        val ready
-        path(bedmethyl_file_hg38)
-        path(mnpFlexBed)
-    
-    output:
-        val true
-    
-    publishDir("${params.outDir}/mnpflex/")
-
-    script:
-        """
-        bash ${mnpFlexScript} ${bedmethyl_file_hg38} ${mnpFlexBed} ${params.outDir}/mnpflex/
-        """
 }

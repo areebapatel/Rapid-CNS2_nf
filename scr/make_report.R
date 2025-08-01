@@ -1,10 +1,13 @@
 
-for (package in c('optparse', 'rmarkdown','kableExtra','knitr')) {
-  if (!require(package, character.only=T, quietly=T)) {
-    install.packages(package,repos = "http://cran.us.r-project.org")
-    library(package, character.only=T)
+# Load required packages with error checking
+required_packages <- c('optparse', 'rmarkdown', 'kableExtra', 'knitr')
+
+for (package in required_packages) {
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    stop(paste("Required R package '", package, "' is not installed. Please ensure all required packages are installed in the container."))
   }
 }
+
 
 #Parse arguments
 option_list = list(
@@ -18,8 +21,6 @@ option_list = list(
               help="RF details tsv", metavar="character"),
   make_option(c("-v", "--votes"), type="character", default=NULL,
               help="votes file", metavar="character"),
-  make_option(c("-o", "--output_dir"), type="character", default=NULL,
-              help="output directory", metavar="character"),
   make_option(c("-n", "--patient"), type="character", default=NULL, 
               help="patient", metavar="character"),
   make_option(c("-e", "--coverage"), type="character", default=NULL,
@@ -36,8 +37,12 @@ option_list = list(
               help="IGV-report html output", metavar="character"),
   make_option(c("-i", "--seq"), type="character", default="Unknown",
              help="Platform used to sequencing; F=MinION/GridION, P=PromethION", metavar="character"),
-  make_option(c("-j", "--nextflow_ver"), type="character", default=NULL,
-              help="Include the version of the Nextflow pipeline used to generate the report", metavar="character")
+  make_option(c("-k", "--report_PDF"), type="character", default="scr/Rapid_CNS2_report_UKHD_PDF.Rmd",
+              help="R Markdown template file", metavar="character"),
+  make_option(c("-l", "--report_HTML"), type="character", default="scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
+              help="R Markdown template file", metavar="character"),
+  make_option(c("-o", "--software_ver"), type="character", default=NULL,
+              help="Software version", metavar="character")
 )
 
 opt_parser = OptionParser(option_list=option_list);
@@ -55,34 +60,48 @@ mgmt <- opt$mgmt
 methylartist_plot <- opt$methylartist
 cov <- opt$promoter_mgmt_coverage
 igv_report <- opt$igv_report
-report_full <- opt$report_full
-nextflow_ver <- opt$nextflow_ver
+report_UKHD <- opt$report_UKHD
+software_ver <- opt$software_ver
 
-mgmt = "false"
+# Check if MGMT file exists
+mgmt_status = "false"
 if (file.exists(opt$mgmt)) {
-    mgmt="true"
+    mgmt_status = "true"
 }
 
-methylartist_plot = "false"
+# Check if methylartist plot exists
+methylartist_status = "false"
 if (file.exists(opt$methylartist)) {
-    methylartist_plot = "true"
+    methylartist_status = "true"
 }
+
+
+
+# Set variables for Rmd environment
+nextflow_ver <- software_ver
+platform <- seq
+
+# Set additional variables that Rmd files expect
+show_mgmt <- mgmt_status == "true" && methylartist_status == "true"
+mgmt_too_low <- !file.exists(mgmt) && !file.exists(methylartist_plot)
 
 # generate the report
 
 inc_igvreport = FALSE
 exc_igvreport = TRUE
-# lite version
-mgmt = "true"
-render(report_UKHD, 
+# lite version - HTML
+render(opt$report_HTML, 
        output_format = "html_document", 
-       output_dir = opt$output_dir,
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"))
+
+# lite version - PDF
+render(opt$report_PDF, 
+       output_format = "pdf_document", 
+       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
-# full version
-render(report_UKHD,
+# full version - HTML
+render(opt$report_HTML,
        output_format = "html_document",
-       output_dir = opt$output_dir,
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))
