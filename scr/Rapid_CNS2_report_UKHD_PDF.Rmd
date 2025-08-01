@@ -7,7 +7,8 @@ output:
         \usepackage{fancyhdr}
         \addtolength{\headheight}{3.0cm} % make more space for the header
         \pagestyle{fancyplain} % use fancy for all pages except chapter start
-        \fancyhead[R]{\includegraphics[height=3cm]{/opt/logos/mnp-flex_logo.png}}
+        \fancyhead[R]{\includegraphics[height=3cm]{/opt/logos/rapid_cns2_logo.png}}
+        \fancyhead[L]{\includegraphics[height=3cm]{/opt/logos/ukhd_logo.png}}
         \renewcommand{\headrulewidth}{0pt}
         \usepackage{palatino}
         \renewcommand{\familydefault}{\sfdefault} % sans serif
