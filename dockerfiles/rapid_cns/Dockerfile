@@ -80,7 +80,7 @@ ENV LD_LIBRARY_PATH="/opt/dorado-1.0.2-linux-x64/lib"
 # Install R packages with dependencies
 RUN R -e "install.packages(c( \
     'optparse','ranger','matrixStats','data.table','glmnet', \
-    'rmarkdown','knitr','BiocManager','ggplot2','reshape2','base64enc' \
+    'rmarkdown','knitr','BiocManager','ggplot2','reshape2' \
   ), repos='https://cloud.r-project.org', INSTALL_opts='--no-test-load')"
 
 # Install system dependencies for devtools and kableExtra
@@ -133,6 +133,11 @@ ENV MPLCONFIGDIR=/tmp/matplotlib
 
 # Add user bin directory to PATH for pip --user installations
 ENV PATH="/root/.local/bin:$PATH"
+
+# Create logos directory and copy logos
+RUN mkdir -p /opt/logos
+COPY logos/rapid_cns2_logo.png /opt/logos/
+COPY logos/ukhd_logo.png /opt/logos/
 
 # Verify cnvpytor installation and PATH
 RUN echo "PATH: $PATH" && \

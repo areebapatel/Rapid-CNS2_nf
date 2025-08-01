@@ -73,9 +73,7 @@ if (file.exists(opt$methylartist)) {
     methylartist_status = "true"
 }
 
-# Define logo files
-logo_file <- "rapid_cns2_logo.png"
-institution_logo <- "ukhd_logo.png"
+
 
 # Set variables for Rmd environment
 nextflow_ver <- software_ver
@@ -92,20 +90,17 @@ exc_igvreport = TRUE
 # lite version - HTML
 render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd", 
        output_format = "html_document", 
-       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"),
-       params = list(logo_file = logo_file, institution_logo = institution_logo))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"))
 
 # lite version - PDF
 render("scr/Rapid_CNS2_report_UKHD_PDF.Rmd", 
        output_format = "pdf_document", 
-       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"),
-       params = list(logo_file = logo_file, institution_logo = institution_logo))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"))
 
 inc_igvreport = TRUE
 exc_igvreport = FALSE
 # full version - HTML
 render("scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
        output_format = "html_document",
-       output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"),
-       params = list(logo_file = logo_file, institution_logo = institution_logo))
+       output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))
 

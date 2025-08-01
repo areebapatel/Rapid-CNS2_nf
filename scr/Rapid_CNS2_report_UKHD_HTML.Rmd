@@ -4,9 +4,7 @@ output:
     df_print: paged
     toc: true
     toc_float: true
-params:
-  logo_file: null
-  institution_logo: null
+params: {}
 always_allow_html: true
 ---
 <style type="text/css">
@@ -111,8 +109,8 @@ always_allow_html: true
 
 ```{r logo_paths, echo=FALSE, results='asis'}
 # Get absolute paths for logos in working directory
-rapid_logo_path <- "rapid_cns2_logo.png"
-ukhd_logo_path <- "ukhd_logo.png"
+rapid_logo_path <- "/opt/logos/rapid_cns2_logo.png"
+ukhd_logo_path <- "/opt/logos/ukhd_logo.png"
 ```
 
 <div class="header">
@@ -131,10 +129,6 @@ library(kableExtra)
 library(ggplot2)
 ```
 
-```{r params_setup, echo=FALSE}
-logo_file <- params$logo_file
-institution_logo <- params$institution_logo
-```
 
 ```{r check_platform, echo=FALSE}
 platform <- "Unknown"

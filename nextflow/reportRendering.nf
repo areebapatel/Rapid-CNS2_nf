@@ -75,13 +75,9 @@ process reportRendering {
             echo "Info: Methylartist PNG file(s) not found or coverage below threshold, skipping methylartist argument."
         fi
 
-        # Copy logos to working directory for Rmd access
+        # Copy logos to working directory for Rmd access (for HTML)
         cp ${logosDir}/* ./
-        
-        # Create logos directory and copy logos there for PDF
-        mkdir -p logos
-        cp ${logosDir}/* logos/
-       
+               
 
         Rscript ${reportScript} \
           --prefix ${id} \
