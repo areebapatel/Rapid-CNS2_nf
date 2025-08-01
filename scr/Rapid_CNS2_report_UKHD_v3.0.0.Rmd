@@ -161,7 +161,7 @@ oob <- read.delim(x,header = F, sep = ":")
 mc <- read.delim(votes,sep=" ")
 ```
 ## Rapid CNS^2^ Methylation classification
-#### Methylation-based classification is based on `r as.integer(oob[1,2])` sites. The Brier score of this ad-hoc classifier is `r paste0(round(oob[3,2]*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$cal_Freq),])`**. This prediction has a confidence score of **`r paste0(round(mc$cal_Freq[which.max(mc$cal_Freq)],digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
+#### Methylation-based classification is based on `r as.integer(oob[1,2])` sites. The Brier score of this ad-hoc classifier is `r paste0(round(as.numeric(oob[3,2])*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$cal_Freq),])`**. This prediction has a confidence score of **`r paste0(round(as.numeric(mc$cal_Freq[which.max(mc$cal_Freq)]),digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
 
 ```{r,echo=FALSE,warning=FALSE}
 mc$methClass <- rownames(mc)
@@ -194,7 +194,7 @@ show_mgmt <- TRUE
 ```{r conditional_block, echo=FALSE, results='asis', eval=show_mgmt}
 mgmt_file <- read.csv(mgmt)
 avg <- mgmt_file$average
-avg <- round(avg, 2)
+avg <- round(as.numeric(avg), 2)
 avg <- paste0(avg,"%")
 status <- mgmt_file$status
 cat("#### MGMT promoter methylation status is assessed based on a logistic regression based prediction model that considers 137 most predictive CpG sites in the MGMT promoter region. The cutoff is assigned as 25%")
