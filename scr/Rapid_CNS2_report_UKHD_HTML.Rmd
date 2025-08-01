@@ -6,7 +6,6 @@ output:
     toc_float: true
 always_allow_html: true
 params:
-  software_ver: null
   inc_igvreport: false
   igv_report: null
 ---
