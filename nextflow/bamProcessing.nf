@@ -146,8 +146,8 @@ process subsetBam {
         """
         samtools index -@${threads} ${bam}
         
-        bedtools intersect -a ${panel} \
-        -b ${bam} \
+        bedtools intersect -a ${bam} \
+        -b ${panel} \
         > ${params.outDir}/bam/${id}.RapidCNS2.subset.bam
         """
 }
