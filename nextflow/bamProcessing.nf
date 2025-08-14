@@ -1,4 +1,3 @@
-
 process checkAlignment {
     label 'rapid_cns'
 
@@ -49,20 +48,19 @@ process alignBam {
     publishDir "${params.outDir}/bam/alignedBams/", mode: 'copy'
     
     output:
-        path "alignedBams/*.bam", emit : alignedBam
+        path "*.bam", emit : alignedBam
 
     script:
         """
-        
         # Check if file is already aligned
         aligned_count=\$(samtools view -F 4 "\$input" | wc -l)
         
         if [ "\$aligned_count" -gt 2 ]; then
-            echo "File already aligned with \$aligned_count reads. Copying to alignedBams directory."
-            cp "\$input" alignedBams/
+            echo "File already aligned with \$aligned_count reads. Copying to current directory."
+            cp "\$input" .
         else
             echo "File has \$aligned_count aligned reads. Performing alignment."
-            dorado aligner "\$ref" "\$input" --output-dir alignedBams/ --threads "\$threads"
+            dorado aligner "\$ref" "\$input" --output-dir . --threads "\$threads"
         fi
         """
 }
@@ -83,7 +81,7 @@ process mergeBam {
 
     script:
         """
-        samtools merge -@${threads} -o ${outDir}/bam/${id}.merged.bam ${bams.join(' ')}
+        samtools merge -@${threads} -o ${id}.merged.bam ${bams.join(' ')}
         """
 }
 
@@ -107,7 +105,7 @@ process addreplacerg {
                 -@${threads} -o ${id}.addrg.bam \
                 ${inputBam}
 
-        samtools index -@ ${threads} ${params.outDir}/bam/${id}.addrg.bam 
+        samtools index -@ ${threads} ${id}.addrg.bam 
         """
 }
 
@@ -148,7 +146,7 @@ process subsetBam {
         
         bedtools intersect -a ${bam} \
         -b ${panel} \
-        > ${params.outDir}/bam/${id}.RapidCNS2.subset.bam
+        > ${id}.RapidCNS2.subset.bam
         """
 }
 
