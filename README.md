@@ -174,7 +174,7 @@ For users who only need methylation analysis without SNV, CNV, or structural var
 
 ### Features
 
-The methylation-only pipeline (`methylation_only.nf`) includes:
+The methylation-only pipeline (`methylationOnly.nf`) includes:
 - **5mC methylation calling** using modkit
 - **MGMT promoter methylation assessment** with coverage validation
 - **Methylation-based tumor classification** using the Rapid-CNS² classifier
@@ -185,7 +185,7 @@ The methylation-only pipeline (`methylation_only.nf`) includes:
 
 #### Basic methylation analysis
 ```bash
-nextflow run methylation_only.nf \
+nextflow run methylationOnly.nf \
     --input /data/sample.bam \
     --id SAMPLE001 \
     --ref /path/to/hg38.fa \
@@ -194,7 +194,7 @@ nextflow run methylation_only.nf \
 
 #### With MNP-Flex preparation
 ```bash
-nextflow run methylation_only.nf \
+nextflow run methylationOnly.nf \
     --input /data/sample.bam \
     --id SAMPLE001 \
     --ref /path/to/hg38.fa \
@@ -204,7 +204,7 @@ nextflow run methylation_only.nf \
 
 #### Advanced configuration
 ```bash
-nextflow run methylation_only.nf \
+nextflow run methylationOnly.nf \
     --input /data/sample.bam \
     --id SAMPLE001 \
     --ref /path/to/hg38.fa \
