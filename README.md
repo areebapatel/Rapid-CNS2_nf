@@ -168,6 +168,104 @@ nextflow run main.nf \
     -profile slurm
 ```
 
+## Methylation-Only Pipeline
+
+For users who only need methylation analysis without SNV, CNV, or structural variant calling, we provide a dedicated methylation-only workflow that is faster and uses fewer computational resources.
+
+### Features
+
+The methylation-only pipeline (`methylation_only.nf`) includes:
+- **5mC methylation calling** using modkit
+- **MGMT promoter methylation assessment** with coverage validation
+- **Methylation-based tumor classification** using the Rapid-CNS² classifier
+- **MNP-Flex preparation** (optional) for external classifier analysis
+- **BAM processing** with automatic alignment detection and methylation tags validation
+
+### Usage
+
+#### Basic methylation analysis
+```bash
+nextflow run methylation_only.nf \
+    --input /data/sample.bam \
+    --id SAMPLE001 \
+    --ref /path/to/hg38.fa \
+    --outDir ./methylation_results
+```
+
+#### With MNP-Flex preparation
+```bash
+nextflow run methylation_only.nf \
+    --input /data/sample.bam \
+    --id SAMPLE001 \
+    --ref /path/to/hg38.fa \
+    --outDir ./methylation_results \
+    --mnpFlex
+```
+
+#### Advanced configuration
+```bash
+nextflow run methylation_only.nf \
+    --input /data/sample.bam \
+    --id SAMPLE001 \
+    --ref /path/to/hg38.fa \
+    --outDir ./methylation_results \
+    --patient "John Doe" \
+    --minimumMgmtCov 10 \
+    --modkitThreads 64 \
+    --methThreads 128 \
+    --mgmtThreads 16 \
+    --mnpFlex \
+    -profile lsf
+```
+
+### Parameters
+
+#### Required parameters
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `--input` | Path to input BAM file(s) | `--input /data/sample.bam` |
+| `--id` | Sample identifier | `--id SAMPLE001` |
+| `--ref` | Path to hg38 reference genome | `--ref /refs/hg38.fa` |
+| `--outDir` | Output directory | `--outDir ./results` |
+
+#### Optional parameters
+| Parameter | Description | Default | Example |
+|-----------|-------------|---------|---------|
+| `--patient` | Patient name for reports | Uses `--id` | `--patient "John Doe"` |
+| `--minimumMgmtCov` | Minimum coverage for MGMT analysis | `5` | `--minimumMgmtCov 10` |
+| `--modkitThreads` | Threads for methylation calling | `32` | `--modkitThreads 64` |
+| `--methThreads` | Threads for classification | `64` | `--methThreads 128` |
+| `--mgmtThreads` | Threads for MGMT analysis | `8` | `--mgmtThreads 16` |
+| `--mnpFlex` | Enable MNP-Flex preparation | `false` | `--mnpFlex` |
+
+### Output
+
+The methylation-only pipeline generates outputs in the following directories:
+
+```
+output/
+├── bam/                           # BAM processing outputs
+│   └── alignedBams/              # Aligned BAM files (if alignment needed)
+├── mods/                         # Methylation calls (bedmethyl files)
+├── mgmt/                         # MGMT promoter analysis
+│   ├── mgmt_avg_cov.txt         # Coverage summary
+│   ├── SAMPLE001_mgmt.png       # MGMT promoter plot
+│   └── SAMPLE001_mgmt_pred.txt  # MGMT prediction results
+├── methylation_classification/   # Tumor classification results
+└── mnpflex/                     # MNP-Flex compatible files (if --mnpFlex)
+```
+
+### When to use methylation-only
+
+Use the methylation-only pipeline when you:
+- Only need methylation analysis and tumor classification
+- Want faster execution (skips computationally intensive variant calling)
+- Have limited computational resources
+- Are primarily interested in MGMT promoter methylation status
+- Need MNP-Flex compatible files for external analysis
+
+**Note:** The methylation-only pipeline uses the same BAM processing logic as the main pipeline, including automatic alignment detection and methylation tags validation.
+
 ## Input requirements
 
 ### Sequencing requirements
