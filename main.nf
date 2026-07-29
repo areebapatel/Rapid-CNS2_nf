@@ -11,7 +11,7 @@ software_version = "3.0.0"
 log.info """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                    🧬 Rapid-CNS² Nextflow Pipeline 🧬                         ║
-║                              Version ${software_version}                     ║
+║                              Version ${software_version}                                   ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                              ║
 ║  📋 Pipeline Information:                                                    ║
@@ -32,7 +32,7 @@ log.info """
 ║                                                                              ║
 ║  🔗 Additional Resources:                                                    ║
 ║  • GitHub Repository: https://github.com/areebapatel/Rapid-CNS2_nf           ║
-║  • License: Apache 2.0                                                   ║
+║  • License: Apache 2.0                                                       ║
 ║  • Documentation: See README.md for detailed usage instructions              ║
 ║                                                                              ║
 ║  ⚠️  Important Notes:                                                        ║

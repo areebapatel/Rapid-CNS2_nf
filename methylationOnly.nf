@@ -7,7 +7,7 @@ software_version = "3.0.0"
 log.info """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                    🧬 Rapid-CNS² Methylation-Only Pipeline 🧬                ║
-║                              Version ${software_version}                     ║
+║                              Version ${software_version}                                   ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                              ║
 ║  📋 Pipeline Information:                                                    ║

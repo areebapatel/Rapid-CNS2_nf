@@ -145,7 +145,7 @@ make PREFIX=. install
 make PREFIX=. install-human-annotation
 ```
 
-**Note:** AnnotSV is freely available under the MIT license. See the [AnnotSV repository](https://github.com/lgmgeo/AnnotSV) for more information.
+**Note:** AnnotSV is distributed under the GNU General Public License v3.0. See the [AnnotSV repository](https://github.com/lgmgeo/AnnotSV) for details.
 
 ### 6. Configure the pipeline
 
@@ -599,7 +599,7 @@ Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a 
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache License 2.0](LICENSE).
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Nextflow](https://img.shields.io/badge/Nextflow-23.10%2B-brightgreen)](https://www.nextflow.io/)
