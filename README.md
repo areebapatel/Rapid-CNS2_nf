@@ -149,17 +149,25 @@ make PREFIX=. install-human-annotation
 
 ### 6. Configure the pipeline
 
-Edit the `nextflow.config` file with your system-specific paths:
+Four site paths must be set; the pipeline fails at startup with a clear message
+if any is missing. Either pass them on the command line, edit `nextflow.config`,
+or keep them in an institutional config.
 
 ```groovy
 params {
-    // Update these paths to match your system
-    ref = "/path/to/references/hg38/hg38.fa"
-    annovarPath = "/path/to/annovar/"
-    annovarDB = "/path/to/annovar/humandb/"
-    annotsvAnnot = "/path/to/AnnotSV/Annotations_Human/"
+    ref          = "/path/to/references/hg38/hg38.fa"
+    annovarPath  = "/path/to/annovar"
+    annovarDB    = "/path/to/annovar/humandb"
+    // directory CONTAINING Annotations_Human, i.e. AnnotSV's -annotationsDir
+    annotsvAnnot = "/path/to/AnnotSV/share/AnnotSV"
+
+    // filesystems that must be visible inside containers
+    containerBindPaths = "/data,/refs"
 }
 ```
+
+`conf/dkfz.config` is an example, selected with `-profile dkfz`. Copy it for
+your own site and add a matching profile in `nextflow.config`.
 
 ### 7. Run the pipeline
 
@@ -170,6 +178,7 @@ nextflow run main.nf \
     --id SAMPLE001 \
     --outDir ./results \
     -profile lsf,singularity
+    # add your site profile, e.g. -profile lsf,singularity,dkfz
 ```
 
 #### Advanced run

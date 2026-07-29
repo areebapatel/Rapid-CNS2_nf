@@ -155,7 +155,14 @@ if (params.help) {
 // Verify that the mandatory parameters are provided
 if (params.input == null) error "The path to the input or BAM file(s) is mandatory, please specify it with --input"
 if (params.id == null) error "The sample identifier is mandatory, please specify it with --id"
-if (params.ref == null) error "The reference genome file is mandatory, please specify it with --ref"
+
+// Site paths must be set. Fail up front rather than deep inside a tool.
+['ref': params.ref, 'annovarPath': params.annovarPath,
+ 'annovarDB': params.annovarDB, 'annotsvAnnot': params.annotsvAnnot].each { k, v ->
+    if (!v) error "--${k} is not set. Set it on the command line, in nextflow.config, " +
+                  "or use an institutional profile (e.g. -profile dkfz)."
+    if (!file(v).exists()) error "--${k} does not exist: ${v}"
+}
 
 // AnnotSV annotations are host-side (not in the container). Fail up front with
 // an actionable message rather than deep inside the SV annotation step.

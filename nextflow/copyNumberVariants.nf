@@ -1,10 +1,6 @@
 process copyNumberVariants {
     label 'heavy'
 
-    // see params.cnvpytorData
-    containerOptions = { params.cnvpytorData
-        ? "-B ${params.cnvpytorData}:/opt/conda/lib/python3.12/site-packages/cnvpytor/data" : '' }
-
     publishDir "${params.outDir}/cnv/", mode: 'copy'
 
     input:
