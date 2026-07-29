@@ -58,6 +58,7 @@ ARG HTSLIB_VERSION=1.21
 ARG BEDTOOLS_VERSION=2.31.1
 ARG VCFTOOLS_VERSION=0.1.16
 ARG PYTHON_VERSION=3.12
+ARG MICROMAMBA_VERSION=2.8.1
 # Dated CRAN snapshot pins every R package without listing each version
 ARG CRAN_SNAPSHOT=https://packagemanager.posit.co/cran/__linux__/jammy/2026-07-01
 
@@ -66,7 +67,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8 \
     MPLCONFIGDIR=/tmp/matplotlib \
-    CONDA_DIR=/opt/conda
+    CONDA_DIR=/opt/conda \
+    MAMBA_ROOT_PREFIX=/opt/mamba
 
 # --- system dependencies ----------------------------------------------------
 # The R graphics stack (fontconfig/freetype/harfbuzz/fribidi/png/tiff/jpeg) is
@@ -74,6 +76,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # packages fail to configure.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential ca-certificates curl git gnupg locales pandoc wget \
+        bzip2 \
         libcurl4-openssl-dev libssl-dev libxml2-dev zlib1g-dev \
         libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev \
         libpng-dev libtiff5-dev libjpeg-dev \
@@ -88,25 +91,28 @@ RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
     && apt-get update && apt-get install -y --no-install-recommends r-base r-base-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# --- conda: ONE python stack ------------------------------------------------
+# --- micromamba: ONE python stack -------------------------------------------
 # The previous image installed into both the system python and conda, leaving
 # duplicate copies of pysam/numpy/pandas.
+# NOTE: `pip` is listed explicitly. conda-forge's python does NOT depend on pip,
+# and no python3-pip is installed via apt, so without it the pip layer below
+# would have no pip to run.
 ENV PATH=$CONDA_DIR/bin:$PATH
-RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
-    && bash /tmp/miniconda.sh -b -p $CONDA_DIR \
-    && rm -f /tmp/miniconda.sh \
-    && conda config --add channels conda-forge \
-    && conda config --add channels bioconda \
-    && conda config --set channel_priority strict \
-    && conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main \
-    && conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r \
-    && conda install -y \
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/${MICROMAMBA_VERSION} \
+      | tar -xj -C /tmp bin/micromamba \
+    && install -m 0755 /tmp/bin/micromamba /usr/local/bin/micromamba \
+    && rm -rf /tmp/bin \
+    && micromamba create -y -p $CONDA_DIR \
+        -c conda-forge \
+        -c bioconda \
+        --strict-channel-priority \
         python=${PYTHON_VERSION} \
+        pip \
         samtools=${SAMTOOLS_VERSION} \
         htslib=${HTSLIB_VERSION} \
         bedtools=${BEDTOOLS_VERSION} \
         vcftools=${VCFTOOLS_VERSION} \
-    && conda clean -afy
+    && micromamba clean -a -y
 
 # --- python tools -----------------------------------------------------------
 # pandas: scr/annotate.py ; openpyxl: its .to_excel call.
@@ -127,7 +133,10 @@ RUN curl -fsSL "https://cdn.oxfordnanoportal.com/software/analysis/dorado-${DORA
     && tar -xzf /tmp/dorado.tar.gz -C /opt \
     && ln -sf /opt/dorado-${DORADO_VERSION}-linux-x64/bin/dorado /usr/local/bin/dorado \
     && rm -f /tmp/dorado.tar.gz
-ENV LD_LIBRARY_PATH=/opt/dorado-${DORADO_VERSION}-linux-x64/lib
+# No LD_LIBRARY_PATH: the dorado binary has RUNPATH=$ORIGIN/../lib and resolves
+# all 73 bundled libs on its own. Exporting that directory globally would put
+# dorado's bundled libstdc++ and CUDA libs ahead of the system ones for every
+# other binary in the image (R, python, samtools).
 
 # --- mosdepth ---------------------------------------------------------------
 RUN wget -qO /usr/local/bin/mosdepth \
@@ -174,6 +183,7 @@ RUN set -e; \
         command -v "$t" >/dev/null || { echo "MISSING BINARY: $t" >&2; exit 1; }; \
     done; \
     python3 -c "import pandas, openpyxl, cnvpytor"; \
+    dorado --version >/dev/null 2>&1 || { echo "dorado cannot resolve its libraries" >&2; exit 1; }; \
     R -e "pkgs <- c('optparse','rmarkdown','kableExtra','knitr','ranger','ggplot2', \
                     'matrixStats','data.table','glmnet','GenomicRanges','reshape2', \
                     'base64enc','xfun'); \
