@@ -337,35 +337,6 @@ If using whole genome sequencing data, the average coverage should be at least *
 - Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling))
 - Provide the resulting BAM(s) as input to this pipeline
 
-#### Optional helper script
-
-If you do not already have a modified-base BAM, `scr/basecall.sh` wraps Dorado
-for one run/flow cell and writes a modBAM that can be passed straight to
-`--input`. It is a convenience only and is not part of the pipeline.
-
-```bash
-# aligned modBAM, ready for the pipeline
-scr/basecall.sh \
-    --pod5 /data/run1/pod5 \
-    --sample SAMPLE001 \
-    --outdir /results/dorado \
-    --ref /path/to/hg38.fa
-
-# submit to LSF with 4 GPUs (adjust for your scheduler)
-bsub -q gpu -n 16 -R "rusage[mem=96GB] span[hosts=1]" \
-     -gpu num=4:j_exclusive=yes:gmem=16G \
-     scr/basecall.sh --pod5 /data/run1/pod5 --sample SAMPLE001 \
-                     --outdir /results/dorado --ref /path/to/hg38.fa
-```
-
-Defaults are the `hac` model with `5mCG_5hmCG` modified bases; pass `--model sup`
-for the super-accurate model. Omitting `--ref` produces an unaligned modBAM,
-which the pipeline will align itself. Large flow cells can exceed a scheduler
-wall-clock limit, so the script is resume-capable: re-running the identical
-command continues from where it stopped via Dorado's `--resume-from`, and the
-final `<sample>.bam` only appears once Dorado exits cleanly. Run
-`scr/basecall.sh --help` for all options.
-
 ### Input options
 
 The pipeline accepts:

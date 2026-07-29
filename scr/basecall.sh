@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Optional helper: basecall one ONT run with dorado, emitting a modified-base
+# INTERNAL helper: basecall one ONT run with dorado, emitting a modified-base
 # BAM suitable as --input for Rapid-CNS2_nf.
 #
-# Basecalling is NOT part of the Rapid-CNS2 pipeline. This script is provided
-# only as a convenience for users who do not already have a modBAM. The
-# alternative is ONT's own workflow:
+# Not part of the pipeline and deliberately undocumented in the README: it
+# assumes a DKFZ-style environment (dorado on PATH via `module load`, LSF for
+# the submission examples below). Users elsewhere should run ONT's workflow:
 #     nextflow run epi2me-labs/wf-basecalling ...
 #
 # The pipeline requires MM/ML tags, so a modified-base model is mandatory
