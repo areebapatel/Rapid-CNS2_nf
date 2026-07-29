@@ -57,6 +57,7 @@ ARG SAMTOOLS_VERSION=1.21
 ARG HTSLIB_VERSION=1.21
 ARG BEDTOOLS_VERSION=2.31.1
 ARG VCFTOOLS_VERSION=0.1.16
+ARG BCFTOOLS_VERSION=1.21
 ARG PYTHON_VERSION=3.12
 ARG MICROMAMBA_VERSION=2.8.1
 # Dated CRAN snapshot pins every R package without listing each version
@@ -114,6 +115,7 @@ RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/${MICROMAMBA_VERSION
         htslib=${HTSLIB_VERSION} \
         bedtools=${BEDTOOLS_VERSION} \
         vcftools=${VCFTOOLS_VERSION} \
+        bcftools=${BCFTOOLS_VERSION} \
     && micromamba clean -a -y
 
 # --- python tools -----------------------------------------------------------
@@ -214,7 +216,7 @@ COPY logos/ukhd_logo.png /opt/logos/
 
 # --- verify every binary and package the pipeline actually invokes ----------
 RUN set -e; \
-    for t in samtools bedtools vcftools bgzip tabix mosdepth dorado \
+    for t in samtools bedtools vcftools bcftools bgzip tabix mosdepth dorado \
              sniffles methylartist create_report cnvpytor AnnotSV Rscript python3; do \
         command -v "$t" >/dev/null || { echo "MISSING BINARY: $t" >&2; exit 1; }; \
     done; \
