@@ -161,7 +161,7 @@ if (params.id == null) error "The sample identifier is mandatory, please specify
 ['ref': params.ref, 'annovarPath': params.annovarPath,
  'annovarDB': params.annovarDB, 'annotsvAnnot': params.annotsvAnnot].each { k, v ->
     if (!v) error "--${k} is not set. Set it on the command line, in nextflow.config, " +
-                  "or use an institutional profile (e.g. -profile dkfz)."
+                  "or in your own site config passed with -c."
     if (!file(v).exists()) error "--${k} does not exist: ${v}"
 }
 

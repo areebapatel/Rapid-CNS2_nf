@@ -166,8 +166,8 @@ params {
 }
 ```
 
-`conf/dkfz.config` is an example, selected with `-profile dkfz`. Copy it for
-your own site and add a matching profile in `nextflow.config`.
+Keeping them in a separate file and passing `-c site.config` avoids editing the
+repository for each deployment.
 
 ### 7. Run the pipeline
 
@@ -178,7 +178,6 @@ nextflow run main.nf \
     --id SAMPLE001 \
     --outDir ./results \
     -profile lsf,singularity
-    # add your site profile, e.g. -profile lsf,singularity,dkfz
 ```
 
 #### Advanced run
