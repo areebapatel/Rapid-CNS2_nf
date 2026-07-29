@@ -7,7 +7,6 @@ process mosdepth {
         tuple path(bam), path(bai)
         path(panel)
         val(id)
-        val(threads)
 
     output:
         path "${id}.mosdepth.summary.txt", emit: summary
@@ -16,7 +15,7 @@ process mosdepth {
     script:
         """
         mosdepth \
-            -t ${threads} \
+            -t ${task.cpus} \
             -n \
             --by ${panel} \
             --fast-mode \

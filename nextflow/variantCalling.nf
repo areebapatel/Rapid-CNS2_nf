@@ -74,7 +74,6 @@ process clair3 {
         path(panel)
         val(id)
         val(model)
-        val(threads)
 
     output:
         path "${id}.clair3.vcf.gz",     emit: vcf
@@ -86,7 +85,7 @@ process clair3 {
         run_clair3.sh \
             --bam_fn=${bam} \
             --ref_fn=${ref} \
-            --threads=${threads} \
+            --threads=${task.cpus} \
             --platform=ont \
             --model_path=/opt/models/${model} \
             --bed_fn=${panel} \
@@ -289,6 +288,6 @@ process human_variation_sv {
             --bam_min_coverage ${bamMinCoverage} \
             --out_dir ${params.outDir}/wf-human-variation/sv/ \
             --threads ${svThreads} \
-            --sniffles_args="--non-germline"
+            --sniffles_args="--mosaic"
         """
 }

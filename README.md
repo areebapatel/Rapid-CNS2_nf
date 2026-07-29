@@ -228,9 +228,6 @@ nextflow run methylationOnly.nf \
     --outDir ./methylation_results \
     --patient "John Doe" \
     --minimumMgmtCov 10 \
-    --modkitThreads 64 \
-    --methThreads 128 \
-    --mgmtThreads 16 \
     --mnpFlex \
     -profile lsf,singularity
 ```
@@ -250,9 +247,6 @@ nextflow run methylationOnly.nf \
 |-----------|-------------|---------|---------|
 | `--patient` | Patient name for reports | Uses `--id` | `--patient "John Doe"` |
 | `--minimumMgmtCov` | Minimum coverage for MGMT analysis | `5` | `--minimumMgmtCov 10` |
-| `--modkitThreads` | Threads for methylation calling | `32` | `--modkitThreads 64` |
-| `--methThreads` | Threads for classification | `64` | `--methThreads 128` |
-| `--mgmtThreads` | Threads for MGMT analysis | `8` | `--mgmtThreads 16` |
 | `--mnpFlex` | Enable MNP-Flex preparation | `true` | `--mnpFlex false` |
 
 #### Containers
@@ -401,28 +395,10 @@ graph TD
 
 #### Resource parameters
 
-| Parameter | Description | Default | Example |
-|-----------|-------------|---------|---------|
-| `--maxThreads` | Maximum number of threads for general processes. | `64` | `--maxThreads 32` |
-| `--modkitThreads` | Number of threads for modkit methylation calling. | `32` | `--modkitThreads 16` |
-| `--cnvThreads` | Number of threads for CNVpytor copy number analysis. | `32` | `--cnvThreads 16` |
-| `--snifflesThreads` | Number of threads for Sniffles2 structural variant calling. | `32` | `--snifflesThreads 16` |
-| `--snpThreads` | Number of threads for SNV calling with Clair3. | `64` | `--snpThreads 32` |
-| `--svThreads` | Number of threads for structural variant calling. | `64` | `--svThreads 32` |
-| `--covThreads` | Number of threads for coverage calculation with mosdepth. | `8` | `--covThreads 4` |
-| `--methThreads` | Number of threads for methylation classification. | `64` | `--methThreads 32` |
-| `--mgmtThreads` | Number of threads for MGMT promoter analysis. | `8` | `--mgmtThreads 4` |
-
-#### Analysis parameters
-
-| Parameter | Description | Default | Example |
-|-----------|-------------|---------|---------|
-| `--minimumMgmtCov` | Minimum coverage threshold for MGMT promoter methylation analysis. If coverage is below this threshold, MGMT analysis will be skipped. | `5` | `--minimumMgmtCov 10` |
-| `--bamMinCoverage` | Minimum coverage threshold for human variation workflow. | `10` | `--bamMinCoverage 15` |
-| `--mnpFlex` | Enable MNP-Flex classifier input preparation. Creates files needed for external MNP-Flex analysis. | `true` | `--mnpFlex false` |
-| `--snifflesNonGermline` | Run Sniffles2 in somatic mode (`--non-germline`). Input is tumour-only, so this is on by default. | `true` | `--snifflesNonGermline false` |
-| `--publishBam` | Publish the prepared full-flow-cell BAM. It is >150 GB and reproducible from the input, so it is not copied into the results by default. The panel subset BAM is always published. | `false` | `--publishBam true` |
-| `--runHumanVariation` | Enable wf-human-variation SNP and SV pipeline. Adds additional variant calling workflows. | `false` | `--runHumanVariation true` |
+CPU and memory are set per process label in `nextflow.config`, and each tool is
+given `task.cpus`. There are no separate per-tool thread parameters, so an
+allocation and a tool's thread count can never disagree. See
+[Profile-specific parameters](#profile-specific-parameters) for the table.
 
 #### Variant calling tool parameters
 
@@ -467,11 +443,16 @@ than hand-written `clusterOptions`, which previously emitted duplicate `-n` and
 
 | Label | Processes | CPUs | Memory |
 |-------|-----------|------|--------|
-| `rapid_cns` | BAM prep, coverage, CNVpytor, Sniffles2, AnnotSV, reporting | 8 | 32 GB |
-| `mods` | modkit methylation calling | 32 | 32 GB |
-| `clair3` | SNV calling | 32 | 64 GB |
-| `severus` | Severus SV calling | 16 | 64 GB |
-| `savana` | SAVANA SV and copy number | 16 | 64 GB |
+| `rapid_cns` | light steps: MGMT, AnnotSV, ANNOVAR, IGV, reporting | 8 | 32 GB |
+| `bamprep` | sort + index the full flow-cell BAM | 32 | 96 GB |
+| `heavy` | Sniffles2, CNVpytor, methylation classifier | 32 | 64 GB |
+| `mods` | modkit methylation calling | 32 | 64 GB |
+| `clair3` | SNV calling | 64 | 96 GB |
+| `severus` | Severus SV calling | 32 | 64 GB |
+| `savana` | SAVANA SV and copy number | 32 | 64 GB |
+
+Each tool is invoked with `task.cpus`, so a tool's thread count always matches
+what the scheduler allocated.
 
 #### SLURM profile (`-profile slurm`)
 - **Executor:** SLURM, queue `batch`; same per-label CPU/memory table as LSF.

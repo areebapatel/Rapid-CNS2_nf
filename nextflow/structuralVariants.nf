@@ -1,6 +1,6 @@
 // Sniffles2 - fast baseline SV caller
 process structuralVariants {
-    label 'rapid_cns'
+    label 'heavy'
 
     publishDir "${params.outDir}/sv/", mode: 'copy'
 
@@ -8,17 +8,17 @@ process structuralVariants {
         tuple path(bam), path(bai)
         path(ref)
         val(id)
-        val(snifflesThreads)
 
     output:
         path "${id}.sniffles2.vcf", emit: vcf
 
     script:
-        // Tumour-only input, so somatic (non-germline) mode is the default.
-        def nonGermline = params.snifflesNonGermline ? '--non-germline' : ''
+        // Tumour-only input, so somatic mode is the default. Sniffles renamed
+        // --non-germline to --mosaic; 2.8.0 rejects the old flag outright.
+        def mosaic = params.snifflesMosaic ? '--mosaic' : ''
         """
-        sniffles --threads ${snifflesThreads} --allow-overwrite \
-            ${nonGermline} \
+        sniffles --threads ${task.cpus} --allow-overwrite \
+            ${mosaic} \
             --reference ${ref} \
             --input ${bam} \
             --vcf ${id}.sniffles2.vcf
@@ -34,27 +34,32 @@ process severus {
 
     publishDir "${params.outDir}/sv/severus/", mode: 'copy'
 
+    // stageAs gives the two optional resources distinct staged names: both
+    // default to the same NO_FILE placeholder, and Nextflow refuses to stage
+    // two inputs with the same filename into one task directory.
     input:
         tuple path(bam), path(bai)
         val(id)
-        path(vntrBed)
-        path(pon)
-        val(threads)
+        path(vntrBed, stageAs: 'severus_vntr')
+        path(pon,     stageAs: 'severus_pon')
 
     output:
         path "severus_${id}/**", emit: allOutputs
         path "${id}.severus.vcf", emit: vcf
 
     script:
-        def vntrArg = vntrBed.name != 'NO_FILE' ? "--vntr-bed ${vntrBed}" : ''
-        def ponArg  = pon.name    != 'NO_FILE' ? "--PON ${pon}"           : ''
         """
+        VNTR_ARG=""
+        if [ -s severus_vntr ]; then VNTR_ARG="--vntr-bed severus_vntr"; fi
+        PON_ARG=""
+        if [ -s severus_pon ];  then PON_ARG="--PON severus_pon"; fi
+
         severus \
             --target-bam ${bam} \
             --out-dir severus_${id} \
-            -t ${threads} \
-            ${vntrArg} \
-            ${ponArg}
+            -t ${task.cpus} \
+            \${VNTR_ARG} \
+            \${PON_ARG}
 
         # Tumour-only runs emit all_SVs/severus_all.vcf; with a PON a somatic
         # set is produced too. Prefer the somatic call set when present.

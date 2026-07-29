@@ -103,15 +103,9 @@ if (params.help) {
        --patient          Patient name for reports [default: uses --id value]
 
    RESOURCE PARAMETERS:
-       --maxThreads       Maximum threads for general processes [default: 64]
-       --modkitThreads    Threads for modkit methylation calling [default: 32]
-       --cnvThreads       Threads for CNVpytor copy number analysis [default: 32]
-       --snifflesThreads  Threads for Sniffles2 structural variant calling [default: 32]
-       --snpThreads       Threads for SNV calling with Clair3 [default: 64]
-       --svThreads        Threads for Severus and SAVANA [default: 64]
-       --covThreads       Threads for coverage calculation [default: 8]
-       --methThreads      Threads for methylation classification [default: 64]
-       --mgmtThreads      Threads for MGMT promoter analysis [default: 8]
+       CPU and memory come from the per-label settings in nextflow.config
+       (see the profiles section); each tool is given task.cpus, so there are
+       no separate per-tool thread parameters to keep in sync.
 
    TOOL PARAMETERS:
        --clair3Model      Clair3 model [default: auto-detected from the BAM's
@@ -123,7 +117,7 @@ if (params.help) {
    ANALYSIS PARAMETERS:
        --minimumMgmtCov       Minimum coverage for MGMT analysis [default: 5]
        --bamMinCoverage       Minimum coverage for human variation workflow [default: 10]
-       --snifflesNonGermline  Run Sniffles2 in somatic mode [default: true]
+       --snifflesMosaic       Run Sniffles2 in --mosaic (somatic) mode [default: true]
        --mnpFlex              Enable MNP-Flex classifier input preparation [default: true]
        --publishBam           Publish the prepared full-flow-cell BAM (>150 GB)
                               [default: false]
@@ -236,22 +230,22 @@ workflow {
     def patientName = params.patient ?: params.id
 
     // ---- BAM preparation: tag check, align if needed, merge, sort, index
-    bam = prepareBam(resolveInputBams(params.input), ref, params.id, params.maxThreads).bam
+    bam = prepareBam(resolveInputBams(params.input), ref, params.id).bam
 
-    subset = subsetBam(bam, panel, params.id, params.maxThreads).bam
+    subset = subsetBam(bam, panel, params.id).bam
 
     // ---- Coverage
-    coverage = mosdepth(bam, panel, params.id, params.covThreads)
+    coverage = mosdepth(bam, panel, params.id)
 
     // ---- Methylation
-    meth = methylationCalls(bam, ref, params.id, params.modkitThreads).bedmethyl
+    meth = methylationCalls(bam, ref, params.id).bedmethyl
 
     classification = methylationClassification(
         methClassScript, meth, params.id,
-        topProbes, trainingData, arrayFile, params.methThreads)
+        topProbes, trainingData, arrayFile)
 
     // ---- MGMT promoter
-    mgmtCov = checkMgmtCoverage(bam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
+    mgmtCov = checkMgmtCoverage(bam, mgmtBed, params.minimumMgmtCov)
     mgmtCovOk  = mgmtCov.covOkFile.map  { f -> f.text.trim() }
     mgmtAvgCov = mgmtCov.avgCovFile.map { f -> f.text.trim() }
 
@@ -259,7 +253,7 @@ workflow {
     mgmtStatus = mgmtPred(mgmtCovOk, mgmtScript, mgmtBed, mgmtProbes, mgmtModel, meth, params.id)
 
     // ---- Copy number
-    cnv = copyNumberVariants(bam, params.id, params.cnvThreads)
+    cnv = copyNumberVariants(bam, params.id)
     cnvAnnotated(cnv.calls1000, params.id, annotateScript, cnvGenes)
 
     // ---- SNVs (Clair3). The model is derived from the BAM's basecaller
@@ -267,7 +261,7 @@ workflow {
     // Nextflow rejects a null val input, so an unset override is passed as ""
     clair3Model = detectClair3Model(bam, params.clair3Model ?: '')
                     .modelFile.map { f -> f.text.trim() }
-    clairVcf = clair3(subset, ref, refIdx, panel, params.id, clair3Model, params.snpThreads).vcf
+    clairVcf = clair3(subset, ref, refIdx, panel, params.id, clair3Model).vcf
     passVcf  = recodeVCF(clairVcf, params.id).passVcf
     avinput  = convert2annovar(passVcf, params.annovarPath, params.id).avinput
     anno     = tableAnnovar(avinput, params.annovarPath, params.annovarDB, params.id,
@@ -277,15 +271,15 @@ workflow {
     igv = igv_reports(snvTable, params.id, ref, subset, annotations)
 
     // ---- Structural variants: Sniffles2 (fast baseline) + Severus (somatic/complex)
-    sniffles = structuralVariants(bam, ref, params.id, params.snifflesThreads)
+    sniffles = structuralVariants(bam, ref, params.id)
     annotSvSniffles(sniffles.vcf, params.annotsvAnnot, params.id, 'sniffles')
 
-    sev = severus(bam, params.id, severusVntr, severusPon, params.svThreads)
+    sev = severus(bam, params.id, severusVntr, severusPon)
     annotSvSeverus(sev.vcf, params.annotsvAnnot, params.id, 'severus')
 
     // ---- SAVANA: tumour-only breakpoints -> copy number, purity and ploidy
-    savanaSv  = savanaTo(bam, ref, refIdx, params.id, params.svThreads)
-    savanaCna(bam, ref, savanaSv.breakpoints, params.id, params.savanaG1000, params.cnvThreads)
+    savanaSv  = savanaTo(bam, ref, refIdx, params.id)
+    savanaCna(bam, ref, savanaSv.breakpoints, params.id, params.savanaG1000)
 
     // ---- Optional: ONT wf-human-variation
     if (params.runHumanVariation) {

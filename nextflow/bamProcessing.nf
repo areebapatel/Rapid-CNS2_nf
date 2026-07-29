@@ -21,7 +21,6 @@ process prepareBam {
         path(bams, stageAs: 'input/*')
         path(ref)
         val(id)
-        val(threads)
 
     output:
         tuple path("${id}.bam"), path("${id}.bam.bai"), emit: bam
@@ -100,14 +99,13 @@ process subsetBam {
         tuple path(bam), path(bai)
         path(panel)
         val(id)
-        val(threads)
 
     output:
         tuple path("${id}.RapidCNS2.subset.bam"), path("${id}.RapidCNS2.subset.bam.bai"), emit: bam
 
     script:
         """
-        samtools view -@${threads} -b -M -L ${panel} -o ${id}.RapidCNS2.subset.bam ${bam}
-        samtools index -@${threads} ${id}.RapidCNS2.subset.bam
+        samtools view -@${task.cpus} -b -M -L ${panel} -o ${id}.RapidCNS2.subset.bam ${bam}
+        samtools index -@${task.cpus} ${id}.RapidCNS2.subset.bam
         """
 }

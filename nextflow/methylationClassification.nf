@@ -1,6 +1,6 @@
 // Rapid-CNS2 random-forest methylation classification
 process methylationClassification {
-    label 'rapid_cns'
+    label 'heavy'
 
     publishDir "${params.outDir}/methylation_classification/", mode: 'copy'
 
@@ -11,7 +11,6 @@ process methylationClassification {
         path(topProbes)
         path(trainingData)
         path(arrayFile)
-        val(methThreads)
 
     output:
         path "${id}_votes.tsv",                      emit: votes
@@ -29,7 +28,7 @@ process methylationClassification {
             --probes_file ${topProbes} \
             --training_data ${trainingData} \
             --array_file ${arrayFile} \
-            --threads ${methThreads}
+            --threads ${task.cpus}
         """
 }
 

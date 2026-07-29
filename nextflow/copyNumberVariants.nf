@@ -1,12 +1,11 @@
 process copyNumberVariants {
-    label 'rapid_cns'
+    label 'heavy'
 
     publishDir "${params.outDir}/cnv/", mode: 'copy'
 
     input:
         tuple path(bam), path(bai)
         val(id)
-        val(cnvThreads)
 
     output:
         path "${id}.cnvpytor.calls.1000.tsv",   emit: calls1000
@@ -18,12 +17,12 @@ process copyNumberVariants {
     script:
         def chroms = (1..22).collect { n -> "chr${n}" }.join(' ') + ' chrX chrY'
         """
-        cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${cnvThreads}
-        cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${cnvThreads}
-        cnvpytor -root ${id}_CNV.pytor -partition 1000 10000 100000 -j ${cnvThreads}
-        cnvpytor -root ${id}_CNV.pytor -call 1000   -j ${cnvThreads} > ${id}.cnvpytor.calls.1000.tsv
-        cnvpytor -root ${id}_CNV.pytor -call 10000  -j ${cnvThreads} > ${id}.cnvpytor.calls.10000.tsv
-        cnvpytor -root ${id}_CNV.pytor -call 100000 -j ${cnvThreads} > ${id}.cnvpytor.calls.100000.tsv
+        cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${task.cpus}
+        cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${task.cpus}
+        cnvpytor -root ${id}_CNV.pytor -partition 1000 10000 100000 -j ${task.cpus}
+        cnvpytor -root ${id}_CNV.pytor -call 1000   -j ${task.cpus} > ${id}.cnvpytor.calls.1000.tsv
+        cnvpytor -root ${id}_CNV.pytor -call 10000  -j ${task.cpus} > ${id}.cnvpytor.calls.10000.tsv
+        cnvpytor -root ${id}_CNV.pytor -call 100000 -j ${task.cpus} > ${id}.cnvpytor.calls.100000.tsv
         cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom ${chroms} -o ${id}_cnvpytor_100k.pdf
         cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom ${chroms} -o ${id}_cnvpytor_100k.png
         """
@@ -61,7 +60,6 @@ process savanaTo {
         path(ref)
         path(refIdx)
         val(id)
-        val(threads)
 
     output:
         path "savana_to_${id}/**", emit: allOutputs
@@ -75,7 +73,7 @@ process savanaTo {
             --ref_index ${refIdx} \
             --sample ${id} \
             --outdir savana_to_${id} \
-            --threads ${threads}
+            --threads ${task.cpus}
 
         VCF=\$(find savana_to_${id} -name "*.vcf" | grep -vi "germline" | head -n 1)
         [ -n "\${VCF}" ] || { echo "ERROR: savana to produced no VCF" >&2; exit 1; }
@@ -101,7 +99,6 @@ process savanaCna {
         path(breakpoints)
         val(id)
         val(g1000)
-        val(threads)
 
     output:
         path "savana_cna_${id}/**", emit: allOutputs
@@ -116,7 +113,7 @@ process savanaCna {
             --outdir savana_cna_${id} \
             --breakpoints ${breakpoints} \
             --g1000_vcf ${g1000} \
-            --cna_threads ${threads} \
+            --cna_threads ${task.cpus} \
             --tmpdir .
 
         # surface the purity/ploidy fit at a predictable path for the report

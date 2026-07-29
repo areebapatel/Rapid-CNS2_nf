@@ -7,7 +7,6 @@ process methylationCalls {
         tuple path(bam), path(bai)
         path(ref)
         val(id)
-        val(modkitThreads)
 
     output:
         path "${id}.5mC.bedmethyl", emit: bedmethyl
@@ -24,7 +23,7 @@ process methylationCalls {
             --combine-strands \
             --combine-mods \
             --modified-bases C \
-            --threads ${modkitThreads}
+            --threads ${task.cpus}
         """
 }
 
@@ -37,7 +36,6 @@ process checkMgmtCoverage {
         tuple path(bam), path(bai)
         path(mgmtBed)
         val(minimumMgmtCov)
-        val(threads)
 
     output:
         path "mgmt_cov.mosdepth.summary.txt"
@@ -46,7 +44,7 @@ process checkMgmtCoverage {
 
     script:
         """
-        mosdepth -t ${threads} -n --by ${mgmtBed} mgmt_cov ${bam}
+        mosdepth -t ${task.cpus} -n --by ${mgmtBed} mgmt_cov ${bam}
 
         COV=\$(awk '\$1=="chr10_region"{print \$4}' mgmt_cov.mosdepth.summary.txt)
         [ -n "\${COV}" ] || COV=0

@@ -54,10 +54,6 @@ if (params.help) {
    OPTIONAL PARAMETERS:
        --patient          Patient name for reports [default: uses --id value]
        --minimumMgmtCov   Minimum coverage for MGMT analysis [default: 5]
-       --maxThreads       Threads for BAM preparation [default: 64]
-       --modkitThreads    Threads for modkit methylation calling [default: 32]
-       --methThreads      Threads for methylation classification [default: 64]
-       --mgmtThreads      Threads for MGMT promoter analysis [default: 8]
        --mnpFlex          Enable MNP-Flex classifier input preparation [default: true]
 
    EXAMPLES:
@@ -110,17 +106,17 @@ workflow {
     def mnpFlexScript   = file("${projectDir}/scr/mnp-flex_preprocessing.sh", checkIfExists: true)
 
     // ---- BAM preparation: tag check, align if needed, merge, sort, index
-    bam = prepareBam(resolveInputBams(params.input), ref, params.id, params.maxThreads).bam
+    bam = prepareBam(resolveInputBams(params.input), ref, params.id).bam
 
     // ---- Methylation
-    meth = methylationCalls(bam, ref, params.id, params.modkitThreads).bedmethyl
+    meth = methylationCalls(bam, ref, params.id).bedmethyl
 
     methylationClassification(
         methClassScript, meth, params.id,
-        topProbes, trainingData, arrayFile, params.methThreads)
+        topProbes, trainingData, arrayFile)
 
     // ---- MGMT promoter
-    mgmtCov   = checkMgmtCoverage(bam, mgmtBed, params.minimumMgmtCov, params.mgmtThreads)
+    mgmtCov   = checkMgmtCoverage(bam, mgmtBed, params.minimumMgmtCov)
     mgmtCovOk = mgmtCov.covOkFile.map { f -> f.text.trim() }
 
     mgmtPromoterMethyartist(bam, ref, mgmtCovOk, params.id)
