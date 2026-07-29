@@ -1,8 +1,12 @@
+# Do NOT auto-install: that writes into the user's home library at run time,
+# which is both a surprise side effect and unreproducible. The container
+# provides these packages; if they are missing, fail loudly instead.
 for (package in c('optparse')) {
-  if (!require(package, character.only=T, quietly=T)) {
-    install.packages(package,repos = "http://cran.us.r-project.org")
-    library(package, character.only=T)
+  if (!requireNamespace(package, quietly = TRUE)) {
+    stop("Required R package '", package, "' is not installed. ",
+         "Please run this inside the pipeline container.")
   }
+  suppressPackageStartupMessages(library(package, character.only = TRUE))
 }
 
 option_list = list(
@@ -25,7 +29,15 @@ load(opt$probes)
 load(opt$model)
 mgmt_meth <- read.delim(opt$input,header = F)
 mgmt_meth <- subset(mgmt_meth, V2 %in% pred_pos)
-mgmt_average <- mean(t(as.numeric(as.data.frame(strsplit(mgmt_meth$V10, ' ', fixed=TRUE))[2,])), na.rm=T)mgmt <- data.frame(average=mgmt_average)
+
+if (nrow(mgmt_meth) == 0) {
+  stop("No MGMT promoter CpG sites from the prediction model were found in ", opt$input)
+}
+
+# modkit bedMethyl is all-tab delimited: column 11 is the percent modified
+# (column 10 is Nvalid_cov). Older mixed-delimiter output packed both into V10.
+mgmt_average <- mean(as.numeric(mgmt_meth$V11), na.rm = TRUE)
+mgmt <- data.frame(average=mgmt_average)
 pred <- predict(log.model,newdata = mgmt,type = "response")
 mgmt$pred <- pred[[1]]
 if (pred[[1]] <0.5){mgmt$status <- "Unmethylated"} else {mgmt$status <- "Methylated"}

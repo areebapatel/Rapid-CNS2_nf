@@ -1,168 +1,80 @@
-process checkAlignment {
+// Input BAM handling: tag check, alignment (if needed), merge, sort, index.
+// Collapsed into a single process so the align/merge decision is made at run
+// time from the actual data rather than from a Groovy flag that is evaluated
+// before the check has run.
+process prepareBam {
     label 'rapid_cns'
 
-    input:
-        path(inputBam)
-        val(threads)
-    
-    output:
-        stdout emit: alignment_check
-
-    script:
-        """
-        # Count aligned reads (not unmapped reads)
-        aligned_count=\$(samtools view -@${threads} -F 4 ${inputBam} | wc -l)
-        echo "\${aligned_count}"
-        """
-}
-
-process checkMethylationTags {
-    label 'rapid_cns'
-    
-    input:
-        path(inputBam)
-        val(threads)
-    
-    output:
-        stdout emit: meth_check
-
-    script:
-        """
-        samtools \
-        view \
-        -@${threads} \
-        ${inputBam} \
-        | grep -m 1 MM:Z
-        """
-}
-
-process alignBam {
-    label 'rapid_cns'
-    
-    input:
-        path(input)
-        path(ref)
-        val(threads)
-        path(outDir)
-
-    publishDir "${params.outDir}/bam/alignedBams/", mode: 'copy'
-    
-    output:
-        path "*.bam", emit : alignedBam
-
-    script:
-        """
-        # Check if file is already aligned
-        aligned_count=\$(samtools view -F 4 "\$input" | wc -l)
-        
-        if [ "\$aligned_count" -gt 2 ]; then
-            echo "File already aligned with \$aligned_count reads. Copying to current directory."
-            cp "\$input" .
-        else
-            echo "File has \$aligned_count aligned reads. Performing alignment."
-            dorado aligner "\$ref" "\$input" --output-dir . --threads "\$threads"
-        fi
-        """
-}
-
-process mergeBam {
-    label 'rapid_cns'
-    
-    input:
-        path(bams)
-        val(threads)
-        path(outDir)
-        val(id)
-    
     publishDir "${params.outDir}/bam/", mode: 'copy'
 
-    output:
-        path "*.bam", emit : mergedBam
-
-    script:
-        """
-        samtools merge -@${threads} -o ${id}.merged.bam ${bams.join(' ')}
-        """
-}
-
-process addreplacerg {
-    label 'rapid_cns'
-    
     input:
-        path(inputBam)
-        path(inputBai)
-    
-    output:
-        path "*.bam", emit : deepVariantBam
-        path "*.bam.bai", emit : deepVariantBai
-    
-    publishDir("${params.outDir}/bam")
-
-    script:
-        def r_args = params.reads ?: ''
-        """
-         samtools addreplacerg ${r_args} \
-                -@${threads} -o ${id}.addrg.bam \
-                ${inputBam}
-
-        samtools index -@ ${threads} ${id}.addrg.bam 
-        """
-}
-
-process indexBam {
-    label 'rapid_cns'
-    
-    input:
-        path(bam)
+        path(bams, stageAs: 'input/*')
+        path(ref)
+        val(id)
         val(threads)
-    
+
     output:
-        path "*.bai", emit: indexBam
+        tuple path("${id}.bam"), path("${id}.bam.bai"), emit: bam
 
     script:
         """
-        samtools index -@${threads} ${bam}
+        BAMS=(input/*.bam)
+        echo "Found \${#BAMS[@]} input BAM file(s)"
+
+        # Modified-base tags must be present; fail early with actionable guidance.
+        samtools view -@${threads} "\${BAMS[0]}" 2>/dev/null | head -n 100000 > tagcheck.sam || true
+        if ! grep -q 'MM:Z' tagcheck.sam; then
+            echo "ERROR: no methylation tags (MM:Z) found in \${BAMS[0]}." >&2
+            echo "Re-run basecalling with modified bases enabled:" >&2
+            echo "  https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling" >&2
+            exit 1
+        fi
+        rm -f tagcheck.sam
+
+        ALIGNED=\$(samtools view -@${threads} -c -F 4 "\${BAMS[0]}")
+        echo "First input BAM has \${ALIGNED} aligned reads"
+
+        if [ "\${ALIGNED}" -le 2 ]; then
+            echo "Input is unaligned - running dorado aligner"
+            mkdir -p aligned
+            dorado aligner ${ref} input/ --output-dir aligned --threads ${threads}
+            OUT=(aligned/*.bam)
+        else
+            echo "Input is already aligned - skipping alignment"
+            OUT=("\${BAMS[@]}")
+        fi
+
+        if [ "\${#OUT[@]}" -gt 1 ]; then
+            samtools cat -o cat.bam "\${OUT[@]}"
+            samtools sort -@${threads} -o ${id}.bam cat.bam
+            rm -f cat.bam
+        elif samtools view -H "\${OUT[0]}" | head -n 1 | grep -q 'SO:coordinate'; then
+            cp "\${OUT[0]}" ${id}.bam
+        else
+            samtools sort -@${threads} -o ${id}.bam "\${OUT[0]}"
+        fi
+
+        samtools index -@${threads} ${id}.bam
         """
-}   
+}
 
 process subsetBam {
     label 'rapid_cns'
-    
+
+    publishDir "${params.outDir}/bam/", mode: 'copy'
+
     input:
-        path(bam)
-        path(indexBam)
+        tuple path(bam), path(bai)
         path(panel)
         val(id)
         val(threads)
 
-    publishDir "${params.outDir}/bam/", mode: 'copy'
-
     output:
-        path "*subset.bam", emit: subsetBam
+        tuple path("${id}.RapidCNS2.subset.bam"), path("${id}.RapidCNS2.subset.bam.bai"), emit: bam
 
     script:
         """
-        samtools index -@${threads} ${bam}
-        
-        bedtools intersect -a ${bam} \
-        -b ${panel} \
-        > ${id}.RapidCNS2.subset.bam
-        """
-}
-
-process indexSubsettedBam{
-    label 'rapid_cns'
-    
-    input:
-        path(bam)
-        val(threads)
-    
-    output:
-        path "*.bai", emit: indexSubsetBam
-
-    publishDir("${params.outDir}/bam/")
-    script:
-        """
-        samtools index -@${threads} ${bam}
+        samtools view -@${threads} -b -M -L ${panel} -o ${id}.RapidCNS2.subset.bam ${bam}
+        samtools index -@${threads} ${id}.RapidCNS2.subset.bam
         """
 }

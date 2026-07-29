@@ -7,6 +7,8 @@ pkgs <- c(
   "ranger",
   "matrixStats",
   "data.table",
+  # required for the serialised model to load, even though no glmnet function
+  # is called directly here - do not remove
   "glmnet"
 )
 
@@ -28,8 +30,10 @@ option_list = list(
               help="output directory", metavar="character"),
   make_option(c("-i", "--in_file"), type="character", default=NULL,
               help="path to modified base called file", metavar="character"),
-  make_option(c("-p", "--probes_file"), type="character", default="top_probes_hm450.Rdata"),
-  make_option(c("-a", "--array_file"), type="character", default="top_probes_hm450.Rdata"),
+  make_option(c("-p", "--probes_file"), type="character", default="top_probes_hm450.Rdata",
+              help="top probes Rdata", metavar="character"),
+  make_option(c("-a", "--array_file"), type="character", default="HM450.hg38.manifest.gencode.v22.Rdata",
+              help="HM450 hg38 manifest Rdata", metavar="character"),
   make_option(c("-d", "--training_data"), type="character", default="capper_betas.RData",
               help="capper dataset", metavar="character"),
   make_option(c("-t", "--threads"), type="numeric", default=16,
@@ -46,8 +50,9 @@ dir.create(file.path(opt$out_dir), showWarnings = FALSE)
 meth <- read.delim(opt$in_file,header=FALSE)
 
 #Keep relevant columns
-#meth_filter <- meth[,c(1:3,6,10:11)]
-meth_filter <- as.data.frame(cbind(meth[,c(1:3,5,6,10)]))
+# modkit bedMethyl (all-tab delimited) column layout:
+#   1-3 chrom/start/end, 6 strand, 10 Nvalid_cov, 11 percent modified
+meth_filter <- as.data.frame(meth[, c(1, 2, 3, 10, 6, 11)])
 
 rm(meth)
 
@@ -140,7 +145,7 @@ glm_models <- lapply(classes, function(type){
 ###### For paper
 details <- paste(paste0("450k_overlap: ", length(unique(names(case)))), 
                            paste0("Top_100k_overlap: ", length(probes)),
-                           paste0("OOB_error: ", rf$prediction.error),
+                           paste0("Brier_score: ", rf$prediction.error),
                            paste0("Training_probes: ", length(cols)),
                            sep = "\n")
 write.table(details, file = paste0(opt$out_dir,"/",opt$sample,"_rf_details.tsv"), row.names = F, col.names = F, quote = F)

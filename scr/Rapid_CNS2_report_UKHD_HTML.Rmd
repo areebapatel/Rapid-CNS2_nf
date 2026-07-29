@@ -110,9 +110,24 @@ params:
 </style>
 
 ```{r logo_paths, echo=FALSE, results='asis'}
-# Get absolute paths for logos in working directory
-rapid_logo_path <- "/opt/logos/rapid_cns2_logo.png"
-ukhd_logo_path <- "/opt/logos/ukhd_logo.png"
+# Embed logos as base64 data URIs. An absolute container path in <img src>
+# resolves only inside the container, so the delivered HTML would show broken
+# images anywhere else.
+embed_png <- function(candidates) {
+  for (p in candidates) {
+    if (file.exists(p)) {
+      return(paste0("data:image/png;base64,", base64enc::base64encode(p)))
+    }
+  }
+  warning("Logo not found in any of: ", paste(candidates, collapse = ", "))
+  ""
+}
+rapid_logo_path <- embed_png(c("/opt/logos/rapid_cns2_logo.png",
+                               "logos/rapid_cns2_logo.png",
+                               "rapid_cns2_logo.png"))
+ukhd_logo_path  <- embed_png(c("/opt/logos/ukhd_logo.png",
+                               "logos/ukhd_logo.png",
+                               "ukhd_logo.png"))
 ```
 
 <div class="header">
@@ -173,6 +188,9 @@ if (seq=="GXB") {
 ## On-target coverage
 ```{r,echo=FALSE,out.width="75%",warning=FALSE, fig.align='center'}
 df <- read.delim(coverage)
+# mosdepth writes 'total' and 'total_region' summary rows; they are not
+# chromosomes and would appear as a spurious bar on the x axis.
+df <- df[!grepl("^total", df$chrom), ]
 df$Reads <- "All"
 df$Reads[endsWith(df$chrom,"_region")] <- "On_target"
 df$chrom <- gsub("_region","",df$chrom)
@@ -241,13 +259,21 @@ knitr::include_graphics(cnv_plot)
 <div class="section">
 
 ```{r, echo=FALSE}
-x <- rf_details
-oob <- read.delim(x,header = F, sep = ":")
-mc <- read.delim(votes,sep=" ")
+oob <- read.delim(rf_details, header = FALSE, sep = ":")
+rf_val <- function(key, default = NA) {
+  i <- which(trimws(oob[[1]]) == key)
+  if (length(i)) trimws(oob[[2]][i[1]]) else default
+}
+n_450k    <- as.integer(rf_val("450k_overlap"))
+n_feature <- as.integer(rf_val("Training_probes"))
+# ranger reports the Brier score in $prediction.error for probability forests.
+# Older rf_details files label it OOB_error.
+brier <- as.numeric(rf_val("Brier_score", rf_val("OOB_error")))
+mc <- read.delim(votes, sep = " ")
 ```
 
 ## Rapid CNS^2^ methylation classification
-#### Methylation-based classification is based on `r as.integer(oob[1,2])` sites. The Brier score of this ad-hoc classifier is `r paste0(round(as.numeric(oob[3,2])*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$Recalibrated_Frequency),])`**. This prediction has a confidence score of **`r paste0(round(as.numeric(mc$cal_Freq[which.max(mc$cal_Freq)]),digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
+#### Methylation-based classification used `r n_feature` CpG features selected from `r n_450k` sites overlapping the HM450 array. The Brier score of this ad-hoc classifier is `r paste0(round(brier*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$Recalibrated_Frequency),])`**. This prediction has a confidence score of **`r paste0(round(as.numeric(mc$Recalibrated_Frequency[which.max(mc$Recalibrated_Frequency)]),digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
 
 ```{r,echo=FALSE,warning=FALSE, fig.pos="h"}
 mc$methClass <- rownames(mc)
@@ -270,10 +296,11 @@ ggplot(data=mc, aes(x=methClass, y=Recalibrated_Frequency)) +
 #### Average coverage of MGMT is: **`r cov`**x.\
 
 ```{r setup2, echo=FALSE}
-show_mgmt <- FALSE
-### if methylartist and mgmt exist
-if (methylartist_status == "true" & mgmt_status == "true")
-show_mgmt <- TRUE
+# The numeric MGMT status is the clinically relevant result; the methylartist
+# plot is supplementary. Gate them separately so a failed plot does not hide
+# a successful prediction.
+show_mgmt <- mgmt_status == "true"
+show_mgmt_plot <- methylartist_status == "true"
 ```
 
 ```{r conditional_block, echo=FALSE, results='asis', eval=show_mgmt}
@@ -301,7 +328,7 @@ cat("#### MGMT promoter methylation status was not assessed in this sample due t
 ```
 
 ## MGMT Promoter methylation plot:
-```{r, echo=FALSE, out.width="100%",warning=FALSE, eval=show_mgmt}
+```{r, echo=FALSE, out.width="100%",warning=FALSE, eval=show_mgmt_plot}
 knitr::include_graphics(methylartist_plot)
 ```
 

@@ -1,8 +1,12 @@
+# Do NOT auto-install: that writes into the user's home library at run time,
+# which is both a surprise side effect and unreproducible. The container
+# provides these packages; if they are missing, fail loudly instead.
 for (package in c('optparse', 'reshape2')) {
-  if (!require(package, character.only=T, quietly=T)) {
-    install.packages(package,repos = "http://cran.us.r-project.org")
-    library(package, character.only=T)
+  if (!requireNamespace(package, quietly = TRUE)) {
+    stop("Required R package '", package, "' is not installed. ",
+         "Please run this inside the pipeline container.")
   }
+  suppressPackageStartupMessages(library(package, character.only = TRUE))
 }
 
 option_list = list(
@@ -19,14 +23,38 @@ opt = parse_args(opt_parser);
 
 var_file <- read.csv(opt$input)
 
-no_na <- var_file[which(var_file$cosmic70 != "." | var_file$X1000g2015aug_eur != "." | var_file$Func.refGene == "upstream"),]
-cosmic <- no_na[which(no_na$cosmic70 != "." | no_na$X1000g2015aug_eur < 0.001 | no_na$Func.refGene == "upstream"),]
+# Optional ANNOVAR databases: cosmic70 needs a COSMIC licence and CLNSIG comes
+# from clinvar. Fill in "." so the filters below behave as "no annotation"
+# rather than erroring when those protocols were not run.
+for (col in c("cosmic70", "CLNSIG", "avsnp151")) {
+  if (!col %in% colnames(var_file)) {
+    message("Note: '", col, "' not present in ANNOVAR output - filling with '.'")
+    var_file[[col]] <- "."
+  }
+}
 
-no_syn <- cosmic[which(cosmic$ExonicFunc.refGene != "synonymous SNV"),]
+# 1000G EUR allele frequency arrives as character, with "." meaning the variant
+# is ABSENT from 1000G - i.e. not a common polymorphism, and exactly what a
+# somatic driver looks like. Comparing "." numerically yields NA, and which()
+# then drops the row, so novel variants were being silently discarded. Coerce
+# once and treat absence as frequency 0 so those variants are retained.
+af_eur <- suppressWarnings(as.numeric(var_file$X1000g2015aug_eur))
+n_novel <- sum(is.na(af_eur))
+af_eur[is.na(af_eur)] <- 0
+var_file$af_eur <- af_eur
+message("Variants absent from 1000G (treated as novel, AF=0): ", n_novel)
 
-no_syn <- no_syn[order(no_syn$X1000g2015aug_eur),]
+is_rare      <- var_file$af_eur < 0.001
+in_cosmic    <- var_file$cosmic70 != "."
+is_upstream  <- var_file$Func.refGene == "upstream"
+not_synon    <- var_file$ExonicFunc.refGene != "synonymous SNV"
 
-table <- no_syn[which(no_syn$X1000g2015aug_eur < 0.001),c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp151","X1000g2015aug_eur","cosmic70","CLNSIG" )]
+keep <- (is_rare | in_cosmic | is_upstream) & not_synon
+no_syn <- var_file[which(keep), ]
+no_syn <- no_syn[order(no_syn$af_eur), ]
+message("Variants retained after filtering: ", nrow(no_syn), " of ", nrow(var_file))
+
+table <- no_syn[,c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp151","X1000g2015aug_eur","cosmic70","CLNSIG" )]
 
 var_list <- strsplit(table$AAChange.refGene[1],split = ":")
 alteration <- lapply(table$AAChange.refGene, function(x){

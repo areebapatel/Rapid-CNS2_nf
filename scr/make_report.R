@@ -31,7 +31,7 @@ option_list = list(
              help="mgmt prediction", metavar="character"),
   make_option(c("-a", "--methylartist"), type="character", default="false",
               help="methylartist mgmt plot", metavar="character"),
-  make_option(c("-b", "--promoter_mgmt_coverage"), type="integer", default=NULL,
+  make_option(c("-b", "--promoter_mgmt_coverage"), type="double", default=NULL,
               help="average coverage at mgmt promoter", metavar="character"),
   make_option(c("-g", "--igv_report"), type="character", default="false",
               help="IGV-report html output", metavar="character"),
@@ -60,7 +60,6 @@ mgmt <- opt$mgmt
 methylartist_plot <- opt$methylartist
 cov <- opt$promoter_mgmt_coverage
 igv_report <- opt$igv_report
-report_UKHD <- opt$report_UKHD
 software_ver <- opt$software_ver
 
 # Check if MGMT file exists
@@ -89,19 +88,24 @@ mgmt_too_low <- !file.exists(mgmt) && !file.exists(methylartist_plot)
 
 inc_igvreport = FALSE
 exc_igvreport = TRUE
-# lite version - HTML
-render(opt$report_HTML, 
-       output_format = "html_document", 
+# lite version - HTML (no embedded IGV report)
+render(opt$report_HTML,
+       output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"))
 
-# lite version - PDF
-render(opt$report_PDF, 
-       output_format = "pdf_document", 
-       output_file = paste0(prefix,"_Rapid-CNS2_report_lite.pdf"))
+# PDF. There is only one PDF variant: the IGV report is an interactive HTML
+# artefact and cannot be embedded in a PDF, so naming it "_lite" implied a
+# "_full" counterpart that never existed.
+render(opt$report_PDF,
+       output_format = "pdf_document",
+       output_file = paste0(prefix,"_Rapid-CNS2_report.pdf"))
 
-inc_igvreport = TRUE
-exc_igvreport = FALSE
-# full version - HTML
+# full version - HTML. Only embed the IGV report if it was actually produced.
+inc_igvreport = file.exists(igv_report)
+exc_igvreport = !inc_igvreport
+if (!inc_igvreport) {
+    message("No IGV report supplied - the full report will omit the IGV section.")
+}
 render(opt$report_HTML,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))

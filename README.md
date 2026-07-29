@@ -94,13 +94,29 @@ chmod +x *.pl
 
 # Create humandb directory and download databases
 mkdir humandb/
+
+# cytoBand is a UCSC track, so it is fetched WITHOUT -webfrom annovar.
+# Using -webfrom annovar for it silently fails.
+./annotate_variation.pl -buildver hg38 -downdb cytoBand humandb/
+
+# The rest are hosted by ANNOVAR
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/
-./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cytoBand humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar avsnp151 humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar 1000g2015aug humandb/
-./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cosmic70 humandb/
-./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp42c humandb/
+```
+
+The five databases above are the pipeline default (`params.annovarProtocol`) and
+all download freely. `1000g2015aug` unpacks into per-population files, so the
+`1000g2015aug_eur` protocol resolves to `hg38_EUR.sites.2015_08.txt`.
+
+Optionally, if you have access to them, add these to **both**
+`params.annovarProtocol` and `params.annovarOperation` (the two lists must stay
+the same length):
+
+```bash
+# cosmic70 requires a COSMIC licence; dbnsfp is ~30-40 GB
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp47a humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar allofus humandb/
 ```
 
@@ -297,6 +313,35 @@ If using whole genome sequencing data, the average coverage should be at least *
 - Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling))
 - Provide the resulting BAM(s) as input to this pipeline
 
+#### Optional helper script
+
+If you do not already have a modified-base BAM, `scr/basecall.sh` wraps Dorado
+for one run/flow cell and writes a modBAM that can be passed straight to
+`--input`. It is a convenience only and is not part of the pipeline.
+
+```bash
+# aligned modBAM, ready for the pipeline
+scr/basecall.sh \
+    --pod5 /data/run1/pod5 \
+    --sample SAMPLE001 \
+    --outdir /results/dorado \
+    --ref /path/to/hg38.fa
+
+# submit to LSF with 4 GPUs (adjust for your scheduler)
+bsub -q gpu -n 16 -R "rusage[mem=96GB] span[hosts=1]" \
+     -gpu num=4:j_exclusive=yes:gmem=16G \
+     scr/basecall.sh --pod5 /data/run1/pod5 --sample SAMPLE001 \
+                     --outdir /results/dorado --ref /path/to/hg38.fa
+```
+
+Defaults are the `hac` model with `5mCG_5hmCG` modified bases; pass `--model sup`
+for the super-accurate model. Omitting `--ref` produces an unaligned modBAM,
+which the pipeline will align itself. Large flow cells can exceed a scheduler
+wall-clock limit, so the script is resume-capable: re-running the identical
+command continues from where it stopped via Dorado's `--resume-from`, and the
+final `<sample>.bam` only appears once Dorado exits cleanly. Run
+`scr/basecall.sh --help` for all options.
+
 ### Input options
 
 The pipeline accepts:
@@ -448,7 +493,7 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
    The pipeline creates MNP-Flex compatible files in:
    ```
    ${outDir}/mnpflex/
-   └── ${id}.MNPFlex.subset.bed
+   └── ${id}.MNPFlex.input.bed
    ```
 
 3. **Upload to MNP-Flex:**
@@ -463,7 +508,7 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
 
 #### Output files
 
-- **`${id}.MNPFlex.subset.bed`:** Methylation data in MNP-Flex compatible format
+- **`${id}.MNPFlex.input.bed`:** Methylation data in MNP-Flex compatible format
 
 **Note:** MNP-Flex analysis is performed externally on the mnp-flex.org platform. The pipeline only prepares the input files. For detailed information about MNP-Flex, visit [mnp-flex.org](https://mnp-flex.org).
 

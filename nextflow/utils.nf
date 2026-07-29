@@ -1,84 +1,26 @@
-process gzip {
-    input:
-        path(input_file)
-
-    output:
-        path "*.gz", emit: compressed_out
-
-    script:
-        """
-        pigz \
-        -1 \
-        -c \
-        ${input_file} \
-        > ${input_file}.gz
-        """
-}
-
-process vcf_intersect {
-    input:
-        path(input1)
-        path(input2)
-        val(output_file)
-
-    output:   
-        path "*.vcf", emit: intersect_vcf
-        
-    script:
-        """
-        bedtools \
-        intersect \
-        -a ${input1} \
-        -b ${input2} > ${output_file}.vcf
-        """
-}
-
-process bedmethyl_intersect {
-    input:
-        val(input1) // filtered bedmethyl file from filter to just 5mC
-        path(input2)
-        val(out_dir)
-        val(output_file)
-        val(id)
-
-    publishDir("${out_dir}")
-
-    output:   
-        path "*.bed", emit: intersect_bed
-        
-    script:
-        """
-        bedtools \
-        intersect \
-        -a ${input1} \
-        -b ${input2} > ${output_file}.bed
-        """
-}
-
 process mosdepth {
     label 'rapid_cns'
 
+    publishDir "${params.outDir}/coverage/", mode: 'copy'
+
     input:
-        val(threads)
+        tuple path(bam), path(bai)
         path(panel)
-        path(bam)
-        path(bai)
         val(id)
-        
-    publishDir("${params.outDir}/coverage")
-	
+        val(threads)
+
     output:
-        path "*.mosdepth.summary.txt", emit: mosdepthOut
+        path "${id}.mosdepth.summary.txt", emit: summary
+        path "${id}.regions.bed.gz",       optional: true
 
     script:
         """
         mosdepth \
-        -t ${threads} \
-        -n \
-        --by ${panel} \
-        --fast-mode \
-        ${id} \
-        ${bam}
+            -t ${threads} \
+            -n \
+            --by ${panel} \
+            --fast-mode \
+            ${id} \
+            ${bam}
         """
 }
-
