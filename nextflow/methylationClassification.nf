@@ -33,7 +33,8 @@ process methylationClassification {
         """
 }
 
-// Prepares the input file for the external MNP-Flex classifier (mnp-flex.org)
+// Prepares the input file for the external MNP-Flex classifier.
+// Upload the resulting BED at https://app.epignostix.com
 process mnpFlex {
     label 'rapid_cns'
 
