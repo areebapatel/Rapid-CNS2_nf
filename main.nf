@@ -5,7 +5,8 @@
 // nextflow run epi2me-labs/wf-basecalling ...
 // and provide the resulting BAM files as input to this pipeline.
 nextflow.enable.dsl = 2
-software_version = "3.0.0"
+// single source of truth: manifest.version in nextflow.config
+software_version = workflow.manifest.version
 
 // Display startup message
 log.info """

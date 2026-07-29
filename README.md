@@ -263,7 +263,7 @@ Every container is version-pinned; none use `:latest`.
 
 | Label | Image | Provides |
 |-------|-------|----------|
-| `rapid_cns` | `areebapatel/rapid_cns:3.0.0` | samtools, bedtools, vcftools, dorado, mosdepth, CNVpytor, Sniffles2, methylartist, igv-reports, AnnotSV (code), R stack |
+| `rapid_cns` | `areebapatel/rapid_cns:3.0.1` | samtools, bedtools, vcftools, dorado, mosdepth, CNVpytor, Sniffles2, methylartist, igv-reports, AnnotSV (code), R stack |
 | `mods` | `quay.io/biocontainers/ont-modkit:0.6.4--h7f49ad2_0` | modkit |
 | `clair3` | `hkubal/clair3:v2.0.2` | Clair3 and its bundled ONT models |
 | `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |

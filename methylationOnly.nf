@@ -1,7 +1,8 @@
 #!/usr/bin/env nextflow
 
 nextflow.enable.dsl = 2
-software_version = "3.0.0"
+// single source of truth: manifest.version in nextflow.config
+software_version = workflow.manifest.version
 
 // Display startup message
 log.info """
