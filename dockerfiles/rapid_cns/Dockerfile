@@ -66,7 +66,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8 \
-    MPLCONFIGDIR=/tmp/matplotlib \
     CONDA_DIR=/opt/conda \
     MAMBA_ROOT_PREFIX=/opt/mamba
 
@@ -140,6 +139,17 @@ RUN curl -fsSL "https://cdn.oxfordnanoportal.com/software/analysis/dorado-${DORA
 # all 73 bundled libs on its own. Exporting that directory globally would put
 # dorado's bundled libstdc++ and CUDA libs ahead of the system ones for every
 # other binary in the image (R, python, samtools).
+
+# --- CNVpytor reference resources -------------------------------------------
+# `cnvpytor -download` is broken in 1.3.2, and CNVpytor requires the files for
+# every reference genome it knows about, not just the one in use.
+RUN CNVDIR=$(python3 -c "import cnvpytor,os;print(os.path.join(os.path.dirname(cnvpytor.__file__),'data'))") \
+    && for f in gc_hg19.pytor mask_hg19.pytor gc_hg38.pytor mask_hg38.pytor \
+                gc_chm13v2.0.pytor gc_chm13v1.1.pytor gc_kn99.pytor; do \
+         curl -fsSL -o "$CNVDIR/$f" \
+           "https://github.com/abyzovlab/CNVpytor/raw/master/cnvpytor/data/$f"; \
+       done \
+    && python3 -c "from cnvpytor.genome import Genome; assert Genome.check_resources()"
 
 # --- mosdepth ---------------------------------------------------------------
 RUN wget -qO /usr/local/bin/mosdepth \

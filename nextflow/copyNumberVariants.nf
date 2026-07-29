@@ -1,6 +1,10 @@
 process copyNumberVariants {
     label 'heavy'
 
+    // see params.cnvpytorData
+    containerOptions = { params.cnvpytorData
+        ? "-B ${params.cnvpytorData}:/opt/conda/lib/python3.12/site-packages/cnvpytor/data" : '' }
+
     publishDir "${params.outDir}/cnv/", mode: 'copy'
 
     input:
@@ -17,6 +21,8 @@ process copyNumberVariants {
     script:
         def chroms = (1..22).collect { n -> "chr${n}" }.join(' ') + ' chrX chrY'
         """
+        export MPLCONFIGDIR=\$PWD/.mpl && mkdir -p \$MPLCONFIGDIR
+
         cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${task.cpus}
         cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${task.cpus}
         cnvpytor -root ${id}_CNV.pytor -partition 1000 10000 100000 -j ${task.cpus}
