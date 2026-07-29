@@ -24,7 +24,9 @@
 #   --ref      <fasta>  Reference FASTA. If given, dorado aligns during
 #                       basecalling and the pipeline can consume the BAM
 #                       directly. If omitted, an unaligned modBAM is written
-#                       and Rapid-CNS2_nf will align it itself.
+#                       and Rapid-CNS2_nf will align it itself. With --ref the
+#                       output is also coordinate-sorted and indexed, so the
+#                       pipeline skips its own sort.
 #   --model    <name>   Dorado model (default: hac). Use 'sup' for the
 #                       super-accurate model, or pass an explicit path.
 #   --mods     <codes>  Modified bases (default: 5mCG_5hmCG)
@@ -33,6 +35,8 @@
 #                       job re-downloading, and lets jobs run on nodes
 #                       without internet access.
 #   --device   <spec>   Dorado device (default: cuda:all)
+#   --threads  <n>      Threads for sorting/indexing (default: 16)
+#   --sort-mem <size>   samtools sort memory per thread (default: 3G)
 #
 # Example - single run:
 #   scr/basecall.sh --pod5 /data/run1/pod5 --sample S001 \
@@ -58,6 +62,7 @@ set -euo pipefail
 
 POD5_DIR=""; SAMPLE=""; OUTROOT=""; REF=""
 MODEL="hac"; MODS="5mCG_5hmCG"; MODELS_DIR=""; DEVICE="cuda:all"
+THREADS=16; SORT_MEM="3G"
 
 usage() { sed -n '2,60p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
@@ -71,6 +76,8 @@ while [ $# -gt 0 ]; do
         --mods)        MODS="$2"; shift 2 ;;
         --models-dir)  MODELS_DIR="$2"; shift 2 ;;
         --device)      DEVICE="$2"; shift 2 ;;
+        --threads)     THREADS="$2"; shift 2 ;;
+        --sort-mem)    SORT_MEM="$2"; shift 2 ;;
         -h|--help)     usage 0 ;;
         *) echo "Unknown argument: $1" >&2; usage 1 ;;
     esac
@@ -84,6 +91,11 @@ done
 command -v dorado >/dev/null 2>&1 || {
     echo "ERROR: dorado not found on PATH." >&2
     echo "Install it, or load it first (e.g. 'module load dorado/2.0.0')." >&2
+    exit 1
+}
+
+[ -z "${REF}" ] || command -v samtools >/dev/null 2>&1 || {
+    echo "ERROR: samtools not found on PATH (needed to sort the aligned output)." >&2
     exit 1
 }
 
@@ -105,6 +117,8 @@ if [ -f "${OUTDIR}/${SAMPLE}.bam" ]; then
     echo "${OUTDIR}/${SAMPLE}.bam already exists - nothing to do."
     exit 0
 fi
+
+rm -f "${OUTDIR}/${SAMPLE}.sorting.bam" "${OUTDIR}/${SAMPLE}.sorting.bam.bai"
 
 # Resume from the newest completed part, if there is one
 PREV=$(ls -1t "${OUTDIR}/${SAMPLE}".part*.bam 2>/dev/null | head -n 1 || true)
@@ -134,8 +148,16 @@ dorado basecaller \
     "${RESUME_ARG[@]}" \
     > "${OUT}"
 
-# dorado exited cleanly -> promote to the final name and drop intermediate parts
-mv "${OUT}" "${OUTDIR}/${SAMPLE}.bam"
+# Sort after dorado exits, not piped into it: samtools sort writes only at the
+# end, so a piped run killed at the wall clock leaves nothing to --resume-from.
+if [ -n "${REF}" ]; then
+    samtools sort -@ "${THREADS}" -m "${SORT_MEM}" -o "${OUTDIR}/${SAMPLE}.sorting.bam" "${OUT}"
+    samtools index -@ "${THREADS}" "${OUTDIR}/${SAMPLE}.sorting.bam"
+    mv "${OUTDIR}/${SAMPLE}.sorting.bam"     "${OUTDIR}/${SAMPLE}.bam"
+    mv "${OUTDIR}/${SAMPLE}.sorting.bam.bai" "${OUTDIR}/${SAMPLE}.bam.bai"
+else
+    mv "${OUT}" "${OUTDIR}/${SAMPLE}.bam"
+fi
 rm -f "${OUTDIR}/${SAMPLE}".part*.bam
 
 echo "=================================================================="
