@@ -74,12 +74,15 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # The R graphics stack (fontconfig/freetype/harfbuzz/fribidi/png/tiff/jpeg) is
 # required by systemfonts -> svglite -> kableExtra; omitting it makes those
 # packages fail to configure.
+# libuv1-dev: required by R package 'fs' (dependency of sass/bslib/rmarkdown)
+# libmagick++-dev: required by R package 'magick' (optional but pulled by kableExtra deps)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential ca-certificates curl git gnupg locales pandoc wget \
         bzip2 \
         libcurl4-openssl-dev libssl-dev libxml2-dev zlib1g-dev \
         libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev \
         libpng-dev libtiff5-dev libjpeg-dev \
+        libuv1-dev libmagick++-dev \
     && locale-gen en_US.UTF-8 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -162,14 +165,37 @@ ENV PATH=/opt/AnnotSV/bin:$PATH
 # CRAN, so devtools and its large dependency tree are gone.
 # glmnet is required for the serialised model to load even though no glmnet
 # function is called directly - do not remove it.
-RUN R -e "options(repos = c(CRAN = '${CRAN_SNAPSHOT}')); \
-      install.packages(c( \
-        'optparse','ranger','matrixStats','data.table','glmnet', \
-        'rmarkdown','knitr','kableExtra','ggplot2','reshape2', \
-        'base64enc','xfun','BiocManager' \
-      ), Ncpus = parallel::detectCores())" \
+RUN R -e "req <- c( \
+                'optparse','ranger','matrixStats','data.table','glmnet', \
+                'rmarkdown','knitr','kableExtra','ggplot2','reshape2', \
+                'base64enc','xfun','BiocManager' \
+            ); \
+            options(repos = c(CRAN = '${CRAN_SNAPSHOT}')); \
+            install.packages(req, Ncpus = 1, dependencies = TRUE); \
+            miss <- req[!sapply(req, requireNamespace, quietly = TRUE)]; \
+            if (length(miss)) { \
+                message('Retrying missing packages from CRAN snapshot: ', paste(miss, collapse=', ')); \
+                install.packages(miss, Ncpus = 1, dependencies = TRUE); \
+            }; \
+            miss2 <- req[!sapply(req, requireNamespace, quietly = TRUE)]; \
+            if (length(miss2)) { \
+                options(repos = c(CRAN = 'https://cloud.r-project.org')); \
+                message('Falling back to live CRAN for: ', paste(miss2, collapse=', ')); \
+                install.packages(miss2, Ncpus = 1, dependencies = TRUE); \
+            }; \
+            miss3 <- req[!sapply(req, requireNamespace, quietly = TRUE)]; \
+            if (length(miss3)) stop('Failed to install required R packages: ', paste(miss3, collapse=', '))" \
  && R -e "options(repos = c(CRAN = '${CRAN_SNAPSHOT}')); \
-      BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)"
+     BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)" \
+ && R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); \
+     post <- c('rmarkdown','kableExtra'); \
+     miss <- post[!sapply(post, requireNamespace, quietly = TRUE)]; \
+     if (length(miss)) { \
+        message('Post-Bioc reinstall for: ', paste(miss, collapse=', ')); \
+        install.packages(miss, Ncpus = 1, dependencies = TRUE); \
+     }; \
+     miss2 <- post[!sapply(post, requireNamespace, quietly = TRUE)]; \
+     if (length(miss2)) stop('Post-Bioc package check failed: ', paste(miss2, collapse=', '))"
 
 # --- logos used by the report templates -------------------------------------
 RUN mkdir -p /opt/logos
