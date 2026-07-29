@@ -169,7 +169,7 @@ nextflow run main.nf \
     --input /data/sample.bam \
     --id SAMPLE001 \
     --outDir ./results \
-    -profile lsf
+    -profile lsf,singularity
 ```
 
 #### Advanced run
@@ -182,8 +182,7 @@ nextflow run main.nf \
     --minimumMgmtCov 10 \
     --mnpFlex true \
     --runHumanVariation true \
-    --containerEngine singularity \
-    -profile slurm
+    -profile slurm,singularity
 ```
 
 ## Methylation-Only Pipeline
@@ -233,7 +232,7 @@ nextflow run methylationOnly.nf \
     --methThreads 128 \
     --mgmtThreads 16 \
     --mnpFlex \
-    -profile lsf
+    -profile lsf,singularity
 ```
 
 ### Parameters
@@ -451,6 +450,7 @@ graph TD
 | `--bamMinCoverage` | Minimum coverage threshold for human variation workflow. | `10` | `--bamMinCoverage 15` |
 | `--mnpFlex` | Enable MNP-Flex classifier input preparation. Creates files needed for external MNP-Flex analysis. | `true` | `--mnpFlex false` |
 | `--snifflesNonGermline` | Run Sniffles2 in somatic mode (`--non-germline`). Input is tumour-only, so this is on by default. | `true` | `--snifflesNonGermline false` |
+| `--publishBam` | Publish the prepared full-flow-cell BAM. It is >150 GB and reproducible from the input, so it is not copied into the results by default. The panel subset BAM is always published. | `false` | `--publishBam true` |
 | `--runHumanVariation` | Enable wf-human-variation SNP and SV pipeline. Adds additional variant calling workflows. | `false` | `--runHumanVariation true` |
 
 #### Variant calling tool parameters
@@ -476,7 +476,6 @@ To add `cosmic70` (needs a COSMIC licence), `dbnsfp47a` or `allofus`, append to
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
-| `--containerEngine` | Container engine to use: 'docker' or 'singularity'. | `docker` | `--containerEngine singularity` |
 | `--containerBindPaths` | Comma-separated host paths to bind into containers. Singularity only auto-mounts the work directory, so reference genome, ANNOVAR and AnnotSV paths outside it **must** be listed here or they will be invisible inside the container. | `/b06x-isilon,/omics` | `--containerBindPaths /data,/refs` |
 | `--seq` | Sequencer platform identifier. Set to `false` to auto-detect from the BAM header. | `P2S` | `--seq F` |
 
@@ -558,7 +557,7 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
        --input /data/sample.bam \
        --id SAMPLE001 \
        --mnpFlex true \
-       -profile lsf
+       -profile lsf,singularity
    ```
 
 2. **Locate the output files:**

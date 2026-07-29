@@ -125,21 +125,26 @@ if (params.help) {
        --bamMinCoverage       Minimum coverage for human variation workflow [default: 10]
        --snifflesNonGermline  Run Sniffles2 in somatic mode [default: true]
        --mnpFlex              Enable MNP-Flex classifier input preparation [default: true]
+       --publishBam           Publish the prepared full-flow-cell BAM (>150 GB)
+                              [default: false]
        --runHumanVariation    Enable wf-human-variation SNP and SV pipeline [default: false]
 
    CONTAINER PARAMETERS:
-       --containerEngine  Container engine: 'docker' or 'singularity' [default: docker]
        --seq              Sequencer platform identifier [default: P2S, 'false' to auto-detect]
 
-   PROFILES:
+   PROFILES (combine one scheduler with one container engine):
        -profile lsf       Use LSF cluster scheduler
        -profile slurm     Use SLURM cluster scheduler
        -profile local     Use local execution
+       -profile singularity   Run tasks with Singularity/Apptainer
+       -profile docker        Run tasks with Docker
+
+       e.g.  -profile lsf,singularity
 
    EXAMPLES:
 
    Basic run:
-       nextflow run main.nf --input /data/sample.bam --id SAMPLE001 -profile lsf
+       nextflow run main.nf --input /data/sample.bam --id SAMPLE001 -profile lsf,singularity
 
 
    ================================================================================

@@ -3,9 +3,19 @@
 // time from the actual data rather than from a Groovy flag that is evaluated
 // before the check has run.
 process prepareBam {
-    label 'rapid_cns'
+    label 'bamprep'
 
-    publishDir "${params.outDir}/bam/", mode: 'copy'
+    // The prepared BAM is a full flow cell (>150 GB) and is reproducible from
+    // the input, so it is NOT published by default - a copy would double the
+    // footprint. Enable with --publishBam when you want it on disk.
+    publishDir enabled: params.publishBam,
+               path:    "${params.outDir}/bam/",
+               pattern: "*.bam",
+               mode:    'copy'
+    publishDir enabled: params.publishBam,
+               path:    "${params.outDir}/bam/",
+               pattern: "*.bam.bai",
+               mode:    'copy'
 
     input:
         path(bams, stageAs: 'input/*')
@@ -16,28 +26,43 @@ process prepareBam {
     output:
         tuple path("${id}.bam"), path("${id}.bam.bai"), emit: bam
 
+    // Use task.cpus/task.memory rather than params.maxThreads: the scheduler
+    // allocation is what actually constrains this step. samtools sort defaults
+    // to 768M per thread, so -@64 would try to reserve ~49 GB and be OOM-killed.
     script:
+        def sortMem = Math.max(1, (int)(task.memory.toGiga() * 0.6 / task.cpus))
         """
         BAMS=(input/*.bam)
         echo "Found \${#BAMS[@]} input BAM file(s)"
+        echo "Allocation: ${task.cpus} cpus, ${task.memory} (sort: -@${task.cpus} -m ${sortMem}G)"
 
-        # Modified-base tags must be present; fail early with actionable guidance.
-        samtools view -@${threads} "\${BAMS[0]}" 2>/dev/null | head -n 100000 > tagcheck.sam || true
-        if ! grep -q 'MM:Z' tagcheck.sam; then
+        # One pass over the head of the first BAM answers both questions:
+        # are modified-base tags present, and is the data already aligned?
+        # A full 'samtools view -c -F 4' would scan the entire file.
+        samtools view -@${task.cpus} "\${BAMS[0]}" 2>view.err | head -n 100000 > head.sam || true
+
+        if [ ! -s head.sam ]; then
+            echo "ERROR: could not read any records from \${BAMS[0]}." >&2
+            echo "samtools said:" >&2; cat view.err >&2
+            exit 1
+        fi
+
+        if ! grep -q 'MM:Z' head.sam; then
             echo "ERROR: no methylation tags (MM:Z) found in \${BAMS[0]}." >&2
             echo "Re-run basecalling with modified bases enabled:" >&2
             echo "  https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling" >&2
             exit 1
         fi
-        rm -f tagcheck.sam
 
-        ALIGNED=\$(samtools view -@${threads} -c -F 4 "\${BAMS[0]}")
-        echo "First input BAM has \${ALIGNED} aligned reads"
+        # column 3 is RNAME; '*' means unmapped
+        MAPPED=\$(awk '\$3 != "*"' head.sam | wc -l)
+        rm -f head.sam view.err
+        echo "Sampled 100000 reads, \${MAPPED} mapped"
 
-        if [ "\${ALIGNED}" -le 2 ]; then
+        if [ "\${MAPPED}" -le 2 ]; then
             echo "Input is unaligned - running dorado aligner"
             mkdir -p aligned
-            dorado aligner ${ref} input/ --output-dir aligned --threads ${threads}
+            dorado aligner ${ref} input/ --output-dir aligned --threads ${task.cpus}
             OUT=(aligned/*.bam)
         else
             echo "Input is already aligned - skipping alignment"
@@ -46,22 +71,30 @@ process prepareBam {
 
         if [ "\${#OUT[@]}" -gt 1 ]; then
             samtools cat -o cat.bam "\${OUT[@]}"
-            samtools sort -@${threads} -o ${id}.bam cat.bam
+            samtools sort -@${task.cpus} -m ${sortMem}G -o ${id}.bam cat.bam
             rm -f cat.bam
         elif samtools view -H "\${OUT[0]}" | head -n 1 | grep -q 'SO:coordinate'; then
+            echo "Already coordinate-sorted - no re-sort needed"
             cp "\${OUT[0]}" ${id}.bam
         else
-            samtools sort -@${threads} -o ${id}.bam "\${OUT[0]}"
+            samtools sort -@${task.cpus} -m ${sortMem}G -o ${id}.bam "\${OUT[0]}"
         fi
 
-        samtools index -@${threads} ${id}.bam
+        samtools index -@${task.cpus} ${id}.bam
         """
 }
 
 process subsetBam {
     label 'rapid_cns'
 
-    publishDir "${params.outDir}/bam/", mode: 'copy'
+    // Panel subset is far smaller than the full BAM and is useful for review
+    // (it backs the IGV report), so this one is published by default.
+    publishDir path:    "${params.outDir}/bam/",
+               pattern: "*.bam",
+               mode:    'copy'
+    publishDir path:    "${params.outDir}/bam/",
+               pattern: "*.bam.bai",
+               mode:    'copy'
 
     input:
         tuple path(bam), path(bai)
