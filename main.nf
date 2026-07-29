@@ -103,9 +103,13 @@ if (params.help) {
        --patient          Patient name for reports [default: uses --id value]
 
    RESOURCE PARAMETERS:
-       CPU and memory come from the per-label settings in nextflow.config
-       (see the profiles section); each tool is given task.cpus, so there are
-       no separate per-tool thread parameters to keep in sync.
+       --maxCpus          Never request more CPUs than this for any one process
+                          [default: 64]
+       --maxMemory        Never request more memory (GB) than this [default: 96]
+
+       Each tool is given task.cpus, so there are no per-tool thread
+       parameters. Lower the two ceilings to run on smaller machines, e.g.
+       --maxCpus 8 --maxMemory 32
 
    TOOL PARAMETERS:
        --clair3Model      Clair3 model [default: auto-detected from the BAM's

@@ -396,9 +396,25 @@ graph TD
 #### Resource parameters
 
 CPU and memory are set per process label in `nextflow.config`, and each tool is
-given `task.cpus`. There are no separate per-tool thread parameters, so an
-allocation and a tool's thread count can never disagree. See
-[Profile-specific parameters](#profile-specific-parameters) for the table.
+given `task.cpus`, so an allocation and a tool's thread count can never
+disagree.
+
+Every request is capped by two parameters, so the pipeline runs on smaller
+machines without editing any config:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--maxCpus` | Ceiling on CPUs for any single process | `64` |
+| `--maxMemory` | Ceiling on memory in GB for any single process | `96` |
+
+```bash
+# e.g. an 8-core workstation
+nextflow run main.nf ... --maxCpus 8 --maxMemory 32 -profile local,singularity
+```
+
+Without a cap, an oversized request is a hard error rather than a slow run
+(`Process requirement exceeds available CPUs`). For finer control, override
+individual labels with your own `-c custom.config`.
 
 #### Variant calling tool parameters
 
