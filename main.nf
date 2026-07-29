@@ -101,6 +101,7 @@ if (params.help) {
    OUTPUT PARAMETERS:
        --outDir           Output directory for all results [default: output]
        --patient          Patient name for reports [default: uses --id value]
+       --email            Email a summary when the run finishes or fails
 
    RESOURCE PARAMETERS:
        --maxCpus          Never request more CPUs than this for any one process
@@ -326,10 +327,33 @@ workflow {
 }
 
 workflow.onComplete {
-    if(workflow.success) {
-    println ( "The Rapid-CNS2 workflow is now complete!\n Your outputs are located in : " + params.outDir )
+    if (workflow.success) {
+        println "The Rapid-CNS2 workflow is now complete!\n Your outputs are located in : ${params.outDir}"
+    } else {
+        println "Oops .. something went wrong, please look into the log file, and error messages into ${workflow.workDir}"
     }
-    else {
-    println ( "Oops .. something went wrong, please look into the log file, and error messages into " + workDir )
+
+    // Notify if --email is given. Done here rather than in the notification{}
+    // config block, which is evaluated before --params are merged.
+    if (!params.email) return
+    def ok = workflow.success
+    try {
+        sendMail(
+            to: params.email,
+            subject: "Rapid-CNS2 ${ok ? 'complete' : 'FAILED'} - ${params.id}",
+            body: """\
+            Sample   : ${params.id}
+            Status   : ${ok ? 'success' : 'failed'}
+            Duration : ${workflow.duration}
+            Command  : ${workflow.commandLine}
+            Results  : ${params.outDir}
+            Work dir : ${workflow.workDir}
+            ${ok ? '' : '\n' + (workflow.errorMessage ?: '') + '\n\n' + (workflow.errorReport ?: '')}
+            """.stripIndent()
+        )
+        println "Notification sent to ${params.email}"
+    }
+    catch (Exception e) {
+        println "Could not send notification email: ${e.message}"
     }
 }
