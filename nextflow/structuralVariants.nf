@@ -40,8 +40,8 @@ process severus {
     input:
         tuple path(bam), path(bai)
         val(id)
-        path(vntrBed, stageAs: 'severus_vntr')
-        path(pon,     stageAs: 'severus_pon')
+        path(vntrBed, stageAs: 'severus_vntr.bed')
+        path(pon,     stageAs: 'severus_pon.tsv.gz')
 
     output:
         path "severus_${id}/**", emit: allOutputs
@@ -50,9 +50,9 @@ process severus {
     script:
         """
         VNTR_ARG=""
-        if [ -s severus_vntr ]; then VNTR_ARG="--vntr-bed severus_vntr"; fi
+        if [ -s severus_vntr.bed ]; then VNTR_ARG="--vntr-bed severus_vntr.bed"; fi
         PON_ARG=""
-        if [ -s severus_pon ];  then PON_ARG="--PON severus_pon"; fi
+        if [ -s severus_pon.tsv.gz ];  then PON_ARG="--PON severus_pon.tsv.gz"; fi
 
         severus \
             --target-bam ${bam} \
