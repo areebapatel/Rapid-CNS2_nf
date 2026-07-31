@@ -395,8 +395,6 @@ what the scheduler allocated.
 
 ## 📦 Containers
 
-Every container is version-pinned; none use `:latest`.
-
 | Label | Image | Provides |
 |-------|-------|----------|
 | `rapid_cns` | `areebapatel/rapid_cns:3.0.2` | samtools, bedtools, vcftools, dorado, mosdepth, CNVpytor, Sniffles2, methylartist, igv-reports, AnnotSV (code), R stack |
@@ -502,9 +500,6 @@ A major update that modernises the toolchain and fixes a number of bugs.
 - **Bug fixes** across variant filtering, methylation classification, MGMT
   prediction and report rendering. The report is now HTML only; the PDF variant
   has been dropped.
-- **Easier to run elsewhere:** site paths are validated at startup,
-  `--maxCpus`/`--maxMemory` cap resource requests so the pipeline runs on
-  smaller machines, and every container image is version-pinned.
 
 Note that the structural variant, SAVANA copy number and gene-level CNV outputs
 are written to disk but are not yet included in the rendered report.
