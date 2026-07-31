@@ -76,6 +76,8 @@ print("Load array")
 #Load hg38 450K array sites 
 genome(cur38) <- "hg38"
 load(opt$array_file)
+# the stored manifest predates the current GRanges class definition
+hm450 <- updateObject(hm450)
 load(opt$probes_file)
 #Identify overlaps with 450K array CpG probes
 print("Identify overlaps")
