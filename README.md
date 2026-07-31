@@ -14,6 +14,19 @@ The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designe
 
 This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
 
+**Contents:**
+[Features](#-features) ·
+[Requirements](#-requirements) ·
+[Quick start](#-quick-start) ·
+[Input requirements](#-input-requirements) ·
+[Pipeline structure](#-pipeline-structure) ·
+[Parameters](#-parameters) ·
+[Containers](#-containers) ·
+[Output](#-output) ·
+[Changelog](#-changelog) ·
+[Citation](#-citation) ·
+[License](#-license)
+
 ## ✨ Features
 
 - **Modular architecture** for easy customization and extension
@@ -242,7 +255,7 @@ The pipeline accepts:
 - **Directory with aligned BAM files:** Path to directory containing multiple aligned BAM files (will be merged automatically)
 - **Directory with unaligned BAM files:** Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
 
-## 🗺️ Pipeline structure
+## 🧭 Pipeline structure
 
 ```mermaid
 graph TD
@@ -266,7 +279,7 @@ graph TD
 SNV calling is restricted to the NPHD panel BED; SV, CNV and methylation run on
 the full BAM.
 
-## ⚙️ Parameters
+## 🧰 Parameters
 
 ### Required parameters
 
@@ -515,6 +528,6 @@ platform for rapid molecular profiling of central nervous system tumors.
 }
 ```
 
-## ⚖️ License
+## 📄 License
 
 This project is licensed under the [Apache License 2.0](LICENSE).
