@@ -21,9 +21,9 @@ process reportRendering {
         path(coverage)
         // distinct staged names: all three fall back to the same NO_FILE
         // placeholder, which Nextflow cannot stage more than once per task
-        path(mgmtStatus, stageAs: 'opt_mgmt_status')
-        path(mgmtPlot,   stageAs: 'opt_mgmt_plot')
-        path(igvReport,  stageAs: 'opt_igv_report')
+        path(mgmtStatus, stageAs: 'opt_mgmt_status.csv')
+        path(mgmtPlot,   stageAs: 'opt_mgmt_plot.png')
+        path(igvReport,  stageAs: 'opt_igv_report.html')
         val(mgmtAvgCov)
 
     output:
@@ -55,22 +55,22 @@ process reportRendering {
 
         # Optional inputs arrive as an empty placeholder file when not produced
         MGMT_ARG=""
-        if [ -s opt_mgmt_status ]; then
-            MGMT_ARG="--mgmt opt_mgmt_status"
+        if [ -s opt_mgmt_status.csv ]; then
+            MGMT_ARG="--mgmt opt_mgmt_status.csv"
         else
             echo "Info: no MGMT status file (coverage below threshold) - omitting --mgmt"
         fi
 
         METHYLARTIST_ARG=""
-        if [ -s opt_mgmt_plot ]; then
-            METHYLARTIST_ARG="--methylartist opt_mgmt_plot"
+        if [ -s opt_mgmt_plot.png ]; then
+            METHYLARTIST_ARG="--methylartist opt_mgmt_plot.png"
         else
             echo "Info: no methylartist plot (coverage below threshold) - omitting --methylartist"
         fi
 
         IGV_ARG=""
-        if [ -s opt_igv_report ]; then
-            IGV_ARG="--igv_report opt_igv_report"
+        if [ -s opt_igv_report.html ]; then
+            IGV_ARG="--igv_report opt_igv_report.html"
         else
             echo "Info: no IGV report - omitting --igv_report"
         fi
