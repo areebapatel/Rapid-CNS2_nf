@@ -40,7 +40,7 @@
 # =============================================================================
 FROM --platform=linux/amd64 ubuntu:22.04
 
-LABEL version="3.0.1"
+LABEL version="3.0.2"
 LABEL maintainer="Areeba Patel <a.patel@dkfz.de>"
 LABEL description="Rapid-CNS2: alignment, coverage, CNV, SV, methylation and reporting"
 
@@ -198,7 +198,9 @@ RUN R -e "req <- c( \
             miss3 <- req[!sapply(req, requireNamespace, quietly = TRUE)]; \
             if (length(miss3)) stop('Failed to install required R packages: ', paste(miss3, collapse=', '))" \
  && R -e "options(repos = c(CRAN = '${CRAN_SNAPSHOT}')); \
-     BiocManager::install('GenomicRanges', ask = FALSE, update = FALSE)" \
+     bioc <- c('GenomeInfoDb','GenomicRanges'); \
+     BiocManager::install(bioc, ask = FALSE, update = FALSE); \
+     for (p in bioc) library(p, character.only = TRUE)" \
  && R -e "options(repos = c(CRAN = 'https://cloud.r-project.org')); \
      post <- c('rmarkdown','kableExtra'); \
      miss <- post[!sapply(post, requireNamespace, quietly = TRUE)]; \
@@ -223,10 +225,11 @@ RUN set -e; \
     python3 -c "import pandas, openpyxl, cnvpytor"; \
     dorado --version >/dev/null 2>&1 || { echo "dorado cannot resolve its libraries" >&2; exit 1; }; \
     R -e "pkgs <- c('optparse','rmarkdown','kableExtra','knitr','ranger','ggplot2', \
-                    'matrixStats','data.table','glmnet','GenomicRanges','reshape2', \
-                    'base64enc','xfun'); \
-          miss <- pkgs[!sapply(pkgs, requireNamespace, quietly = TRUE)]; \
-          if (length(miss)) stop('Missing R packages: ', paste(miss, collapse=', ')); \
+                    'matrixStats','data.table','glmnet','GenomicRanges','GenomeInfoDb', \
+                    'reshape2','base64enc','xfun'); \
+          ok <- sapply(pkgs, function(p) \
+                    isTRUE(suppressMessages(require(p, character.only = TRUE, quietly = TRUE)))); \
+          if (any(!ok)) stop('R packages that fail to load: ', paste(pkgs[!ok], collapse=', ')); \
           cat('All required R packages present\n')"; \
     echo "=== container verification passed ==="
 
