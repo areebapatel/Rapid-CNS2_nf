@@ -17,7 +17,8 @@ process copyNumberVariants {
     script:
         def chroms = (1..22).collect { n -> "chr${n}" }.join(' ') + ' chrX chrY'
         """
-        export MPLCONFIGDIR=\$PWD/.mpl && mkdir -p \$MPLCONFIGDIR
+        export TMPDIR="\$PWD" MPLCONFIGDIR="\$PWD/.mpl" XDG_CACHE_HOME="\$PWD/.cache"
+        mkdir -p "\$MPLCONFIGDIR" "\$XDG_CACHE_HOME"
 
         cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${task.cpus}
         cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${task.cpus}
@@ -75,6 +76,12 @@ process savanaTo {
 
     script:
         """
+        # LSF exports a node-local TMPDIR that does not exist inside the
+        # container; savana's final bcftools sort fails on it. XDG_CACHE_HOME
+        # keeps fontconfig out of the (unwritable) home directory.
+        export TMPDIR="\$PWD" MPLCONFIGDIR="\$PWD/.mpl" XDG_CACHE_HOME="\$PWD/.cache"
+        mkdir -p "\$MPLCONFIGDIR" "\$XDG_CACHE_HOME"
+
         savana to \
             --tumour ${bam} \
             --ref ${ref} \
@@ -114,6 +121,9 @@ process savanaCna {
 
     script:
         """
+        export TMPDIR="\$PWD" MPLCONFIGDIR="\$PWD/.mpl" XDG_CACHE_HOME="\$PWD/.cache"
+        mkdir -p "\$MPLCONFIGDIR" "\$XDG_CACHE_HOME"
+
         savana cna \
             --tumour ${bam} \
             --ref ${ref} \
