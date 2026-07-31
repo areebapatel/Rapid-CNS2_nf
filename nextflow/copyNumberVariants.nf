@@ -27,6 +27,12 @@ process copyNumberVariants {
         cnvpytor -root ${id}_CNV.pytor -call 100000 -j ${task.cpus} > ${id}.cnvpytor.calls.100000.tsv
         cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom ${chroms} -o ${id}_cnvpytor_100k.pdf
         cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom ${chroms} -o ${id}_cnvpytor_100k.png
+
+        # cnvpytor writes <name>.global.0000.<ext>, not the -o name it is given
+        for E in pdf png; do
+            [ -f ${id}_cnvpytor_100k.\$E ] || \\
+                mv ${id}_cnvpytor_100k.global.0000.\$E ${id}_cnvpytor_100k.\$E
+        done
         """
 }
 
