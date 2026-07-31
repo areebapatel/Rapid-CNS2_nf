@@ -241,7 +241,6 @@ workflow {
     def annotateScript    = file("${projectDir}/scr/annotate.py", checkIfExists: true)
     def filterReportScript= file("${projectDir}/scr/filter_report.R", checkIfExists: true)
     def makeReportScript  = file("${projectDir}/scr/make_report.R", checkIfExists: true)
-    def reportPDF         = file("${projectDir}/scr/Rapid_CNS2_report_UKHD_PDF.Rmd", checkIfExists: true)
     def reportHTML        = file("${projectDir}/scr/Rapid_CNS2_report_UKHD_HTML.Rmd", checkIfExists: true)
     def mnpFlexScript     = file("${projectDir}/scr/mnp-flex_preprocessing.sh", checkIfExists: true)
 
@@ -313,7 +312,6 @@ workflow {
     // ---- Final report. Optional inputs fall back to an empty placeholder file.
     reportRendering(
         makeReportScript,
-        reportPDF,
         reportHTML,
         params.id,
         patientName,

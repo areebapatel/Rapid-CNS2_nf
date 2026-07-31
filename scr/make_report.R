@@ -37,8 +37,6 @@ option_list = list(
               help="IGV-report html output", metavar="character"),
   make_option(c("-i", "--seq"), type="character", default="Unknown",
              help="Platform used to sequencing; F=MinION/GridION, P=PromethION", metavar="character"),
-  make_option(c("-k", "--report_PDF"), type="character", default="scr/Rapid_CNS2_report_UKHD_PDF.Rmd",
-              help="R Markdown template file", metavar="character"),
   make_option(c("-l", "--report_HTML"), type="character", default="scr/Rapid_CNS2_report_UKHD_HTML.Rmd",
               help="R Markdown template file", metavar="character"),
   make_option(c("-o", "--software_ver"), type="character", default=NULL,
@@ -92,13 +90,6 @@ exc_igvreport = TRUE
 render(opt$report_HTML,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_lite.html"))
-
-# PDF. There is only one PDF variant: the IGV report is an interactive HTML
-# artefact and cannot be embedded in a PDF, so naming it "_lite" implied a
-# "_full" counterpart that never existed.
-render(opt$report_PDF,
-       output_format = "pdf_document",
-       output_file = paste0(prefix,"_Rapid-CNS2_report.pdf"))
 
 # full version - HTML. Only embed the IGV report if it was actually produced.
 inc_igvreport = file.exists(igv_report)

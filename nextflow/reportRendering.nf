@@ -8,7 +8,6 @@ process reportRendering {
 
     input:
         path(reportScript)
-        path(reportPDF)
         path(reportHTML)
         val(id)
         val(patient)
@@ -91,7 +90,6 @@ process reportRendering {
             --software_ver ${softwareVersion} \
             --seq "\${seq}" \
             --promoter_mgmt_coverage ${mgmtAvgCov} \
-            --report_PDF ${reportPDF} \
             --report_HTML ${reportHTML}
         """
 }
