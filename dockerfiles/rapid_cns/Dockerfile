@@ -6,14 +6,14 @@
 #
 #   docker buildx build \
 #       --platform linux/amd64 \
-#       -t areebapatel/rapid_cns:3.0.1 \
+#       -t areebapatel/rapid_cns:3.0.2 \
 #       -f dockerfiles/rapid_cns/Dockerfile \
 #       --push .
 #
 #   # or build locally first, then push
 #   docker buildx build --platform linux/amd64 --load \
-#       -t areebapatel/rapid_cns:3.0.1 -f dockerfiles/rapid_cns/Dockerfile .
-#   docker push areebapatel/rapid_cns:3.0.1
+#       -t areebapatel/rapid_cns:3.0.2 -f dockerfiles/rapid_cns/Dockerfile .
+#   docker push areebapatel/rapid_cns:3.0.2
 #
 # PLATFORM
 #   --platform linux/amd64 is REQUIRED and the FROM line pins it too. On Apple
@@ -26,7 +26,7 @@
 #   here is x86_64. It runs on an Apple Silicon Mac through Docker's emulation.
 #
 # PULLING ON THE HPC (no Docker needed there)
-#   singularity pull docker://areebapatel/rapid_cns:3.0.1
+#   singularity pull docker://areebapatel/rapid_cns:3.0.2
 #   # or let Nextflow do it:
 #   nextflow run main.nf ... --containerEngine singularity
 #
