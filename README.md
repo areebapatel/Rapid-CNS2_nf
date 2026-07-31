@@ -166,8 +166,10 @@ params {
 }
 ```
 
-Keeping them in a separate file and passing `-c site.config` avoids editing the
-repository for each deployment.
+Site configs can also live in `conf/` and be selected as a profile.
+`conf/dkfz.config` is a worked example, enabled with `-profile dkfz`; copy it
+for your own site and add a matching entry to the `profiles` block. It has no
+effect unless the profile is selected.
 
 ### 7. Run the pipeline
 
