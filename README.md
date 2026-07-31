@@ -388,12 +388,6 @@ Every container is version-pinned; none use `:latest`.
 | `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
 | `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
 
-The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile` and is
-amd64-only.
-
-AnnotSV annotations are not in the container. Install them on the host (step 5)
-and point `--annotsvAnnot` at the directory containing `Annotations_Human`.
-
 ## Output
 
 ```
