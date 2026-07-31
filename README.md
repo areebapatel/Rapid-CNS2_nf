@@ -388,9 +388,15 @@ Every container is version-pinned; none use `:latest`.
 | `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
 | `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
 
-The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile`; see the
-header of that file for the build command. It is amd64-only by design, because
-dorado's Linux build and the mosdepth release binary are published for x86_64.
+The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile`. It is
+amd64-only by design, because dorado's Linux build and the mosdepth release
+binary are published for x86_64. Build it from the repository root:
+
+```bash
+docker buildx build --platform linux/amd64 \
+    -t areebapatel/rapid_cns:3.0.2 \
+    -f dockerfiles/rapid_cns/Dockerfile --push .
+```
 
 **AnnotSV annotations are not in the container.** They are ~21 GB, are released
 independently of the AnnotSV code, and downloading them at build time would make
