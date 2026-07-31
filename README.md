@@ -350,9 +350,6 @@ To add `cosmic70` (needs a COSMIC licence), `dbnsfp47a` or `allofus`, append to
 
 The pipeline supports different compute infrastructure profiles:
 
-No GPU is required. Clair3 replaced Parabricks DeepVariant, so the pipeline runs
-entirely on CPU.
-
 Resources are set with native Nextflow `cpus`/`memory`/`queue` directives rather
 than hand-written `clusterOptions`, which previously emitted duplicate `-n` and
 `-q` flags on every submission.
