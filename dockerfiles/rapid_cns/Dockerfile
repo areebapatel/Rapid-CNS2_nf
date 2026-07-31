@@ -41,7 +41,7 @@
 FROM --platform=linux/amd64 ubuntu:22.04
 
 LABEL version="3.0.2"
-LABEL maintainer="Areeba Patel <a.patel@dkfz.de>"
+LABEL maintainer="Areeba Patel <a.patel@kitz-heidelberg.de>"
 LABEL description="Rapid-CNS2: alignment, coverage, CNV, SV, methylation and reporting"
 
 ARG DORADO_VERSION=2.1.0

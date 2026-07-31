@@ -18,7 +18,7 @@ log.info """
 ║  • Methylation-based tumor classification                                    ║
 ║                                                                              ║
 ║  • Developer: Areeba Patel                                                   ║
-║  • Email: a.patel@dkfz.de                                                    ║
+║  • Email: a.patel@kitz-heidelberg.de                                         ║
 ║  • Institution: German Cancer Research Center (DKFZ)                         ║
 ║                                                                              ║
 ║  ⚠️  Important Notes:                                                        ║

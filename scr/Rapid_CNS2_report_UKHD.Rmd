@@ -361,7 +361,7 @@ cat("#### An MGMT promoter plot was not produced in this sample due to sequence 
 #### For any questions, please contact:  
 #### **Areeba Patel, PhD**  
 #### Department of Neuropathology, German Cancer Research Center  
-#### a.patel@dkfz.de  
+#### a.patel@kitz-heidelberg.de  
 #### **Prof Dr. Dr. med Felix Sahm**  
 #### Head of Molecular Neuropathology, University Hospital Heidelberg  
 #### felix.sahm@med.uni-heidelberg.de  \
