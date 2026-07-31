@@ -82,6 +82,10 @@ process clair3 {
 
     script:
         """
+        # LSF exports a node-local TMPDIR that does not exist inside the
+        # container; GNU parallel (used by Clair3) fails on it.
+        export TMPDIR="\$PWD"
+
         run_clair3.sh \
             --bam_fn=${bam} \
             --ref_fn=${ref} \
