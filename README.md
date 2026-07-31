@@ -242,59 +242,21 @@ nextflow run methylationOnly.nf \
 
 ### Parameters
 
-#### Required parameters
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `--input` | Path to input BAM file(s) | `--input /data/sample.bam` |
-| `--id` | Sample identifier | `--id SAMPLE001` |
-| `--ref` | Path to hg38 reference genome | `--ref /refs/hg38.fa` |
-| `--outDir` | Output directory | `--outDir ./results` |
+Takes the same parameters as the main pipeline (see
+[Parameters](#parameters-1)); the variant-calling options simply do not apply.
 
-#### Optional parameters
-| Parameter | Description | Default | Example |
-|-----------|-------------|---------|---------|
-| `--patient` | Patient name for reports | Uses `--id` | `--patient "John Doe"` |
-| `--minimumMgmtCov` | Minimum coverage for MGMT analysis | `5` | `--minimumMgmtCov 10` |
-| `--mnpFlex` | Enable MNP-Flex preparation | `true` | `--mnpFlex false` |
 
-#### Containers
+### Output
 
-Every container is version-pinned; none use `:latest`.
-
-| Label | Image | Provides |
-|-------|-------|----------|
-| `rapid_cns` | `areebapatel/rapid_cns:3.0.1` | samtools, bedtools, vcftools, dorado, mosdepth, CNVpytor, Sniffles2, methylartist, igv-reports, AnnotSV (code), R stack |
-| `mods` | `quay.io/biocontainers/ont-modkit:0.6.4--h7f49ad2_0` | modkit |
-| `clair3` | `hkubal/clair3:v2.0.2` | Clair3 and its bundled ONT models |
-| `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
-| `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
-
-The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile`; see the
-header of that file for the build command. It is amd64-only by design, because
-dorado's Linux build and the mosdepth release binary are published for x86_64.
-
-**AnnotSV annotations are not in the container.** They are ~6.6 GB, are released
-independently of the AnnotSV code, and downloading them at build time would make
-an otherwise-pinned image non-reproducible. Install them on the host (step 5
-above) and point `--annotsvAnnot` at the directory *containing*
-`Annotations_Human` - that is AnnotSV's `-annotationsDir`, usually
-`<install>/share/AnnotSV`, **not** `Annotations_Human` itself.
-
-## Output
-
-The methylation-only pipeline generates outputs in the following directories:
+Outputs:
 
 ```
 output/
-├── bam/                           # BAM processing outputs
-│   └── alignedBams/              # Aligned BAM files (if alignment needed)
-├── mods/                         # Methylation calls (bedmethyl files)
-├── mgmt/                         # MGMT promoter analysis
-│   ├── mgmt_avg_cov.txt         # Coverage summary
-│   ├── SAMPLE001_mgmt.png       # MGMT promoter plot
-│   └── SAMPLE001_mgmt_pred.txt  # MGMT prediction results
-├── methylation_classification/   # Tumor classification results
-└── mnpflex/                     # MNP-Flex compatible files (if --mnpFlex)
+├── bam/                          # panel subset BAM + index
+├── mods/                         # <id>.5mC.bedmethyl
+├── mgmt/                         # coverage, status, methylartist plot
+├── methylation_classification/   # votes, rf_details, calibrated scores
+└── mnpflex/                      # <id>.MNPFlex.input.bed
 ```
 
 ### When to use methylation-only
@@ -484,6 +446,29 @@ what the scheduler allocated.
 #### Local profile (`-profile local`)
 - **Executor:** Local, 1 CPU / 4 GB per process. Suitable only for small tests.
 
+## Containers
+
+Every container is version-pinned; none use `:latest`.
+
+| Label | Image | Provides |
+|-------|-------|----------|
+| `rapid_cns` | `areebapatel/rapid_cns:3.0.1` | samtools, bedtools, vcftools, dorado, mosdepth, CNVpytor, Sniffles2, methylartist, igv-reports, AnnotSV (code), R stack |
+| `mods` | `quay.io/biocontainers/ont-modkit:0.6.4--h7f49ad2_0` | modkit |
+| `clair3` | `hkubal/clair3:v2.0.2` | Clair3 and its bundled ONT models |
+| `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
+| `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
+
+The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile`; see the
+header of that file for the build command. It is amd64-only by design, because
+dorado's Linux build and the mosdepth release binary are published for x86_64.
+
+**AnnotSV annotations are not in the container.** They are ~6.6 GB, are released
+independently of the AnnotSV code, and downloading them at build time would make
+an otherwise-pinned image non-reproducible. Install them on the host (step 5
+above) and point `--annotsvAnnot` at the directory *containing*
+`Annotations_Human` - that is AnnotSV's `-annotationsDir`, usually
+`<install>/share/AnnotSV`, **not** `Annotations_Human` itself.
+
 ## Output
 
 ```
@@ -565,6 +550,26 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
 - Review the pipeline logs in the `work/` directory
 - Check the `pipeline_info/` directory for execution reports
 - Run with `--help` for available options
+
+## Changelog
+
+### 3.0.0
+
+A major update that modernises the toolchain and fixes a number of bugs.
+
+- **New callers:** Clair3 replaces DeepVariant for SNVs, Severus joins Sniffles2 for structural variants,
+  and SAVANA adds copy number with tumour purity and ploidy estimates.
+- **Compatible with current Dorado output.** All tools are updated and pinned,
+  including modkit, Sniffles2, mosdepth, AnnotSV and dorado itself. The Clair3
+  model is detected automatically from the BAM's basecaller.
+- **Bug fixes** across variant filtering, methylation classification, MGMT
+  prediction and report rendering.
+- **Easier to run elsewhere:** site paths are validated at startup,
+  `--maxCpus`/`--maxMemory` cap resource requests so the pipeline runs on
+  smaller machines, and every container image is version-pinned.
+
+Note that the structural variant, SAVANA copy number and gene-level CNV outputs
+are written to disk but are not yet included in the rendered report.
 
 ## Citation
 
