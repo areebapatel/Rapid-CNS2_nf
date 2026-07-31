@@ -248,6 +248,9 @@ If using whole genome sequencing data, the average coverage should be at least *
 - Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling))
 - Provide the resulting BAM(s) as input to this pipeline
 
+`scr/basecall.sh` is a reference Dorado command with the settings this pipeline
+expects; edit the paths before use.
+
 ### Input options
 
 The pipeline accepts:
@@ -356,7 +359,7 @@ To add `cosmic70` (needs a COSMIC licence), `dbnsfp47a` or `allofus`, append to
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
-| `--containerBindPaths` | Comma-separated host paths to bind into containers. Singularity only auto-mounts the work directory, so reference genome, ANNOVAR and AnnotSV paths outside it **must** be listed here or they will be invisible inside the container. | `/b06x-isilon,/omics` | `--containerBindPaths /data,/refs` |
+| `--containerBindPaths` | Comma-separated host paths to bind into containers. Singularity only auto-mounts the work directory, so reference genome, ANNOVAR and AnnotSV paths outside it **must** be listed here or they will be invisible inside the container. | `""` | `--containerBindPaths /data,/refs` |
 | `--seq` | Sequencer platform identifier. Set to `false` to auto-detect from the BAM header. | `P2S` | `--seq F` |
 
 ### Profile-specific parameters
@@ -486,6 +489,9 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
 - Run with `--help` for available options
 
 ## 📝 Changelog
+
+The pipeline and the container image are versioned separately: pipeline 3.0.0
+runs against `rapid_cns:3.0.2`.
 
 ### 3.0.0
 
