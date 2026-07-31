@@ -490,9 +490,6 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
 
 ## 📝 Changelog
 
-The pipeline and the container image are versioned separately: pipeline 3.0.0
-runs against `rapid_cns:3.0.2`.
-
 ### 3.0.0
 
 A major update that modernises the toolchain and fixes a number of bugs.
