@@ -145,6 +145,15 @@ make PREFIX=. install
 make PREFIX=. install-human-annotation
 ```
 
+The annotations must match the AnnotSV version in the container (3.5.10, which
+expects the 3.5 bundle). Older bundles fail at run time - 3.5 renamed
+`Gene-based/NCBIgeneID` to `NCBIandHGNCgeneID`. To fetch the bundle directly:
+
+```bash
+curl -LO https://www.lbgi.fr/~geoffroy/Annotations/Annotations_Human_3.5.tar.gz
+tar -xf Annotations_Human_3.5.tar.gz -C /path/to/annotsv/
+```
+
 **Note:** AnnotSV is distributed under the GNU General Public License v3.0. See the [AnnotSV repository](https://github.com/lgmgeo/AnnotSV) for details.
 
 ### 6. Configure the pipeline
@@ -240,12 +249,9 @@ The pipeline accepts:
 
 ```mermaid
 graph TD
-    A[Input Data BAM] --> B[Alignment Check]
-    B --> C[Alignment if needed]
-    B --> D[Direct Processing]
-    C --> E[Merge BAMs]
-    D --> E
-    E --> F[SNV calling - Clair3]
+    A[Input BAM] --> E[prepareBam - align if needed, merge, sort, index]
+    E --> P[Panel subset - NPHD BED]
+    P --> F[SNV calling - Clair3]
     E --> G[Methylation - modkit]
     E --> H[SV - Sniffles2 + Severus]
     E --> N[CNV - CNVpytor]
@@ -259,6 +265,9 @@ graph TD
     K --> M
     N --> M
 ```
+
+SNV calling is restricted to the NPHD panel BED; SV, CNV and methylation run on
+the full BAM.
 
 ## Parameters
 
@@ -320,7 +329,7 @@ individual labels with your own `-c custom.config`.
 |-----------|-------------|---------|---------|
 | `--clair3Model` | Clair3 model directory name. By default it is **auto-detected** from the `basecall_model=` field in the BAM's `@RG` header and validated against the models shipped in the container, so a mismatched model cannot be used silently. Set only to override. | `null` (auto) | `--clair3Model r1041_e82_400bps_sup_v500` |
 | `--severusVntr` | Optional VNTR BED for Severus. Recommended: `vntrs/human_GRCh38_no_alt_analysis_set.trf.bed` from the [Severus repo](https://github.com/KolmogorovLab/Severus). | `null` | `--severusVntr /refs/vntr.bed` |
-| `--severusPON` | Optional panel of normals for Severus. Without one, tumour-only Severus has **no somatic filter**, so supplying `pon/PoN_1000G_hg38.tsv.gz` is strongly advised. | `null` | `--severusPON /refs/PoN_1000G_hg38.tsv.gz` |
+| `--severusPON` | Optional panel of normals for Severus. Without one, tumour-only Severus has **no somatic filter**, so supplying `pon/PoN_1000G_hg38.tsv.gz` is strongly advised. With a PON, Severus writes a `somatic_SVs/` set and that is what gets published and annotated. | `null` | `--severusPON /refs/PoN_1000G_hg38.tsv.gz` |
 | `--savanaG1000` | 1000G het-SNP set used by SAVANA for B-allele frequency, purity and ploidy. | `1000g_hg38` | `--savanaG1000 1000g_hg38` |
 
 #### Annotation parameters
@@ -390,7 +399,7 @@ The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile`; see the
 header of that file for the build command. It is amd64-only by design, because
 dorado's Linux build and the mosdepth release binary are published for x86_64.
 
-**AnnotSV annotations are not in the container.** They are ~6.6 GB, are released
+**AnnotSV annotations are not in the container.** They are ~21 GB, are released
 independently of the AnnotSV code, and downloading them at build time would make
 an otherwise-pinned image non-reproducible. Install them on the host (step 5
 above) and point `--annotsvAnnot` at the directory *containing*
@@ -420,11 +429,12 @@ output/
 ├── mnpflex/                # <id>.MNPFlex.input.bed  (upload to app.epignostix.com)
 ├── coverage/               # mosdepth summaries
 ├── reports/                # IGV report
-├── report/                 # final HTML + PDF reports
+├── report/                 # <id>_Rapid-CNS2_report_lite.html (no IGV)
+│                           # <id>_Rapid-CNS2_report_full.html (IGV embedded)
 └── pipeline_info/          # timeline, trace, execution report
 ```
 
-> **Note on the report:** the final HTML/PDF currently covers coverage, SNVs,
+> **Note on the report:** the final HTML currently covers coverage, SNVs,
 > the IGV report, the CNVpytor copy-number plot, methylation classification and
 > MGMT. The Sniffles2/Severus/AnnotSV results, the SAVANA copy-number and
 > purity/ploidy output and the gene-level CNV table are written to disk but are
@@ -491,7 +501,8 @@ A major update that modernises the toolchain and fixes a number of bugs.
   including modkit, Sniffles2, mosdepth, AnnotSV and dorado itself. The Clair3
   model is detected automatically from the BAM's basecaller.
 - **Bug fixes** across variant filtering, methylation classification, MGMT
-  prediction and report rendering.
+  prediction and report rendering. The report is now HTML only; the PDF variant
+  has been dropped.
 - **Easier to run elsewhere:** site paths are validated at startup,
   `--maxCpus`/`--maxMemory` cap resource requests so the pipeline runs on
   smaller machines, and every container image is version-pinned.
