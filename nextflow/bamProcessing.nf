@@ -73,13 +73,20 @@ process prepareBam {
             samtools sort -@${task.cpus} -m ${sortMem}G -o ${id}.bam cat.bam
             rm -f cat.bam
         elif samtools view -H "\${OUT[0]}" | head -n 1 | grep -q 'SO:coordinate'; then
+            # hard-link rather than copy: same filesystem, and it survives work/
+            # being cleaned because the inode is shared with the input
             echo "Already coordinate-sorted - no re-sort needed"
-            cp "\${OUT[0]}" ${id}.bam
+            SRC=\$(readlink -f "\${OUT[0]}")
+            ln "\$SRC" ${id}.bam 2>/dev/null || cp "\$SRC" ${id}.bam
+            if [ -f "\$SRC.bai" ]; then
+                echo "Reusing the existing index"
+                ln "\$SRC.bai" ${id}.bam.bai 2>/dev/null || cp "\$SRC.bai" ${id}.bam.bai
+            fi
         else
             samtools sort -@${task.cpus} -m ${sortMem}G -o ${id}.bam "\${OUT[0]}"
         fi
 
-        samtools index -@${task.cpus} ${id}.bam
+        [ -f ${id}.bam.bai ] || samtools index -@${task.cpus} ${id}.bam
         """
 }
 

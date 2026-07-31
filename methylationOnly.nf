@@ -84,12 +84,17 @@ include { methylationClassification; mnpFlex }   from './nextflow/methylationCla
 // Resolve --input (a single BAM, or a directory of BAMs) to a list of files
 def resolveInputBams(input) {
     def target = file(input, checkIfExists: true)
-    if (!target.isDirectory()) return [ target ]
+    if (!target.isDirectory()) return withIndexes([ target ])
 
     def found = file("${input}/*.bam")
     if (found instanceof Path) found = [ found ]
     if (!found) error "No BAM files found in directory: ${input}"
-    return found
+    return withIndexes(found)
+}
+
+// stage any existing .bai so prepareBam can reuse it instead of re-indexing
+def withIndexes(bams) {
+    bams + bams.collect { file("${it}.bai") }.findAll { it.exists() }
 }
 
 workflow {
