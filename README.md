@@ -388,22 +388,11 @@ Every container is version-pinned; none use `:latest`.
 | `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
 | `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
 
-The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile`. It is
-amd64-only by design, because dorado's Linux build and the mosdepth release
-binary are published for x86_64. Build it from the repository root:
+The `rapid_cns` image is built from `dockerfiles/rapid_cns/Dockerfile` and is
+amd64-only.
 
-```bash
-docker buildx build --platform linux/amd64 \
-    -t areebapatel/rapid_cns:3.0.2 \
-    -f dockerfiles/rapid_cns/Dockerfile --push .
-```
-
-**AnnotSV annotations are not in the container.** They are ~21 GB, are released
-independently of the AnnotSV code, and downloading them at build time would make
-an otherwise-pinned image non-reproducible. Install them on the host (step 5
-above) and point `--annotsvAnnot` at the directory *containing*
-`Annotations_Human` - that is AnnotSV's `-annotationsDir`, usually
-`<install>/share/AnnotSV`, **not** `Annotations_Human` itself.
+AnnotSV annotations are not in the container. Install them on the host (step 5)
+and point `--annotsvAnnot` at the directory containing `Annotations_Human`.
 
 ## Output
 
