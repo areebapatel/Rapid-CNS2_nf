@@ -337,6 +337,25 @@ workflow.onComplete {
         println "Oops .. something went wrong, please look into the log file, and error messages into ${workflow.workDir}"
     }
 
+    // Drop per-task scratch that no process declares as an output: SAVANA's
+    // per-window .temp files and the matplotlib/fontconfig caches. Safe for
+    // -resume, which only checks declared outputs. Use -profile cleanup to
+    // remove the work directory outright.
+    if (workflow.success) {
+        try {
+            def files = [], dirs = [], freed = 0L
+            // collect first: deleting during the walk breaks the traversal
+            workflow.workDir.toFile().eachFileRecurse { f ->
+                if (f.isFile() && f.name.endsWith('.temp')) files << f
+                else if (f.isDirectory() && f.name in ['.mpl', '.cache']) dirs << f
+            }
+            files.each { freed += it.length(); it.delete() }
+            dirs.each { it.deleteDir() }
+            if (freed > 0) println "Removed ${(freed / 1024 / 1024) as long} MB of task scratch"
+        }
+        catch (Exception e) { println "Scratch cleanup skipped: ${e.message}" }
+    }
+
     // Notify if --email is given. Done here rather than in the notification{}
     // config block, which is evaluated before --params are merged.
     if (!params.email) return
