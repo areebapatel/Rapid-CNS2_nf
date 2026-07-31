@@ -78,7 +78,8 @@ process clair3 {
     output:
         path "${id}.clair3.vcf.gz",     emit: vcf
         path "${id}.clair3.vcf.gz.tbi", emit: tbi
-        path "clair3_${id}/run_clair3.log", optional: true
+        // whole Clair3 run dir: pileup and full-alignment VCFs, and the logs
+        path "clair3_${id}", emit: runDir
 
     script:
         """
@@ -98,6 +99,10 @@ process clair3 {
 
         cp clair3_${id}/merge_output.vcf.gz     ${id}.clair3.vcf.gz
         cp clair3_${id}/merge_output.vcf.gz.tbi ${id}.clair3.vcf.gz.tbi
+
+        # Clair3's scratch dir holds per-chunk candidates and is large; the rest
+        # of the run dir is worth publishing.
+        rm -rf clair3_${id}/tmp
         """
 }
 
