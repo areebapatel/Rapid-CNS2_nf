@@ -1,16 +1,20 @@
 <div align="left">
-<img width="342" alt="313507599-6ba243da-0dca-4f4e-9cea-a4df7b989ff6" src="https://github.com/user-attachments/assets/cda166c2-664f-4286-951a-309b111c1132">
+<img width="342" alt="Rapid-CNS2" src="https://github.com/user-attachments/assets/cda166c2-664f-4286-951a-309b111c1132">
 
 <h1 style="display: inline-block;">Rapid-CNS<sup>2</sup> workflow</h1>
 </div>
 
-## Overview
+[![Paper](https://img.shields.io/badge/Nature%20Medicine-2025-b31b1b.svg)](https://www.nature.com/articles/s41591-025-03562-5)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Nextflow](https://img.shields.io/badge/Nextflow-23.10%2B-brightgreen)](https://www.nextflow.io/)
+
+## 🧬 Overview
 
 The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, SNV calling, structural variant calling, methylation analysis, copy number variation calling, and provides a comprehensive molecular report.
 
 This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
 
-## Features
+## ✨ Features
 
 - **Modular architecture** for easy customization and extension
 - **Flexible input handling** - supports aligned and unaligned BAM files with automatic alignment detection
@@ -21,7 +25,7 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
 - **Automated reporting** with molecular diagnostic-ready reports
 - **MNP-Flex integration** preparing input for upload to [app.epignostix.com](https://app.epignostix.com) (on by default)
 
-## Requirements
+## 🔧 Requirements
 
 - **Nextflow:** version 23.10.0 or later (enforced by `manifest.nextflowVersion`)
 - **Container Engine:** Singularity/Apptainer (typical on HPC) or Docker
@@ -30,7 +34,7 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
 - **Memory:** Minimum 8GB RAM, recommended 32GB+ for large datasets
 - **Storage:** At least 100GB free space for reference genomes and databases
 
-## Quick start
+## 🚀 Quick start
 
 ### 1. Clone the repository
 ```bash
@@ -200,7 +204,7 @@ nextflow run main.nf \
 For methylation analysis only, without SNV/SV/CNV calling, see
 [METHYLATION_ONLY.md](METHYLATION_ONLY.md).
 
-## Input requirements
+## 📥 Input requirements
 
 ### Sequencing requirements
 
@@ -238,7 +242,7 @@ The pipeline accepts:
 - **Directory with aligned BAM files:** Path to directory containing multiple aligned BAM files (will be merged automatically)
 - **Directory with unaligned BAM files:** Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
 
-## Pipeline structure
+## 🗺️ Pipeline structure
 
 ```mermaid
 graph TD
@@ -262,7 +266,7 @@ graph TD
 SNV calling is restricted to the NPHD panel BED; SV, CNV and methylation run on
 the full BAM.
 
-## Parameters
+## ⚙️ Parameters
 
 ### Required parameters
 
@@ -376,7 +380,7 @@ what the scheduler allocated.
 #### Local profile (`-profile local`)
 - **Executor:** Local, 1 CPU / 4 GB per process. Suitable only for small tests.
 
-## Containers
+## 📦 Containers
 
 Every container is version-pinned; none use `:latest`.
 
@@ -388,7 +392,7 @@ Every container is version-pinned; none use `:latest`.
 | `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
 | `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
 
-## Output
+## 📤 Output
 
 ```
 output/
@@ -471,7 +475,7 @@ MNP-Flex is a methylation classifier compatible with the latest version of the H
 - Check the `pipeline_info/` directory for execution reports
 - Run with `--help` for available options
 
-## Changelog
+## 📝 Changelog
 
 ### 3.0.0
 
@@ -492,15 +496,28 @@ A major update that modernises the toolchain and fixes a number of bugs.
 Note that the structural variant, SAVANA copy number and gene-level CNV outputs
 are written to disk but are not yet included in the rendered report.
 
-## Citation
+## 📚 Citation
 
-If you use this pipeline, please cite our work:
+If you use this pipeline, please cite:
 
-Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
+Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a
+platform for rapid molecular profiling of central nervous system tumors.
+*Nature Medicine* **31**, 1567–1577 (2025).
+[doi:10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
 
-## License
+```bibtex
+@article{patel2025rapidcns2,
+  title   = {Prospective, multicenter validation of a platform for rapid
+             molecular profiling of central nervous system tumors},
+  author  = {Patel, Areeba and G{\"o}bel, Kirsten and Ille, Sebastian and others},
+  journal = {Nature Medicine},
+  volume  = {31},
+  pages   = {1567--1577},
+  year    = {2025},
+  doi     = {10.1038/s41591-025-03562-5}
+}
+```
+
+## ⚖️ License
 
 This project is licensed under the [Apache License 2.0](LICENSE).
-
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Nextflow](https://img.shields.io/badge/Nextflow-23.10%2B-brightgreen)](https://www.nextflow.io/)
