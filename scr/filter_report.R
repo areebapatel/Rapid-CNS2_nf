@@ -56,6 +56,31 @@ message("Variants retained after filtering: ", nrow(no_syn), " of ", nrow(var_fi
 
 table <- no_syn[,c("Chr","Start","End","Ref","Alt","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene","cytoBand","avsnp151","X1000g2015aug_eur","cosmic70","CLNSIG" )]
 
+# Depth and allele fraction come from the Clair3 genotype column. ANNOVAR keeps
+# the whole tab-delimited VCF record in a single Otherinfo field (convert2annovar
+# was run with -includeinfo), so split on tabs and locate FORMAT/SAMPLE by name -
+# Clair3 emits GT:GQ:DP:AD:AF but the field order is not guaranteed.
+gt_field <- function(blob, key) {
+    if (is.na(blob)) return(NA_character_)
+    f <- strsplit(blob, "\t", fixed = TRUE)[[1]]
+    i <- grep("^GT:", f)
+    if (!length(i) || i[1] + 1 > length(f)) return(NA_character_)
+    keys <- strsplit(f[i[1]],     ":", fixed = TRUE)[[1]]
+    vals <- strsplit(f[i[1] + 1], ":", fixed = TRUE)[[1]]
+    k <- match(key, keys)
+    if (is.na(k) || k > length(vals)) NA_character_ else vals[k]
+}
+oi_cols <- grep("^Otherinfo", names(no_syn), value = TRUE)
+blob <- if (length(oi_cols)) {
+    apply(no_syn[, oi_cols, drop = FALSE], 1,
+          function(r) { g <- r[grepl("GT:", r, fixed = TRUE)]; if (length(g)) g[1] else NA_character_ })
+} else rep(NA_character_, nrow(no_syn))
+
+depth <- vapply(blob, gt_field, character(1), key = "DP", USE.NAMES = FALSE)
+vaf   <- vapply(blob, gt_field, character(1), key = "AF", USE.NAMES = FALSE)
+vaf   <- ifelse(is.na(vaf), NA_character_,
+                paste0(round(suppressWarnings(as.numeric(vaf)) * 100, 1), "%"))
+
 var_list <- strsplit(table$AAChange.refGene[1],split = ":")
 alteration <- lapply(table$AAChange.refGene, function(x){
   var_list <- strsplit(x,split = ":")
@@ -69,9 +94,9 @@ cosmic <- lapply(table$cosmic70, function(x){
   return(alter)
 })
 
-filtered <- cbind("Chr"=table$Chr,"Start"=table$Start,"End"=table$End,"Func"=table$Func.refGene,"Gene"=table$Gene.refGene,"ExonicFunc"=table$ExonicFunc.refGene,"AAChange"=reshape2::melt(alteration)["value"],"cytoBand"=table$cytoBand,"1000g_EUR"=table$X1000g2015aug_eur,"COSMIC"=reshape2::melt(cosmic)["value"], "CLNSIG" = table$CLNSIG)
+filtered <- cbind("Chr"=table$Chr,"Start"=table$Start,"End"=table$End,"Func"=table$Func.refGene,"Gene"=table$Gene.refGene,"ExonicFunc"=table$ExonicFunc.refGene,"AAChange"=reshape2::melt(alteration)["value"],"cytoBand"=table$cytoBand,"1000g_EUR"=table$X1000g2015aug_eur,"COSMIC"=reshape2::melt(cosmic)["value"], "CLNSIG" = table$CLNSIG, "Coverage"=depth, "VAF"=vaf)
 
-colnames(filtered) <- c("Chr","Start","End","Func","Gene","ExonicFunc","AAChange","cytoBand","1000g_EUR","COSMIC", "CLNSIG")
+colnames(filtered) <- c("Chr","Start","End","Func","Gene","ExonicFunc","AAChange","cytoBand","1000g_EUR","COSMIC","CLNSIG","Coverage","VAF")
 
 
 write.csv(filtered,file = opt$output,row.names = F)

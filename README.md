@@ -414,7 +414,8 @@ what the scheduler allocated.
 ```
 output/
 ├── bam/                    # merged, sorted, indexed BAM + panel subset
-├── snv/                    # Clair3 VCF, PASS VCF, ANNOVAR multianno, filtered report
+├── snv/                    # Clair3 VCF, PASS VCF, ANNOVAR multianno, filtered
+│                           # report (with per-variant coverage and VAF)
 ├── sv/
 │   ├── <id>.sniffles2.vcf              # Sniffles2 calls
 │   ├── <id>_sniffles_annotsv.tsv       # AnnotSV annotation
