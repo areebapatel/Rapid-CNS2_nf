@@ -1,34 +1,67 @@
 <div align="left">
-<img width="342" alt="313507599-6ba243da-0dca-4f4e-9cea-a4df7b989ff6" src="https://github.com/user-attachments/assets/cda166c2-664f-4286-951a-309b111c1132">
+<img width="342" alt="Rapid-CNS2" src="https://github.com/user-attachments/assets/cda166c2-664f-4286-951a-309b111c1132">
 
 <h1 style="display: inline-block;">Rapid-CNS<sup>2</sup> workflow</h1>
 </div>
 
-## Overview
+[![Paper](https://img.shields.io/badge/Nature%20Medicine-2025-b31b1b.svg)](https://www.nature.com/articles/s41591-025-03562-5)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Nextflow](https://img.shields.io/badge/Nextflow-23.10%2B-brightgreen)](https://www.nextflow.io/)
 
-The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, SNV calling, structural variant calling, methylation analysis, copy number variation calling, and provides a comprehensive molecular report.
+## 🧬 Overview
 
-This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
+The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed
+for comprehensive analysis of genomic and epigenomic data generated using adaptive
+sampling based sequencing of central nervous system (CNS) tumours. It performs
+alignment, SNV calling, structural variant and fusion calling, copy number
+variation calling, methylation analysis and classification, and provides a
+comprehensive molecular report.
 
-## Features
+This pipeline is implemented using Nextflow, allowing for easy execution and
+scalability on various compute environments, including local machines, clusters
+and cloud platforms.
 
-- **Modular architecture** for easy customization and extension
-- **Flexible input handling** - supports aligned and unaligned BAM files with automatic alignment detection
-- **Accelerated variant calling** with Clara Parabricks supported DeepVariant and Sniffles2
-- **Comprehensive analysis** including methylation analysis with Rapid-CNS² classifier and MGMT promoter methylation status
-- **Automated reporting** with molecular diagnostic-ready reports
-- **MNP-Flex integration** for additional classifier input preparation (optional)
+**Contents:**
+[Features](#-features) ·
+[Requirements](#-requirements) ·
+[Quick start](#-quick-start) ·
+[Input requirements](#-input-requirements) ·
+[Pipeline structure](#-pipeline-structure) ·
+[Parameters](#-parameters) ·
+[Containers](#-containers) ·
+[Output](#-output) ·
+[Help](#-help) ·
+[Changelog](#-changelog) ·
+[Citation](#-citation) ·
+[License](#-license)
 
-## Requirements
+## ✨ Features
 
-- **Nextflow:** version 20.10.0 or later (recommended 22.10.0+)
-- **Container Engine:** Docker (recommended) or Singularity
+- **Aligned or unaligned BAM input**, with alignment detected from the data
+- **SNVs with [Clair3](https://github.com/HKU-BAL/Clair3)**, the model auto-detected from the BAM's basecaller,
+  filtered on consequence with a CNS hotspot allowlist and reported with
+  per-variant coverage and VAF
+- **Structural variants from [Sniffles2](https://github.com/fritzsedlazeck/Sniffles),
+  [Severus](https://github.com/KolmogorovLab/Severus) and
+  [SAVANA](https://github.com/cortes-ciriano-lab/savana)**, annotated with
+  [AnnotSV](https://github.com/lgmgeo/AnnotSV) and screened per caller against a curated list of recurrent CNS fusions
+- **Copy number from [CNVpytor](https://github.com/abyzovlab/CNVpytor) and SAVANA**, the latter absolute and corrected for
+  tumour purity and ploidy
+- **Methylation**: Rapid-CNS² classifier and MGMT promoter status
+- **MNP-Flex**: input prepared for [app.epignostix.com](https://app.epignostix.com), and
+  optionally submitted through its API with the classification returned
+- **HTML report** collecting all of the above
+
+## 🔧 Requirements
+
+- **Nextflow:** version 23.10.0 or later (enforced by `manifest.nextflowVersion`)
+- **Container Engine:** Singularity/Apptainer (typical on HPC) or Docker
 - **Java:** OpenJDK 8 or later
 - **System:** Linux (Ubuntu 18.04+, CentOS 7+, or similar)
 - **Memory:** Minimum 8GB RAM, recommended 32GB+ for large datasets
 - **Storage:** At least 100GB free space for reference genomes and databases
 
-## Quick start
+## 🚀 Quick start
 
 ### 1. Clone the repository
 ```bash
@@ -78,7 +111,7 @@ samtools faidx /path/to/references/hg38/hg38.fa
 
 ### 4. Install ANNOVAR
 
-ANNOVAR is required for variant annotation:
+[ANNOVAR](https://annovar.openbioinformatics.org) is required for variant annotation:
 
 1. **Register and download:**
    - Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
@@ -94,13 +127,29 @@ chmod +x *.pl
 
 # Create humandb directory and download databases
 mkdir humandb/
+
+# cytoBand is a UCSC track, so it is fetched WITHOUT -webfrom annovar.
+# Using -webfrom annovar for it silently fails.
+./annotate_variation.pl -buildver hg38 -downdb cytoBand humandb/
+
+# The rest are hosted by ANNOVAR
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/
-./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cytoBand humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20240917 humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar avsnp151 humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar 1000g2015aug humandb/
-./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cosmic70 humandb/
-./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp42c humandb/
+```
+
+The five databases above are the pipeline default (`params.annovarProtocol`) and
+all download freely. `1000g2015aug` unpacks into per-population files, so the
+`1000g2015aug_eur` protocol resolves to `hg38_EUR.sites.2015_08.txt`.
+
+Optionally, if you have access to them, add these to **both**
+`params.annovarProtocol` and `params.annovarOperation` (the two lists must stay
+the same length):
+
+```bash
+# cosmic70 requires a COSMIC licence; dbnsfp is ~30-40 GB
+./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar dbnsfp47a humandb/
 ./annotate_variation.pl -buildver hg38 -downdb -webfrom annovar allofus humandb/
 ```
 
@@ -127,21 +176,33 @@ make PREFIX=. install
 make PREFIX=. install-human-annotation
 ```
 
-**Note:** AnnotSV is freely available under the MIT license. See the [AnnotSV repository](https://github.com/lgmgeo/AnnotSV) for more information.
+The annotations must be the 3.5 bundle, to match AnnotSV 3.5.10 in the container.
+
+**Note:** AnnotSV is distributed under the GNU General Public License v3.0. See the [AnnotSV repository](https://github.com/lgmgeo/AnnotSV) for details.
 
 ### 6. Configure the pipeline
 
-Edit the `nextflow.config` file with your system-specific paths:
+Four site paths must be set; the pipeline fails at startup with a clear message
+if any is missing. Either pass them on the command line, edit `nextflow.config`,
+or keep them in an institutional config.
 
 ```groovy
 params {
-    // Update these paths to match your system
-    ref = "/path/to/references/hg38/hg38.fa"
-    annovarPath = "/path/to/annovar/"
-    annovarDB = "/path/to/annovar/humandb/"
-    annotsvAnnot = "/path/to/AnnotSV/Annotations_Human/"
+    ref          = "/path/to/references/hg38/hg38.fa"
+    annovarPath  = "/path/to/annovar"
+    annovarDB    = "/path/to/annovar/humandb"
+    // directory CONTAINING Annotations_Human, i.e. AnnotSV's -annotationsDir
+    annotsvAnnot = "/path/to/AnnotSV/share/AnnotSV"
+
+    // filesystems that must be visible inside containers
+    containerBindPaths = "/data,/refs"
 }
 ```
+
+Site configs can also live in `conf/` and be selected as a profile.
+`conf/dkfz.config` is a worked example, enabled with `-profile dkfz`; copy it
+for your own site and add a matching entry to the `profiles` block. It has no
+effect unless the profile is selected.
 
 ### 7. Run the pipeline
 
@@ -151,7 +212,7 @@ nextflow run main.nf \
     --input /data/sample.bam \
     --id SAMPLE001 \
     --outDir ./results \
-    -profile lsf
+    -profile lsf,singularity
 ```
 
 #### Advanced run
@@ -164,11 +225,13 @@ nextflow run main.nf \
     --minimumMgmtCov 10 \
     --mnpFlex true \
     --runHumanVariation true \
-    --containerEngine singularity \
-    -profile slurm
+    -profile slurm,singularity
 ```
 
-## Input requirements
+For methylation analysis only, without SNV/SV/CNV calling, see
+[METHYLATION_ONLY.md](METHYLATION_ONLY.md).
+
+## 📥 Input requirements
 
 ### Sequencing requirements
 
@@ -199,6 +262,9 @@ If using whole genome sequencing data, the average coverage should be at least *
 - Ensure you use a model that supports modified basecalling (see [Dorado documentation](https://github.com/nanoporetech/dorado?tab=readme-ov-file#modified-basecalling))
 - Provide the resulting BAM(s) as input to this pipeline
 
+`scr/basecall.sh` is a reference Dorado command with the settings this pipeline
+expects; edit the paths before use.
+
 ### Input options
 
 The pipeline accepts:
@@ -206,29 +272,36 @@ The pipeline accepts:
 - **Directory with aligned BAM files:** Path to directory containing multiple aligned BAM files (will be merged automatically)
 - **Directory with unaligned BAM files:** Path to directory containing multiple unaligned BAM files (will be aligned and merged automatically)
 
-## Pipeline structure
+## 🧭 Pipeline structure
 
 ```mermaid
 graph TD
-    A[Input Data BAM] --> B[Alignment Check]
-    B --> C[Alignment if needed]
-    B --> D[Direct Processing]
-    C --> E[Merge BAMs]
-    D --> E
-    E --> F[SNV Calling]
-    E --> G[Methylation Analysis]
-    E --> H[Structural Variant Calling]
-    F --> I[Annotation & Filtering]
-    G --> J[MGMT Promoter Analysis]
-    G --> K[Methylation Classification]
-    H --> L[Structural Variant Annotation]
-    I --> M[Report Generation]
+    A[Input BAM] --> E[prepareBam - align if needed, merge, sort, index]
+    E --> P[Panel subset - NPHD BED]
+    P --> F[SNV calling - Clair3]
+    E --> G[Methylation - modkit]
+    E --> H[SV - Sniffles2 + Severus]
+    E --> N[CNV - CNVpytor]
+    E --> O[SAVANA - SV breakpoints, CN, purity, ploidy]
+    F --> I[Annotation - ANNOVAR + filtering]
+    G --> J[MGMT promoter status]
+    G --> K[Methylation classification]
+    H --> L[SV annotation - AnnotSV]
+    H --> Q[Fusion screen - curated CNS list]
+    O --> Q
+    O --> R[Absolute CN plot + purity/ploidy]
+    I --> M[Report generation]
     J --> M
     K --> M
-    L --> M
+    N --> M
+    Q --> M
+    R --> M
 ```
 
-## Parameters
+SNV calling is restricted to the NPHD panel BED; SV, CNV and methylation run on
+the full BAM.
+
+## 🧰 Parameters
 
 ### Required parameters
 
@@ -247,7 +320,7 @@ graph TD
 | `--annovarPath` | Path to ANNOVAR installation directory. | System-specific | `--annovarPath /tools/annovar/` |
 | `--annovarDB` | Path to ANNOVAR database directory (humandb/). | System-specific | `--annovarDB /tools/annovar/humandb/` |
 | `--annotsvAnnot` | Path to AnnotSV annotations directory. | System-specific | `--annotsvAnnot /tools/AnnotSV/Annotations_Human/` |
-| `--annotations` | Path to annotation file for IGV reports (refGene.txt.gz). | `data/refGene.txt` | `--annotations /refs/refGene.txt` |
+| `--annotations` | Path to annotation file for IGV reports (refGene.txt.gz). | `${projectDir}/data/refGene.txt.gz` | `--annotations /refs/refGene.txt.gz` |
 
 
 ### Optional parameters
@@ -257,134 +330,314 @@ graph TD
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
 | `--outDir` | Output directory for all pipeline results. Will be created if it doesn't exist. | `output` | `--outDir /results/analysis` |
-| `--tmpDir` | Directory for temporary files. Auto-set to `${outDir}/tmp/` unless overridden. | `${outDir}/tmp/` | `--tmpDir /scratch/tmp` |
-| `--logDir` | Directory for log files. | `logDir` | `--logDir /logs` |
 | `--patient` | Patient name for reports. If not specified, uses the `--id` value. | `null` (uses `--id`) | `--patient "John Doe"` |
 
 #### Resource parameters
 
+CPU and memory are set per process label in `nextflow.config`, and each tool is
+given `task.cpus`, so an allocation and a tool's thread count can never
+disagree.
+
+Every request is capped by two parameters, so the pipeline runs on smaller
+machines without editing any config:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--maxCpus` | Ceiling on CPUs for any single process | `64` |
+| `--maxMemory` | Ceiling on memory in GB for any single process | `96` |
+
+```bash
+# e.g. an 8-core workstation
+nextflow run main.nf ... --maxCpus 8 --maxMemory 32 -profile local,singularity
+```
+
+Without a cap, an oversized request is a hard error rather than a slow run
+(`Process requirement exceeds available CPUs`). For finer control, override
+individual labels with your own `-c custom.config`.
+
+#### Variant calling tool parameters
+
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
-| `--maxThreads` | Maximum number of threads for general processes. | `64` | `--maxThreads 32` |
-| `--modkitThreads` | Number of threads for modkit methylation calling. | `32` | `--modkitThreads 16` |
-| `--cnvThreads` | Number of threads for CNVpytor copy number analysis. | `32` | `--cnvThreads 16` |
-| `--snifflesThreads` | Number of threads for Sniffles2 structural variant calling. | `32` | `--snifflesThreads 16` |
-| `--snpThreads` | Number of threads for SNV calling with DeepVariant. | `64` | `--snpThreads 32` |
-| `--svThreads` | Number of threads for structural variant calling. | `64` | `--svThreads 32` |
-| `--covThreads` | Number of threads for coverage calculation with mosdepth. | `8` | `--covThreads 4` |
-| `--methThreads` | Number of threads for methylation classification. | `64` | `--methThreads 32` |
-| `--mgmtThreads` | Number of threads for MGMT promoter analysis. | `8` | `--mgmtThreads 4` |
+| `--clair3Model` | Clair3 model directory name. By default it is **auto-detected** from the `basecall_model=` field in the BAM's `@RG` header and validated against the models shipped in the container, so a mismatched model cannot be used silently. Set only to override. | `null` (auto) | `--clair3Model r1041_e82_400bps_sup_v500` |
+| `--severusVntr` | Optional VNTR BED for Severus. Recommended: `vntrs/human_GRCh38_no_alt_analysis_set.trf.bed` from the [Severus repo](https://github.com/KolmogorovLab/Severus). | `null` | `--severusVntr /refs/vntr.bed` |
+| `--severusPON` | Optional panel of normals for Severus. Without one, tumour-only Severus has **no somatic filter**, so supplying `pon/PoN_1000G_hg38.tsv.gz` is strongly advised. With a PON, the published VCF is the somatic set. | `null` | `--severusPON /refs/PoN_1000G_hg38.tsv.gz` |
+| `--savanaG1000` | 1000G het-SNP set used by SAVANA for B-allele frequency, purity and ploidy. | `1000g_hg38` | `--savanaG1000 1000g_hg38` |
+| `--minFusionLen` | Smallest same-chromosome DEL/DUP/INV that can rearrange two genes. | `10000` | `--minFusionLen 50000` |
+| `--minFusionReads` | Minimum supporting reads for a fusion candidate. | `10` | `--minFusionReads 5` |
+| `--minFusionMapq` | Minimum mapping quality, where the caller reports it. | `50` | `--minFusionMapq 60` |
+| `--knownFusions` | Curated CNS fusion list. | `data/cns_fusions.tsv` | `--knownFusions my.tsv` |
+| `--cnsHotspots` | Recurrent CNS variants always kept by the SNV filter. | `data/cns_hotspots.tsv` | `--cnsHotspots my.tsv` |
 
-#### Analysis parameters
+#### Annotation parameters
 
-| Parameter | Description | Default | Example |
-|-----------|-------------|---------|---------|
-| `--minimumMgmtCov` | Minimum coverage threshold for MGMT promoter methylation analysis. If coverage is below this threshold, MGMT analysis will be skipped. | `5` | `--minimumMgmtCov 10` |
-| `--bamMinCoverage` | Minimum coverage threshold for human variation workflow. | `10` | `--bamMinCoverage 15` |
-| `--mnpFlex` | Enable MNP-Flex classifier input preparation. Creates files needed for external MNP-Flex analysis. | `false` | `--mnpFlex true` |
-| `--runHumanVariation` | Enable wf-human-variation SNP and SV pipeline. Adds additional variant calling workflows. | `false` | `--runHumanVariation true` |
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--annovarProtocol` | Comma-separated ANNOVAR databases. | `refGene,cytoBand,clinvar_20240917,avsnp151,1000g2015aug_eur` |
+| `--annovarOperation` | ANNOVAR operation codes. **Must have the same number of entries as `--annovarProtocol`** - the pipeline checks this at startup and fails early if not. | `gx,r,f,f,f` |
+
+To add `cosmic70` (needs a COSMIC licence), `dbnsfp47a` or `allofus`, append to
+**both** lists, keeping them the same length.
 
 #### Container and system parameters
 
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
-| `--containerEngine` | Container engine to use: 'docker' or 'singularity'. | `docker` | `--containerEngine singularity` |
-| `--seq` | Sequencer platform identifier. Auto-detected from BAM headers, but can be manually set. | `P2` | `--seq F` |
+| `--containerBindPaths` | Comma-separated host paths to bind into containers. Singularity only auto-mounts the work directory, so reference genome, ANNOVAR and AnnotSV paths outside it **must** be listed here or they will be invisible inside the container. | `""` | `--containerBindPaths /data,/refs` |
 
 ### Profile-specific parameters
 
-The pipeline supports different compute infrastructure profiles:
+Resources are set with native Nextflow `cpus`/`memory`/`queue` directives.
 
 #### LSF profile (`-profile lsf`)
-- **Executor:** LSF
-- **Queue:** normal
-- **Memory:** 8 GB per process
-- **CPUs:** 2 per process
-- **GPU:** Available for variant calling and structural variant processes
+- **Executor:** LSF, queue `verylong`, `perJobMemLimit` enabled
+- **Default:** 2 CPUs / 8 GB
+
+| Label | Processes | CPUs | Memory |
+|-------|-----------|------|--------|
+| `rapid_cns` | light steps: MGMT, AnnotSV, ANNOVAR, IGV, reporting | 8 | 32 GB |
+| `bamprep` | sort + index the full flow-cell BAM | 32 | 96 GB |
+| `heavy` | Sniffles2, CNVpytor, methylation classifier | 32 | 64 GB |
+| `mods` | modkit methylation calling | 32 | 64 GB |
+| `clair3` | SNV calling | 64 | 96 GB |
+| `severus` | Severus SV calling | 32 | 64 GB |
+| `savana` | SAVANA SV and copy number | 32 | 64 GB |
+
+Each tool is invoked with `task.cpus`, so a tool's thread count always matches
+what the scheduler allocated.
 
 #### SLURM profile (`-profile slurm`)
-- **Executor:** SLURM
-- **Queue:** batch
-- **Memory:** 8 GB per process
-- **CPUs:** 2 per process
-- **GPU:** Available for variant calling and structural variant processes
+- **Executor:** SLURM, queue `batch`; same per-label CPU/memory table as LSF.
 
 #### Local profile (`-profile local`)
-- **Executor:** Local
-- **Memory:** 4 GB per process
-- **CPUs:** 1 per process
-- **GPU:** Not available
+- **Executor:** Local, 1 CPU / 4 GB per process. Suitable only for small tests.
 
-## Output
+## 📦 Containers
 
-The pipeline generates comprehensive outputs in the specified output directory:
+| Label | Image | Provides |
+|-------|-------|----------|
+| `rapid_cns` | `areebapatel/rapid_cns:3.0.2` | samtools, bedtools, vcftools, [dorado](https://github.com/nanoporetech/dorado), [mosdepth](https://github.com/brentp/mosdepth), [CNVpytor](https://github.com/abyzovlab/CNVpytor), [Sniffles2](https://github.com/fritzsedlazeck/Sniffles), [methylartist](https://github.com/adamewing/methylartist), [igv-reports](https://github.com/igvteam/igv-reports), [AnnotSV](https://github.com/lgmgeo/AnnotSV) (code), R stack |
+| `mods` | `quay.io/biocontainers/ont-modkit:0.6.4--h7f49ad2_0` | [modkit](https://github.com/nanoporetech/modkit) |
+| `clair3` | `hkubal/clair3:v2.0.2` | [Clair3](https://github.com/HKU-BAL/Clair3) and its bundled ONT models |
+| `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | [Severus](https://github.com/KolmogorovLab/Severus) |
+| `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | [SAVANA](https://github.com/cortes-ciriano-lab/savana) |
 
-- **SNV analysis:** Variant calls, annotations, and filtered reports
-- **Structural variants:** SV calls with annotations
-- **Copy Number variations:** CNV analysis with plots and annotations
-- **Methylation analysis:** Methylation calls and classification results
-- **MGMT analysis:** Promoter methylation status and predictions
-- **Coverage analysis:** Depth of coverage summaries
-- **Reports:** HTML reports with comprehensive molecular diagnostic information
+## 📤 Output
 
-### MNP-Flex integration
+```
+output/
+├── bam/                    # merged, sorted, indexed BAM + panel subset
+├── snv/                    # Clair3 VCF, PASS VCF, ANNOVAR multianno, filtered
+│                           # report (with per-variant coverage and VAF)
+├── sv/
+│   ├── <id>.sniffles2.vcf              # Sniffles2 calls
+│   ├── <id>_sniffles_annotsv.tsv       # AnnotSV annotation
+│   ├── severus/                        # Severus calls + <id>.severus.vcf
+│   ├── <id>_severus_annotsv.tsv        # AnnotSV annotation
+│   ├── savana/                         # SAVANA tumour-only breakpoints
+│   └── fusions/                        # per-caller fusion screen (see below)
+├── cnv/
+│   ├── <id>.cnvpytor.calls.*.tsv       # CNVpytor calls at 1k/10k/100k bins
+│   ├── <id>_cnvpytor_100k.png/.pdf     # read-depth plot
+│   ├── <id>_savana_cnv.png             # absolute copy number, genes annotated
+│   ├── <id>.annotation.1000.xlsx       # gene-level CNV table
+│   └── savana/                         # SAVANA segmentation + purity/ploidy fit
+├── mods/                   # modkit bedMethyl
+├── mgmt/                   # MGMT coverage, status, methylartist plot
+├── methylation_classification/         # votes, rf_details, calibrated scores
+├── mnpflex/                # <id>.MNPFlex.input.bed  (upload to app.epignostix.com)
+├── coverage/               # mosdepth summaries
+├── reports/                # IGV report
+├── report/                 # <id>_Rapid-CNS2_report_lite.html (no IGV)
+│                           # <id>_Rapid-CNS2_report_full.html (IGV embedded)
+└── pipeline_info/          # timeline, trace, execution report
+```
 
-**MNP-Flex** is a methylation-based tumor classifier that provides detailed molecular classification of CNS tumours. The Rapid-CNS² pipeline can prepare the necessary input files for MNP-Flex analysis.
+> **Note on the report:** the final HTML covers coverage, SNVs, the IGV report,
+> both copy-number plots with the purity/ploidy fit, methylation classification,
+> MGMT, and reportable fusions. The full SV call sets, the AnnotSV annotations
+> and the gene-level CNV table are written to disk only.
 
-#### What is MNP-Flex?
+### SNV filtering
 
-MNP-Flex is a methylation classifier compatible with the latest version of the Heidelberg CNS tumour methylation classifier. It can classify CNS tumours into 184 subclasses according to the 2021 WHO classification.
+Variants are reported when they change the protein or a splice site - exonic
+non-synonymous, stopgain/stoploss, frameshift and non-frameshift changes, or
+splicing - and are either rare (1000G EUR AF < 0.001) or present in COSMIC.
+Filtering on rarity alone floods the report with intronic calls.
 
-#### How to use MNP-Flex
+`data/cns_hotspots.tsv` overrides that filter for recurrent CNS variants. A row
+naming a residue (`IDH1 R132`) or a coordinate window (the TERT promoter, which
+is annotated `upstream` and would otherwise be dropped) is always reported. A row
+with `*` widens the gene set but still requires a coding change, so it does not
+readmit every intron of a large gene.
 
-1. **Enable MNP-Flex in the pipeline:**
-   ```bash
-   nextflow run main.nf \
-       --input /data/sample.bam \
-       --id SAMPLE001 \
-       --mnpFlex true \
-       -profile lsf
-   ```
+Each variant carries its read depth and allele fraction from the Clair3 genotype.
 
-2. **Locate the output files:**
-   The pipeline creates MNP-Flex compatible files in:
-   ```
-   ${outDir}/mnpflex/
-   └── ${id}.MNPFlex.subset.bed
-   ```
 
-3. **Upload to MNP-Flex:**
-   - Visit [mnp-flex.org](https://mnp-flex.org)
-   - Upload the `.bed` file generated by the pipeline
-   - Submit for analysis
+### Copy number
 
-4. **Interpret results:**
-   - MNP-Flex will provide detailed classification results
-   - Results include confidence scores
-   - Reports are compatible with clinical interpretation guidelines
+**CNVpytor** (`<id>_cnvpytor_100k.png`) is a read-depth profile in 100 kb bins,
+normalised to the genome-wide mean. It assumes nothing about the tumour.
 
-#### Output files
+**SAVANA** (`<id>_savana_cnv.png`) fits *absolute* copy number from read depth
+and B-allele frequency, using SV breakpoints as segment boundaries and correcting
+for purity and ploidy - so CN 0 (homozygous deletion) and CN 1 (heterozygous
+loss) are distinguishable. Genes from `data/genes.bed` are labelled at their copy
+number.
 
-- **`${id}.MNPFlex.subset.bed`:** Methylation data in MNP-Flex compatible format
+If SAVANA cannot fit purity and ploidy it writes `No_fit_found_PARAMS.tsv`
+instead, listing the candidate solutions it rejected, and the absolute
+copy-number plot is omitted. This is common on adaptive-sampling data, where
+uneven off-target coverage makes fitted values scatter around integers. Pass
+extra flags with `--savanaCnaArgs` to relax the viability filters, e.g.
 
-**Note:** MNP-Flex analysis is performed externally on the mnp-flex.org platform. The pipeline only prepares the input files. For detailed information about MNP-Flex, visit [mnp-flex.org](https://mnp-flex.org).
+```bash
+--savanaCnaArgs '--min_proportion_close_to_whole_number 0.4 --max_distance_from_whole_number 0.3'
+```
 
-### Getting Help
+`--overrule_cellularity <purity>` skips the estimate entirely when the purity is
+known from histology.
 
-- Check the Nextflow documentation: https://www.nextflow.io/docs/
-- Review the pipeline logs in the `work/` directory
-- Check the `pipeline_info/` directory for execution reports
-- Run with `--help` for available options
+The purity/ploidy fit (`cnv/savana/<id>_purity_ploidy.tsv`) also appears in the
+report. It is **experimental and not validated for clinical use** - see the
+[SAVANA repository](https://github.com/cortes-ciriano-lab/savana). Segmentation
+assumes uniform coverage, which adaptive-sampling data only partly satisfies.
+`savana cna` is the slowest step in the pipeline.
 
-## Citation
+### Fusion screen
 
-If you use this pipeline, please cite our work:
+Each SV caller's output is screened for gene fusions and written to
+`sv/fusions/`. Three filters keep the reportable set specific:
 
-Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
+1. **Structural sanity** - BND/TRA, anything interchromosomal, or a DEL/DUP/INV
+   of at least `--minFusionLen`. Without this a small deletion straddling a gene
+   boundary counts as a fusion.
+2. **Evidence** - `--minFusionReads` and `--minFusionMapq`, where the caller
+   reports them.
+3. **Curated list** - `data/cns_fusions.tsv`, matched on the gene pair *and* the
+   expected structure, not the names alone. `*` matches any partner.
 
-## License
+Breakpoints are assigned to gene bodies from refGene, since the panel BED is
+exon-level and breakpoints fall in introns.
 
-This project is licensed under the [MIT License](LICENSE).
+| File | Contents |
+|------|----------|
+| `<id>_<caller>_fusions_reportable.tsv` | curated-list matches, `entity-defining` (both partners named) or `potentially significant` (one named partner) |
+| `<id>_<caller>_fusions_all.tsv` | everything passing the filters |
+| `<id>_<caller>_EGFRvIII.txt` | targeted EGFRvIII check |
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Nextflow](https://img.shields.io/badge/Nextflow-3.0%2B-brightgreen)](https://www.nextflow.io/)
+The `entity` column states the association a fusion carries, not a diagnosis:
+`KIAA1549--BRAF` is most frequent in pilocytic astrocytoma but also occurs in
+other low-grade gliomas.
+
+### MNP-Flex
+
+[MNP-Flex](https://app.epignostix.com) is a methylation classifier compatible
+with the Heidelberg CNS classifier, covering 184 subclasses of the 2021 WHO
+classification.
+
+The pipeline prepares its input at `mnpflex/<id>.MNPFlex.input.bed` (on by
+default; disable with `--mnpFlex false`). Upload it yourself at
+[app.epignostix.com](https://app.epignostix.com), or - if you have an account
+and set the credentials below - let the pipeline submit it and collect the
+results for you.
+
+#### Uploading through the API
+
+Optional and off by default. Set your website login in the environment of the
+shell that launches the run:
+
+```bash
+export EPIGNOSTIX_USER='you@institute.de'      # the app.epignostix.com login
+export EPIGNOSTIX_PASSWORD='...'
+
+nextflow run main.nf ... --mnpFlexUpload
+```
+
+Keep them out of `nextflow.config` and `-c` files, which Nextflow copies into the
+task directory. If either is unset the upload is skipped with a warning.
+
+A batch script does not read `.bashrc`, so when submitting through LSF or SLURM
+either export the variables in the shell you submit *from*, or source your
+profile at the top of the launcher.
+
+Sample metadata is sent alongside the file:
+
+| Parameter | Default |
+|-----------|---------|
+| `--savanaCnaArgs` | *(empty)* |
+| `--mnpFlexApi` | `https://app.epignostix.com/api` |
+| `--mnpFlexWorkflowId` | `18` |
+| `--mnpFlexTechnology` | `Nanopore sequencing- PromethION` |
+| `--mnpFlexCoverage` | `>10X` |
+| `--mnpFlexExtraction` | `Frozen` |
+| `--mnpFlexSex` | `ND` |
+| `--mnpFlexLocalisation`, `--mnpFlexDiagnosis` | unset |
+| `--mnpFlexWait` | `600` (seconds to wait for results) |
+
+The upload response is written to `mnpflex/<id>_mnpflex_upload.json`. The
+pipeline then polls for the analysis (up to `--mnpFlexWait`, default 600 s) and
+downloads the results:
+
+| File | Contents |
+|------|----------|
+| `<id>_mnpflex_predictions.tsv` | top classes with scores, classifier version, QC line |
+| `<id>_bundle_summary.json` | full classifier output |
+| `<id>_qc_*.json`, `<id>_mgmt_region_plot.json` | QC and MGMT plot data |
+
+The top predictions appear in the report. Descriptions of the methylation
+classes are in [Cancer Cell (2025)](https://www.cell.com/cancer-cell/fulltext/S1535-6108(25)00495-7).
+If the analysis has not finished within `--mnpFlexWait`, the run still succeeds
+and the report omits the section; re-run `scr/mnpflex_results.py --sample-id <id>`
+later to collect it.
+
+## 🆘 Help
+
+- `nextflow run main.nf --help` lists every parameter
+- Task logs are in `work/`; run reports and the timeline in `pipeline_info/`
+- [Nextflow documentation](https://www.nextflow.io/docs/)
+
+## 📝 Changelog
+
+### 3.0.0
+
+A major update that modernises the toolchain and fixes a number of bugs.
+
+- **New callers:** Clair3 replaces DeepVariant for SNVs, Severus joins Sniffles2 for structural variants,
+  and SAVANA adds copy number with tumour purity and ploidy estimates.
+- **Compatible with current Dorado output.** All tools are updated and pinned,
+  including modkit, Sniffles2, mosdepth, AnnotSV and dorado itself. The Clair3
+  model is detected automatically from the BAM's basecaller.
+- **Bug fixes** across variant filtering, methylation classification, MGMT
+  prediction and report rendering. The report is now HTML only; the PDF variant
+  has been dropped.
+- **Fusion screen and absolute copy number.** Structural variants are screened
+  against a curated list of recurrent CNS fusions, and SAVANA contributes an
+  absolute copy-number profile with tumour purity and ploidy. Both appear in the
+  report; the full SV call sets and the gene-level CNV table are written to disk.
+
+## 📚 Citation
+
+If you use this pipeline, please cite:
+
+Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a
+platform for rapid molecular profiling of central nervous system tumors.
+*Nature Medicine* **31**, 1567–1577 (2025).
+[doi:10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
+
+```bibtex
+@article{patel2025rapidcns2,
+  title   = {Prospective, multicenter validation of a platform for rapid
+             molecular profiling of central nervous system tumors},
+  author  = {Patel, Areeba and G{\"o}bel, Kirsten and Ille, Sebastian and others},
+  journal = {Nature Medicine},
+  volume  = {31},
+  pages   = {1567--1577},
+  year    = {2025},
+  doi     = {10.1038/s41591-025-03562-5}
+}
+```
+
+## 📄 License
+
+This project is licensed under the [Apache License 2.0](LICENSE).

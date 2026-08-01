@@ -1,86 +1,83 @@
 process methylationCalls {
     label 'mods'
 
+    publishDir "${params.outDir}/mods/", mode: 'copy'
+
     input:
-        path(bam)
-        path(bai)
+        tuple path(bam), path(bai)
         path(ref)
         val(id)
-        val(modkitThreads)
-
-    publishDir("${params.outDir}/mods/")
 
     output:
-        path "${id}.5mC.bedmethyl", emit: bedmethylFile
+        path "${id}.5mC.bedmethyl", emit: bedmethyl
 
+    // modkit >=0.6 removed --preset, --only-tabs and --ignore, and made
+    // --modified-bases required. --combine-mods reports 5mC and 5hmC as a single
+    // combined fraction, which is what the HM450 array betas represent.
+    // Output is all-tab delimited: col 10 = Nvalid_cov, col 11 = percent modified.
     script:
         """
-        modkit pileup ${bam} ${id}.5mC.bedmethyl --ref ${ref} --preset traditional --only-tabs --threads ${modkitThreads}
+        modkit pileup ${bam} ${id}.5mC.bedmethyl \
+            --ref ${ref} \
+            --cpg \
+            --combine-strands \
+            --combine-mods \
+            --modified-bases C \
+            --threads ${task.cpus}
         """
 }
 
 process checkMgmtCoverage {
     label 'rapid_cns'
 
+    publishDir "${params.outDir}/mgmt/", mode: 'copy'
+
     input:
-        path(bam)
-        path(bai)
+        tuple path(bam), path(bai)
         path(mgmtBed)
         val(minimumMgmtCov)
-        val(threads)
-
-    publishDir("${params.outDir}/mgmt")
 
     output:
-	    val true
-	    path "*_cov.txt", emit: mgmt_avg_cov_file
-        path "mgmt_cov.mosdepth.summary.txt"	
-        stdout emit: mgmt_avg_cov
+        path "mgmt_cov.mosdepth.summary.txt"
+        path "mgmt_avg_cov.txt", emit: avgCovFile
+        path "mgmt_cov_ok.txt",  emit: covOkFile
 
     script:
         """
-        mosdepth \
-        -t ${threads} \
-        -n \
-        --by ${mgmtBed} \
-        mgmt_cov ${bam}
-        
-        # Check if the coverage is below the threshold
-        cov="\$(grep "^chr10_region" mgmt_cov.mosdepth.summary.txt | awk '{ print \$4 }')"
-        
-        echo \${cov}
-        if awk 'BEGIN{exit ARGV[1]>ARGV[2]}' "\$cov" ${minimumMgmtCov}
-        then
-            echo \${cov} > mgmt_below_thresh_cov.txt
-        else
-            echo \${cov} > mgmt_avg_cov.txt
-        fi
-	"""
+        mosdepth -t ${task.cpus} -n --by ${mgmtBed} mgmt_cov ${bam}
+
+        COV=\$(awk '\$1=="chr10_region"{print \$4}' mgmt_cov.mosdepth.summary.txt)
+        [ -n "\${COV}" ] || COV=0
+        OK=\$(awk -v c="\${COV}" -v m=${minimumMgmtCov} 'BEGIN{print (c>=m) ? "true" : "false"}')
+
+        echo "MGMT promoter mean coverage: \${COV}x (threshold ${minimumMgmtCov}x, pass=\${OK})"
+        printf '%s' "\${COV}" > mgmt_avg_cov.txt
+        printf '%s' "\${OK}"  > mgmt_cov_ok.txt
+        """
 }
 
 process mgmtPromoterMethyartist {
     label 'rapid_cns'
-    
+
+    publishDir "${params.outDir}/mgmt/", mode: 'copy'
+
     input:
-        path(bam)
-        path(bai)
+        tuple path(bam), path(bai)
         path(ref)
-        val(ready)
+        val(covOk)
         val(id)
 
-    publishDir("${params.outDir}/mgmt/")
-    
     output:
-        val true
-        path "*.svg", emit: mgmt_plot optional true
-    
+        path "${id}_mgmt_methylartist.png", optional: true, emit: mgmtPlot
+
     script:
-        cov_file = file("${params.outDir}/mgmt/mgmt_avg_cov.txt")
-        // Check if the coverage is above the threshold
-        if ( cov_file.exists() == true )    
-            """
-            methylartist \
-            locus \
+        """
+        if [ "${covOk}" != "true" ]; then
+            echo "MGMT coverage below threshold - skipping methylartist plot"
+            exit 0
+        fi
+
+        methylartist locus \
             -i chr10:129465536-129468536 \
             -l chr10:129466536-129467536 \
             -b ${bam} \
@@ -88,49 +85,50 @@ process mgmtPromoterMethyartist {
             --motif CG \
             --mods m \
             --highlightpalette viridis \
-            --samplepalette magma > ${id}_mgmt.png
+            --samplepalette magma
 
-            """
+        # methylartist names its own output; normalise it for the report.
+        PLOT=\$(ls *.locus.meth.png 2>/dev/null | head -n 1)
+        if [ -n "\${PLOT}" ]; then
+            mv "\${PLOT}" ${id}_mgmt_methylartist.png
         else
-            // If the coverage is below the threshold, do nothing
-            """
-            echo "MGMT coverage is below the threshold, skipping MGMT promoter methylation analysis"
-            """
+            echo "WARNING: methylartist produced no plot" >&2
+        fi
+        """
 }
 
 process mgmtPred {
     label 'rapid_cns'
-    
+
+    publishDir "${params.outDir}/mgmt/", mode: 'copy'
+
     input:
-        val(ready)
+        val(covOk)
         path(mgmtScript)
         path(mgmtBed)
         path(mgmtProbes)
         path(mgmtModel)
-        path(bedmethylFile)
+        path(bedmethyl)
         val(id)
 
     output:
-        val true
+        path "${id}_mgmt_status.csv", optional: true, emit: mgmtStatus
+        path "${id}_mgmt.bed",        optional: true
 
     script:
-        cov_file = file("${params.outDir}/mgmt/mgmt_avg_cov.txt")
-        if ( cov_file.exists() == true )
-            """
-            bedtools \
-            intersect \
-            -a ${bedmethylFile} \
-            -b ${mgmtBed} > ${params.outDir}/mgmt/${id}_mgmt.bed \
+        """
+        if [ "${covOk}" != "true" ]; then
+            echo "MGMT coverage below threshold - skipping MGMT prediction"
+            exit 0
+        fi
 
-            Rscript ${mgmtScript} \
-            --input ${params.outDir}/mgmt/${id}_mgmt.bed \
+        bedtools intersect -a ${bedmethyl} -b ${mgmtBed} > ${id}_mgmt.bed
+
+        Rscript ${mgmtScript} \
+            --input ${id}_mgmt.bed \
             --probes ${mgmtProbes} \
             --model ${mgmtModel} \
             --out_dir . \
-            --sample ${id} \
-            """
-        else
-            """
-            echo "MGMT coverage is below the threshold, skipping MGMT promoter methylation analysis"   
-            """
+            --sample ${id}
+        """
 }

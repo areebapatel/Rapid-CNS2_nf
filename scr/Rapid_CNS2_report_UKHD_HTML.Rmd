@@ -1,40 +1,106 @@
 ---
 output:
   html_document:
-    df_print: paged
+    theme: flatly
+    df_print: kable
     toc: true
     toc_float: true
+    toc_depth: 2
 always_allow_html: true
 params:
   inc_igvreport: false
   igv_report: null
 ---
 <style type="text/css">
-  body{
-  font-size: 14pt;
-  text-align: justify;
-  font-family: "Arial", "Helvetica", sans-serif;
+  /* KiTZ brand palette: #0047b9 blue and #ff5c00 orange are taken from the
+     KiTZ logo; the categorical pair is validated for colour-vision deficiency. */
+  :root {
+    --primary:            #0047b9;   /* KiTZ blue - headings, table headers */
+    --primary-dark:       #28348a;   /* KiTZ navy */
+    --primary-container:  #dce6f7;   /* tinted panels, hover rows */
+    --on-primary:         #ffffff;
+    --accent:             #ff5c00;   /* KiTZ orange - second data series */
+    --surface:            #ffffff;
+    --surface-variant:    #f5f7fa;
+    --on-surface-variant: #49454f;
+    --outline:            #ccd6e5;
+    --warning:            #ff5c00;
+    --error:              #c61826;   /* KiTZ red */
   }
 
-  .header {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-    gap: 20px;
+  /* System stack: the report is rendered --self-contained, so web fonts cannot
+     be fetched. These are humanist sans faces present on each platform. */
+  body{
+  font-size: 12pt;
+  line-height: 1.6;
+  text-align: left;
+  color: #222;
+  font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+               Roboto, "Noto Sans", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
   }
-  
+
+  /* rmarkdown caps the content column at ~940px; widen it so the coverage and
+     copy-number figures have room */
+  .main-container {
+    max-width: 1360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  img { max-width: 100%; height: auto; }
+
+  /* prose that used to be marked up as h4 headings */
+  .note {
+    font-size: 1em;
+    margin: 0 0 14px 0;
+  }
+  .note-muted {
+    font-size: 0.9em;
+    color: #555;
+    margin: 0 0 8px 0;
+  }
+  .contact { font-size: 0.9em; margin: 2px 0; }
+
+  /* title + sample details on the left, logos on the right, one baseline */
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--outline);
+  }
+
+  .report-header .titles { flex: 1 1 auto; min-width: 0; }
+
+  .report-header .logos {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex: 0 0 auto;
+  }
+
+  /* the title sits inside the header row, so drop the section rule above it */
+  .report-header h2 {
+    border-top: none;
+    margin: 0 0 10px 0;
+    padding-top: 0;
+  }
+
   .logo {
-    height: 150px;
+    height: 84px;
     width: auto;
   }
-  
+
   .sample-info {
-    font-size: 14pt;
-    color: #666;
-    margin: 10px 0;
+    font-size: 12pt;
+    color: #555;
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .report-header { flex-direction: column; align-items: flex-start; }
   }
   
   .smaller-text {
@@ -63,21 +129,60 @@ params:
     border-radius: 5px;
   }
   
-  h1, h2, h3, h4 {
+  /* only real section headings get the rule and spacing */
+  h1, h2, h3 {
+    color: var(--primary);
+    font-weight: 600;
     margin-top: 40px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     padding-top: 20px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #e6e6e6;
   }
 
-  h1:first-child, h2:first-child, h3:first-child, h4:first-child {
+  h1:first-child, h2:first-child, h3:first-child {
     border-top: none;
     margin-top: 20px;
   }
 
+  h4 { font-size: 1.05em; font-weight: 600; margin: 18px 0 6px 0; }
+
   p {
-    margin-bottom: 8px;
-    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  /* tables - primary header, alternating surface rows, thin outline grid */
+  table.table {
+    font-size: 0.9em;
+    border: 1px solid var(--outline);
+    font-variant-numeric: tabular-nums;   /* numeric columns line up */
+  }
+  /* the child-combinator form outranks bootstrap's .table>thead>tr>th, which is
+     injected after this block and would otherwise win the tie */
+  table.table > thead > tr > th {
+    background-color: var(--primary);
+    color: var(--on-primary);
+    font-weight: 600;
+    border-bottom: none;
+    vertical-align: middle;
+  }
+  table.table > tbody > tr > td { border-top: 1px solid var(--outline); }
+  table.table-striped > tbody > tr:nth-of-type(odd)  > td { background-color: var(--surface); }
+  table.table-striped > tbody > tr:nth-of-type(even) > td { background-color: var(--surface-variant); }
+  table.table-hover > tbody > tr:hover > td { background-color: var(--primary-container); }
+
+  .experimental {
+    background-color: #fff6ef;
+    border-left: 4px solid var(--warning);
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 3px;
+  }
+  .experimental .small { font-size: 0.85em; color: var(--on-surface-variant); }
+
+  hr.plot-sep {
+    border: 0;
+    border-top: 1px dashed var(--outline);
+    margin: 28px 0 18px 0;
   }
 
   .section {
@@ -98,27 +203,47 @@ params:
     line-height: 1.0;
   }
   
-  .contact-section h4 {
-    margin-top: 0px;
-    margin-bottom: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
-    line-height: 1.0;
-    font-size: 12pt;
-    font-style: italic;
+  /* references + contact: a distinct closing block, separated from the last
+     figure by a rule and its own tinted surface */
+  .contact-section {
+    margin-top: 56px;
+    padding: 24px 28px 20px 28px;
+    border-top: 3px solid var(--primary);
+    background-color: var(--surface-variant);
+    border-radius: 4px;
   }
+
+  .contact-section .note-muted { margin-bottom: 10px; }
+
+  /* clear gap between the references above and the contact block below */
+  .contact-section .contact:first-of-type {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--outline);
+  }
+  .contact-section .contact { line-height: 1.7; }
 </style>
 
 ```{r logo_paths, echo=FALSE, results='asis'}
-# Get absolute paths for logos in working directory
-rapid_logo_path <- "/opt/logos/rapid_cns2_logo.png"
-ukhd_logo_path <- "/opt/logos/ukhd_logo.png"
+# Embed logos as base64 data URIs. An absolute container path in <img src>
+# resolves only inside the container, so the delivered HTML would show broken
+# images anywhere else.
+embed_png <- function(candidates) {
+  for (p in candidates) {
+    if (file.exists(p)) {
+      return(paste0("data:image/png;base64,", base64enc::base64encode(p)))
+    }
+  }
+  warning("Logo not found in any of: ", paste(candidates, collapse = ", "))
+  ""
+}
+rapid_logo_path <- embed_png(c("/opt/logos/rapid_cns2_logo.png",
+                               "logos/rapid_cns2_logo.png",
+                               "rapid_cns2_logo.png"))
+ukhd_logo_path  <- embed_png(c("/opt/logos/ukhd_logo.png",
+                               "logos/ukhd_logo.png",
+                               "ukhd_logo.png"))
 ```
-
-<div class="header">
-  <img src="`r rapid_logo_path`" alt="Rapid-CNS² Logo" class="logo">
-  <img src="`r ukhd_logo_path`" alt="Institution Logo" class="logo">
-</div>
 
 <div class="research-warning">
   RESEARCH USE ONLY
@@ -132,29 +257,10 @@ library(ggplot2)
 ```
 
 
-```{r check_platform, echo=FALSE}
-platform <- "Unknown"
-if (seq!="false"){
-    platform <- seq
-}
-if (seq=="F") {
-    platform <- "MinION/GridION"
-}
-if (seq=="P") {
-    platform <- "PromethION"
-}
-if (seq=="P2S") {
-    platform <- "P2 Solo"
-}
-if (seq=="P2i") {
-    platform <- "P2 Integrated"
-}
-if (seq=="GXB") {
-    platform <- "GridION"
-}
-```
-
 <div class="section">
+
+<div class="report-header">
+<div class="titles">
 
 ## **Rapid-CNS^2^ report**
 
@@ -163,16 +269,37 @@ if (seq=="GXB") {
 **Patient:** `r patient`
 </div>
 
-#### This report was generated by **Rapid-CNS^2^ (Nextflow pipeline Rapid-CNS2_nf `r software_ver`)** and is intended for research use only.  \
-#### Frozen tumour tissue was prepared and processed using the SQK-LSK114 Ligation Sequencing Kit from Oxford Nanopore Technologies. 160 gene regions from the NPHD panel were targeted using an adaptive sampling approach on the `r platform` platform. Data was analysed by the custom Rapid-CNS^2^ pipeline. Comprehensive analysis of CNS tumours using Rapid-CNS^2^ is a research tool currently under development. It has not been clinically validated in sufficiently large cohorts. Interpretation and implementation of the results in a clinical setting is in the sole responsibility of the treating physician.
+</div>
+<div class="logos">
+  <img src="`r rapid_logo_path`" alt="Rapid-CNS² Logo" class="logo">
+  <img src="`r ukhd_logo_path`" alt="Institution Logo" class="logo">
+</div>
+</div>
+
+<div class="note">
+**Method.** Frozen tumour tissue was processed with the Oxford Nanopore SQK-LSK114
+ligation sequencing kit, with adaptive sampling enriching for 160 gene regions of
+the NPHD panel. Reads were analysed with the Rapid-CNS^2^ Nextflow pipeline
+(`r software_ver`), covering single-nucleotide and structural variants, copy
+number, genome-wide methylation-based classification and MGMT promoter status.
+</div>
+<div class="note-muted">
+**Research use only.** Rapid-CNS^2^ is under active development and has not been
+clinically validated in sufficiently large cohorts. Interpretation of these results
+in a clinical setting, and any action taken on them, remain the sole responsibility
+of the treating physician.
+</div>
 
 </div>
 
 <div class="section">
 
 ## On-target coverage
-```{r,echo=FALSE,out.width="75%",warning=FALSE, fig.align='center'}
+```{r, echo=FALSE, warning=FALSE, fig.align='center', fig.width=13, fig.height=5, out.width="100%"}
 df <- read.delim(coverage)
+# mosdepth writes 'total' and 'total_region' summary rows; they are not
+# chromosomes and would appear as a spurious bar on the x axis.
+df <- df[!grepl("^total", df$chrom), ]
 df$Reads <- "All"
 df$Reads[endsWith(df$chrom,"_region")] <- "On_target"
 df$chrom <- gsub("_region","",df$chrom)
@@ -189,13 +316,20 @@ df$chrom[df$chrom=="chr9"] <- "chr09"
 
 df <- df[order(df$chrom),]
 
+# KiTZ blue / orange: validated as a colourblind-safe categorical pair
 ggplot(df, aes(x=chrom, y=mean, fill=Reads)) +
-  geom_bar(stat="identity", position="dodge") +
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_bar(stat="identity", position=position_dodge(width=0.8), width=0.7) +
+  theme_classic(base_size = 12) +
+  theme(axis.text.x     = element_text(angle = 45, hjust = 1),
+        axis.line       = element_line(colour = "#ccd6e5"),
+        axis.ticks      = element_line(colour = "#ccd6e5"),
+        panel.grid.major.y = element_line(colour = "#eef1f5"),
+        legend.position = "top",
+        legend.title    = element_blank()) +
   ylab("Mean coverage") +
   xlab("Chromosome") +
-  scale_fill_manual(values=c("All"="lightblue", "On_target"="darkblue"))
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  scale_fill_manual(values = c("All" = "#0047b9", "On_target" = "#ff5c00"))
 ```
 
 </div>
@@ -207,8 +341,14 @@ ggplot(df, aes(x=chrom, y=mean, fill=Reads)) +
 if (file.exists(mutations)) {
   mutations_df <- read.csv(mutations)
   if (nrow(mutations_df) > 0) {
-    kable(mutations_df, booktabs = TRUE) %>%
-      kable_styling(font_size=14, latex_options = c("HOLD_position","scale_down"))
+    # row_spec(0) styles the header inline; a stylesheet rule loses to the
+    # bootstrap theme, which is injected after this document's <style> block
+    kable(mutations_df, format = "html", escape = FALSE) %>%
+      kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                    full_width = TRUE, font_size = 12) %>%
+      row_spec(0, bold = TRUE, color = "white", background = "#0047b9") %>%
+      scroll_box(width = "100%", height = "600px",
+                 box_css = "border: 1px solid #ccd6e5; padding: 4px; ")
   } else {
     cat("No mutations found.")
   }
@@ -233,33 +373,135 @@ xfun::file_string(igv_report)
 
 ## Copy number profile
 
-```{r, echo=FALSE, warning=FALSE, fig.width=12, fig.height=8}
+#### Read depth (CNVpytor)
+
+<div class="note-muted">
+Read-depth copy number in 100 kb bins; each point is the normalised depth of one
+bin relative to the genome-wide mean, so gains sit above and losses below the
+central band.
+</div>
+
+```{r, echo=FALSE, warning=FALSE, out.width="100%"}
 knitr::include_graphics(cnv_plot)
+```
+
+```{r, echo=FALSE, results='asis'}
+if (!exists("savana_cnv_plot")) savana_cnv_plot <- NULL
+if (!is.null(savana_cnv_plot)) {
+  cat('<hr class="plot-sep">\n')
+  cat('<h4>Absolute copy number (SAVANA)</h4>\n')
+  cat('<div class="note-muted">',
+      'Fitted from read depth',
+      'and B-allele frequency and corrected for tumour purity and ploidy. The',
+      'y axis is copy number rather than a ratio, the dashed line marks the',
+      'sample ploidy, and CNS-relevant genes are annotated at their copy number',
+      '(\u25b3 = above the axis limit).',
+      '</div>\n')
+}
+```
+
+```{r, echo=FALSE, warning=FALSE, out.width="100%"}
+if (!is.null(savana_cnv_plot)) knitr::include_graphics(savana_cnv_plot)
+```
+
+```{r, echo=FALSE, results='asis'}
+if (!exists("purity_ploidy")) purity_ploidy <- NULL
+if (!is.null(purity_ploidy) && nrow(purity_ploidy)) {
+  pp <- purity_ploidy[1, , drop = FALSE]
+  cat('<div class="experimental">',
+      '<strong>Predicted tumour purity and ploidy (experimental)</strong><br>',
+      sprintf('Purity <strong>%s%%</strong> &nbsp;&middot;&nbsp; Ploidy <strong>%s</strong>',
+              round(as.numeric(pp$purity) * 100), round(as.numeric(pp$ploidy), 2)),
+      '<br><span class="small">Estimated by SAVANA from read depth and B-allele',
+      'frequency. This estimate is <strong>experimental and not validated</strong>',
+      'for clinical use; consult the SAVANA manuscript and repository',
+      '(<a href="https://github.com/cortes-ciriano-lab/savana">github.com/cortes-ciriano-lab/savana</a>)',
+      'for method details and limitations.</span>',
+      '</div>\n')
+}
 ```
 </div>
 
 <div class="section">
 
 ```{r, echo=FALSE}
-x <- rf_details
-oob <- read.delim(x,header = F, sep = ":")
-mc <- read.delim(votes,sep=" ")
+oob <- read.delim(rf_details, header = FALSE, sep = ":")
+rf_val <- function(key, default = NA) {
+  i <- which(trimws(oob[[1]]) == key)
+  if (length(i)) trimws(oob[[2]][i[1]]) else default
+}
+n_450k    <- as.integer(rf_val("450k_overlap"))
+n_feature <- as.integer(rf_val("Training_probes"))
+# ranger reports the Brier score in $prediction.error for probability forests.
+# Older rf_details files label it OOB_error.
+brier <- as.numeric(rf_val("Brier_score", rf_val("OOB_error")))
+mc <- read.delim(votes, sep = " ")
 ```
 
 ## Rapid CNS^2^ methylation classification
-#### Methylation-based classification is based on `r as.integer(oob[1,2])` sites. The Brier score of this ad-hoc classifier is `r paste0(round(as.numeric(oob[3,2])*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$Recalibrated_Frequency),])`**. This prediction has a confidence score of **`r paste0(round(as.numeric(mc$cal_Freq[which.max(mc$cal_Freq)]),digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
+<div class="note">
+Methylation-based classification used `r n_feature` CpG features selected from `r n_450k` sites overlapping the HM450 array. The Brier score of this ad-hoc classifier is `r paste0(round(brier*100,digits=1),"%")`. Using this classifier, the sample has been classified as  **`r rownames(mc[which.max(mc$Recalibrated_Frequency),])`**. This prediction has a confidence score of **`r paste0(round(as.numeric(mc$Recalibrated_Frequency[which.max(mc$Recalibrated_Frequency)]),digits=1),"%")`**. The calibrated score distribution for the Top 10 entities is given below.
+</div>
 
 ```{r,echo=FALSE,warning=FALSE, fig.pos="h"}
 mc$methClass <- rownames(mc)
+# single series: one hue, no legend, recessive axes
 ggplot(data=mc, aes(x=methClass, y=Recalibrated_Frequency)) +
-  geom_bar(stat="identity", fill="#dc143c") +
+  geom_bar(stat="identity", fill="#0047b9", width=0.7) +
   coord_flip() +
   scale_x_discrete(limits=mc[order(mc$Recalibrated_Frequency,decreasing=T),]$methClass[10:1]) +
-  ylim(0,100) +
+  scale_y_continuous(limits=c(0,100), expand = expansion(mult = c(0, 0.05))) +
   ylab("confidence score (%)") + xlab("methylation class") +
-  theme_classic() + theme(aspect.ratio=1) +theme(text=element_text(family="sans")) +
-  theme(panel.border = element_rect(color = "black", fill = NA, size = 1))
+  theme_classic(base_size = 12) +
+  theme(aspect.ratio     = 1,
+        text             = element_text(family="sans"),
+        axis.line        = element_line(colour = "#ccd6e5"),
+        axis.ticks       = element_line(colour = "#ccd6e5"),
+        panel.grid.major.x = element_line(colour = "#eef1f5"))
 
+```
+
+</div>
+
+<div class="section">
+
+## MNP-Flex classification
+
+```{r, echo=FALSE, results='asis'}
+if (!exists("mnpflex")) mnpflex <- NULL
+if (is.null(mnpflex) || !nrow(mnpflex)) {
+  cat('<div class="note-muted">No MNP-Flex result available for this sample.</div>\n')
+} else {
+  cat('<div class="note">',
+      'MNP-Flex is a platform-agnostic methylation classifier for',
+      'sequencing-based methylation data. It is compatible with the Heidelberg',
+      'CNS tumour methylation classifier v12.8 comprising 184 subclasses. The',
+      'methylation bed file produced by this pipeline was submitted through the',
+      '<a href="https://app.epignostix.com">Epignostix</a> platform API; the',
+      'classifier and its quality check are reported as returned.',
+      '</div>\n')
+  cat('<div class="note-muted">',
+      'Methylation classification of CNS tumours using MNP-Flex is a research',
+      'tool currently under development. It has not been clinically validated in',
+      'sufficiently large cohorts. Interpretation and implementation of the',
+      'results in a clinical setting is in the sole responsibility of the',
+      'treating physician.',
+      '</div>\n')
+  if (!is.na(mnpflex_clf)) cat('<div class="note-muted">Classifier: ', mnpflex_clf, '</div>\n')
+  if (!is.na(mnpflex_qc))  cat('<div class="note-muted">', mnpflex_qc, '</div>\n')
+
+  d <- head(mnpflex[order(-mnpflex$score), ], 10)
+  names(d) <- c("Methylation class", "Score")
+  print(kable(d, format = "html", escape = FALSE, row.names = FALSE, digits = 4) %>%
+          kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                        full_width = TRUE, font_size = 12) %>%
+          row_spec(0, bold = TRUE, color = "white", background = "#0047b9"))
+  cat('<div class="note-muted">',
+      'Descriptions of the methylation classes are given in',
+      '<a href="https://www.cell.com/cancer-cell/fulltext/S1535-6108(25)00495-7">',
+      'Cancer Cell (2025)</a>.',
+      '</div>\n')
+}
 ```
 
 </div>
@@ -267,13 +509,16 @@ ggplot(data=mc, aes(x=methClass, y=Recalibrated_Frequency)) +
 <div class="section">
 
 ## MGMT promoter methylation \
-#### Average coverage of MGMT is: **`r cov`**x.\
+<div class="note">
+Average coverage of MGMT is: **`r cov`**x.
+</div>
 
 ```{r setup2, echo=FALSE}
-show_mgmt <- FALSE
-### if methylartist and mgmt exist
-if (methylartist_status == "true" & mgmt_status == "true")
-show_mgmt <- TRUE
+# The numeric MGMT status is the clinically relevant result; the methylartist
+# plot is supplementary. Gate them separately so a failed plot does not hide
+# a successful prediction.
+show_mgmt <- mgmt_status == "true"
+show_mgmt_plot <- methylartist_status == "true"
 ```
 
 ```{r conditional_block, echo=FALSE, results='asis', eval=show_mgmt}
@@ -282,11 +527,12 @@ avg <- mgmt_file$average
 avg <- round(as.numeric(avg), 2)
 avg <- paste0(avg,"%")
 status <- mgmt_file$status
-cat("#### MGMT promoter methylation status is assessed based on a logistic regression based prediction model that considers 137 most predictive CpG sites in the MGMT promoter region. The cutoff is assigned as 25%")
-cat("\n\n#### Average methylation = ")
+cat('<div class="note-muted">MGMT promoter methylation status is assessed with a logistic regression model over the 137 most predictive CpG sites in the MGMT promoter region; the cutoff is 25%.</div>')
+cat('<div class="note">Average methylation = <strong>')
 cat(avg)
-cat("\n\n#### Predicted MGMT promoter status = ")
+cat('</strong></div><div class="note">Predicted MGMT promoter status = <strong>')
 cat(status)
+cat('</strong></div>')
 ```
 
 ```{r setup3, echo=FALSE}
@@ -297,33 +543,89 @@ if (!file.exists(methylartist_plot)
 mgmt_too_low <- TRUE
 ```
 ```{r, echo=FALSE, warning=FALSE, results='asis', eval=mgmt_too_low}
-cat("#### MGMT promoter methylation status was not assessed in this sample due to sequence coverage at the MGMT promter region being too low.")
+cat('<div class="note-muted">MGMT promoter methylation status was not assessed in this sample due to sequence coverage at the MGMT promoter region being too low.</div>')
 ```
 
-## MGMT Promoter methylation plot:
-```{r, echo=FALSE, out.width="100%",warning=FALSE, eval=show_mgmt}
+## MGMT promoter methylation plot
+```{r, echo=FALSE, out.width="100%",warning=FALSE, eval=show_mgmt_plot}
 knitr::include_graphics(methylartist_plot)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, results='asis', eval=mgmt_too_low}
-cat("#### An MGMT promoter plot was not produced in this sample due to sequence coverage at the MGMT site being too low.")
+cat('<div class="note-muted">An MGMT promoter plot was not produced in this sample due to sequence coverage at the MGMT site being too low.</div>')
 ```
 
+<div class="section">
+
+## Structural variants
+
+```{r, echo=FALSE, results='asis'}
+if (!exists("fusions_df")) fusions_df <- NULL
+if (is.null(fusions_df) || !nrow(fusions_df)) {
+  cat('<div class="note">No fusion from the curated CNS list was detected.</div>\n')
+} else {
+  d <- data.frame(
+    Fusion      = gsub("--", " \u2013 ", fusions_df$fusion),
+    Type        = fusions_df$svtype,
+    Breakpoints = paste0(fusions_df$chrom1, ":", format(as.numeric(fusions_df$pos1),
+                         big.mark = ",", trim = TRUE), "  \u2192  ",
+                         fusions_df$chrom2, ":", format(as.numeric(fusions_df$pos2),
+                         big.mark = ",", trim = TRUE)),
+    Size        = ifelse(fusions_df$span == "." | is.na(fusions_df$span), "-",
+                         paste0(round(as.numeric(fusions_df$span) / 1e6, 2), " Mb")),
+    Reads       = fusions_df$reads,
+    Callers     = fusions_df$caller,
+    Significance= fusions_df$significance,
+    Association = fusions_df$entity,
+    check.names = FALSE)
+  print(kable(d, format = "html", escape = FALSE, row.names = FALSE) %>%
+          kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                        full_width = TRUE, font_size = 12) %>%
+          row_spec(0, bold = TRUE, color = "white", background = "#0047b9"))
+}
+if (exists("egfrviii_txt") && !is.na(egfrviii_txt)) {
+  cat(paste0('<div class="note-muted">EGFRvIII: ', egfrviii_txt, '</div>\n'))
+}
+```
+
+<div class="note-muted">
+Fusions are screened against a curated list of recurrent CNS alterations. The
+association column describes what a fusion is typically seen with; it is not a
+diagnosis. The complete set of structural variants is written to `sv/`.
+</div>
+
+</div>
+
 <div class="contact-section">
-#### The Rapid CNS2 classification and report generation followed the protocol designed and published by Patel _et_ _al._ (2022) and Patel _et_ _al._ (2025).
-#### Patel, A., Dogan, H., Payne, A., Krause, E., Sievers, P., Schoebe, N., Schrimpf, D., Blume, C., Stichel, D., Holmes, N., Euskirchen, P., Hench, J., Frank, S., Rosenstiel-Goidts, V., Ratliff, M., Etminan, N., Unterberg, A., Dieterich, C., Herold-Mende, C., Pfister, S. M., … Sahm, F. (2022). Rapid-CNS^2^: rapid comprehensive adaptive nanopore-sequencing of CNS tumors, a proof-of-concept study. _Acta_ _neuropathologica_, _143_(5), 609–612. https://doi.org/10.1007/s00401-022-02415-6 \
-#### Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
-#### **The information contained with this report is intended for research use only and is not for use in diagnostic procedures.**
+<div class="note-muted">
+The Rapid CNS2 classification and report generation followed the protocol designed and published by Patel _et_ _al._ (2022) and Patel _et_ _al._ (2025).
+</div>
+<div class="note-muted">
+Patel, A., Dogan, H., Payne, A., Krause, E., Sievers, P., Schoebe, N., Schrimpf, D., Blume, C., Stichel, D., Holmes, N., Euskirchen, P., Hench, J., Frank, S., Rosenstiel-Goidts, V., Ratliff, M., Etminan, N., Unterberg, A., Dieterich, C., Herold-Mende, C., Pfister, S. M., … Sahm, F. (2022). Rapid-CNS^2^: rapid comprehensive adaptive nanopore-sequencing of CNS tumors, a proof-of-concept study. _Acta_ _neuropathologica_, _143_(5), 609–612. https://doi.org/10.1007/s00401-022-02415-6
+</div>
+<div class="note-muted">
+Patel, A., Göbel, K., Ille, S. et al. Prospective, multicenter validation of a platform for rapid molecular profiling of central nervous system tumors. *Nature Medicine* 31, 1567–1577 (2025). [https://doi.org/10.1038/s41591-025-03562-5](https://www.nature.com/articles/s41591-025-03562-5)
+</div>
+<div class="note-muted">
+**The information contained with this report is intended for research use only and is not for use in diagnostic procedures.**
+</div>
 
-#### For any questions, please contact:  
-#### **Areeba Patel, PhD**  
-#### Department of Neuropathology, German Cancer Research Center  
-#### a.patel@dkfz.de  
-#### **Prof Dr. Dr. med Felix Sahm**  
-#### Head of Molecular Neuropathology, University Hospital Heidelberg  
-#### felix.sahm@med.uni-heidelberg.de  \
+<div class="contact">
+For any questions, please contact:
+</div>
+<div class="contact">
+**Areeba Patel, PhD**
+</div>
+<div class="contact">
+Department of Neuropathology, German Cancer Research Center
+</div>
+<div class="contact">
+a.patel@kitz-heidelberg.de
+</div>
 
-#### Report generated on `r format(Sys.time(), '%d %B, %Y at %H:%M')`
+<div class="note-muted">
+Report generated on `r format(Sys.time(), '%d %B, %Y at %H:%M')`
+</div>
 </div>
 
 <div class="footer">

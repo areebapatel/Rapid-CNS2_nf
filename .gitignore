@@ -1,0 +1,14 @@
+# Nextflow runtime artefacts
+.nextflow/
+.nextflow.log*
+work/
+output/
+results/
+
+# Container / model caches - keep these off home, see README
+.singularity/
+.apptainer/
+singularity_cache/
+
+# OS cruft
+.DS_Store

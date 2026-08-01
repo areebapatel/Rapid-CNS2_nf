@@ -1,50 +1,180 @@
 process copyNumberVariants {
-    label 'rapid_cns'
+    label 'heavy'
+
+    publishDir "${params.outDir}/cnv/", mode: 'copy'
+
     input:
-        path(bam)
-        path(bai)
+        tuple path(bam), path(bai)
         val(id)
-        val(cnvThreads)
 
     output:
-        path "${id}.cnvpytor.calls.1000.tsv", emit: cnvpytorCalls1000
-        path "${id}.cnvpytor.calls.10000.tsv", emit: cnvpytorCalls10000
-        path "${id}.cnvpytor.calls.100000.tsv", emit: cnvpytorCalls100000
-        path "${id}_cnvpytor_100k.pdf", emit: cnvpytorPlot
-        path "${id}_cnvpytor_100k.png", emit: cnvpytorPlotPng
-    
-    publishDir("${params.outDir}/cnv/")
+        path "${id}.cnvpytor.calls.1000.tsv",   emit: calls1000
+        path "${id}.cnvpytor.calls.10000.tsv",  emit: calls10000
+        path "${id}.cnvpytor.calls.100000.tsv", emit: calls100000
+        path "${id}_cnvpytor_100k.pdf",         emit: plotPdf
+        path "${id}_cnvpytor_100k.png",         emit: plotPng
 
     script:
+        def chroms = (1..22).collect { n -> "chr${n}" }.join(' ') + ' chrX chrY'
         """
-        cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${cnvThreads}
-        cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${cnvThreads} 
-        cnvpytor -root ${id}_CNV.pytor -partition 1000 10000 100000 -j ${cnvThreads} # SLOW
-        cnvpytor -root ${id}_CNV.pytor -call 1000 -j ${cnvThreads} > ${id}.cnvpytor.calls.1000.tsv
-        cnvpytor -root ${id}_CNV.pytor -call 10000 -j ${cnvThreads} > ${id}.cnvpytor.calls.10000.tsv
-        cnvpytor -root ${id}_CNV.pytor -call 100000 -j ${cnvThreads} > ${id}.cnvpytor.calls.100000.tsv
-        cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY -o ${id}_cnvpytor_100k.pdf
-        cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY -o ${id}_cnvpytor_100k.png
+        export TMPDIR="\$PWD" MPLCONFIGDIR="\$PWD/.mpl" XDG_CACHE_HOME="\$PWD/.cache"
+        mkdir -p "\$MPLCONFIGDIR" "\$XDG_CACHE_HOME"
+
+        cnvpytor -root ${id}_CNV.pytor -rd ${bam} -j ${task.cpus}
+        cnvpytor -root ${id}_CNV.pytor -his 1000 10000 100000 -j ${task.cpus}
+        cnvpytor -root ${id}_CNV.pytor -partition 1000 10000 100000 -j ${task.cpus}
+        cnvpytor -root ${id}_CNV.pytor -call 1000   -j ${task.cpus} > ${id}.cnvpytor.calls.1000.tsv
+        cnvpytor -root ${id}_CNV.pytor -call 10000  -j ${task.cpus} > ${id}.cnvpytor.calls.10000.tsv
+        cnvpytor -root ${id}_CNV.pytor -call 100000 -j ${task.cpus} > ${id}.cnvpytor.calls.100000.tsv
+        cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom ${chroms} -o ${id}_cnvpytor_100k.pdf
+        cnvpytor -root ${id}_CNV.pytor -plot manhattan 100000 -chrom ${chroms} -o ${id}_cnvpytor_100k.png
+
+        # cnvpytor writes <name>.global.0000.<ext>, not the -o name it is given
+        for E in pdf png; do
+            [ -f ${id}_cnvpytor_100k.\$E ] || \\
+                mv ${id}_cnvpytor_100k.global.0000.\$E ${id}_cnvpytor_100k.\$E
+        done
         """
 }
 
-process cnvAnnotated{
+process cnvAnnotated {
     label 'rapid_cns'
-    
+
+    publishDir "${params.outDir}/cnv/", mode: 'copy'
+
     input:
-        val(ready)
+        path(cnvCalls)
         val(id)
         path(annotateScript)
         path(cnvGenes)
-        path(outDir)
-    
-    publishDir("${params.outDir}/cnv/", mode: 'copy')
 
     output:
-        path "${id}.annotation.1000.xlsx", emit: cnv_annotated
-        
+        path "${id}.annotation.1000.xlsx", emit: cnvAnnotated
+
     script:
-    """
-    python3 ${annotateScript} ${outDir}/cnv/${id}.cnvpytor.calls.1000.tsv ${cnvGenes} ${id}.annotation.1000.xlsx
-    """
+        """
+        python3 ${annotateScript} ${cnvCalls} ${cnvGenes} ${id}.annotation.1000.xlsx
+        """
+}
+
+// SAVANA tumour-only SV calling. Its breakpoints feed `savana cna` below, which
+// gives better copy-number segmentation than read depth alone.
+process savanaTo {
+    label 'savana'
+
+    publishDir "${params.outDir}/sv/savana/", mode: 'copy'
+
+    input:
+        tuple path(bam), path(bai)
+        path(ref)
+        path(refIdx)
+        val(id)
+
+    output:
+        path "savana_to_${id}/**", emit: allOutputs
+        path "${id}.savana.breakpoints.vcf", emit: breakpoints
+
+    script:
+        """
+        # LSF exports a node-local TMPDIR that does not exist inside the
+        # container; savana's final bcftools sort fails on it. XDG_CACHE_HOME
+        # keeps fontconfig out of the (unwritable) home directory.
+        export TMPDIR="\$PWD" MPLCONFIGDIR="\$PWD/.mpl" XDG_CACHE_HOME="\$PWD/.cache"
+        mkdir -p "\$MPLCONFIGDIR" "\$XDG_CACHE_HOME"
+
+        savana to \
+            --tumour ${bam} \
+            --ref ${ref} \
+            --ref_index ${refIdx} \
+            --sample ${id} \
+            --outdir savana_to_${id} \
+            --threads ${task.cpus}
+
+        # prefer the somatic call set; savana also writes an unfiltered
+        # classified.vcf that is ~10x larger and not what downstream wants
+        VCF=\$(find savana_to_${id} -name "*classified.somatic.vcf" | head -n 1)
+        if [ -z "\${VCF}" ]; then
+            VCF=\$(find savana_to_${id} -name "*.vcf" | grep -vi "germline" | head -n 1)
+        fi
+        [ -n "\${VCF}" ] || { echo "ERROR: savana to produced no VCF" >&2; exit 1; }
+        echo "using \${VCF}"
+        cp "\${VCF}" ${id}.savana.breakpoints.vcf
+        """
+}
+
+// SAVANA copy number: absolute CN with purity and ploidy fitted from B-allele
+// frequencies at 1000G het SNP sites. The fit assumes fairly uniform genome-wide
+// coverage, which adaptive-sampling data only partly satisfies.
+process savanaCna {
+    label 'savana'
+
+    publishDir "${params.outDir}/cnv/savana/", mode: 'copy'
+
+    input:
+        tuple path(bam), path(bai)
+        path(ref)
+        path(breakpoints)
+        val(id)
+        val(g1000)
+
+    output:
+        path "savana_cna_${id}/**", emit: allOutputs
+        path "${id}_purity_ploidy.tsv", optional: true, emit: purityPloidy
+        path "${id}_segmented_absolute_copy_number.tsv", optional: true, emit: segments
+
+    script:
+        """
+        export TMPDIR="\$PWD" MPLCONFIGDIR="\$PWD/.mpl" XDG_CACHE_HOME="\$PWD/.cache"
+        mkdir -p "\$MPLCONFIGDIR" "\$XDG_CACHE_HOME"
+
+        savana cna \
+            --tumour ${bam} \
+            --ref ${ref} \
+            --sample ${id} \
+            --outdir savana_cna_${id} \
+            --breakpoints ${breakpoints} \
+            --g1000_vcf ${g1000} \
+            --cna_threads ${task.cpus} \
+            --tmpdir . ${params.savanaCnaArgs}
+
+        # surface the segmentation and the purity/ploidy fit for the report
+        SEG=\$(find savana_cna_${id} -name "*segmented_absolute_copy_number.tsv" | head -n 1)
+        [ -n "\${SEG}" ] && cp "\${SEG}" ${id}_segmented_absolute_copy_number.tsv
+
+        FIT=\$(find savana_cna_${id} -iname "*purity_ploidy*" | head -n 1)
+        if [ -n "\${FIT}" ]; then
+            cp "\${FIT}" ${id}_purity_ploidy.tsv
+        else
+            echo "WARNING: no purity/ploidy fit produced by savana cna" >&2
+        fi
+        """
+}
+
+// Genome-wide absolute copy number from the SAVANA segmentation. Complements
+// the CNVpytor read-depth plot: values here are purity- and ploidy-corrected,
+// and the CNS genes in data/genes.bed are annotated on the profile.
+process savanaCnvPlot {
+    label 'rapid_cns'
+
+    publishDir "${params.outDir}/cnv/", mode: 'copy'
+
+    input:
+        path(segments)
+        path(purityPloidy)
+        path(cnvGenes)
+        path(plotScript)
+        val(id)
+
+    output:
+        path "${id}_savana_cnv.png", emit: plot, optional: true
+
+    script:
+        """
+        Rscript ${plotScript} \
+            --segments ${segments} \
+            --purity_ploidy ${purityPloidy} \
+            --genes ${cnvGenes} \
+            --sample ${id} \
+            --out ${id}_savana_cnv.png
+        """
 }
