@@ -139,7 +139,7 @@ process savanaCna {
             --breakpoints ${breakpoints} \
             --g1000_vcf ${g1000} \
             --cna_threads ${task.cpus} \
-            --tmpdir .
+            --tmpdir . ${params.savanaCnaArgs}
 
         # surface the segmentation and the purity/ploidy fit for the report
         SEG=\$(find savana_cna_${id} -name "*segmented_absolute_copy_number.tsv" | head -n 1)

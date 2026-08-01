@@ -455,6 +455,19 @@ for purity and ploidy - so CN 0 (homozygous deletion) and CN 1 (heterozygous
 loss) are distinguishable. Genes from `data/genes.bed` are labelled at their copy
 number.
 
+If SAVANA cannot fit purity and ploidy it writes `No_fit_found_PARAMS.tsv`
+instead, listing the candidate solutions it rejected, and the absolute
+copy-number plot is omitted. This is common on adaptive-sampling data, where
+uneven off-target coverage makes fitted values scatter around integers. Pass
+extra flags with `--savanaCnaArgs` to relax the viability filters, e.g.
+
+```bash
+--savanaCnaArgs '--min_proportion_close_to_whole_number 0.4 --max_distance_from_whole_number 0.3'
+```
+
+`--overrule_cellularity <purity>` skips the estimate entirely when the purity is
+known from histology.
+
 The purity/ploidy fit (`cnv/savana/<id>_purity_ploidy.tsv`) also appears in the
 report. It is **experimental and not validated for clinical use** - see the
 [SAVANA repository](https://github.com/cortes-ciriano-lab/savana). Segmentation
@@ -529,6 +542,7 @@ Sample metadata is sent alongside the file:
 
 | Parameter | Default |
 |-----------|---------|
+| `--savanaCnaArgs` | *(empty)* |
 | `--mnpFlexApi` | `https://app.epignostix.com/api` |
 | `--mnpFlexWorkflowId` | `18` |
 | `--mnpFlexTechnology` | `Nanopore sequencing- PromethION` |

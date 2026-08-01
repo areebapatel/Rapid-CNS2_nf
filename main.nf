@@ -123,6 +123,8 @@ if (params.help) {
        --minFusionMapq    Minimum mapping quality for a fusion [default: 50]
        --knownFusions     Curated CNS fusion list [default: data/cns_fusions.tsv]
        --savanaG1000      1000G SNP set for SAVANA BAF/purity [default: 1000g_hg38]
+       --savanaCnaArgs    Extra flags for `savana cna`, e.g. to relax the
+                          purity/ploidy viability filters when no fit is found
 
    ANALYSIS PARAMETERS:
        --minimumMgmtCov       Minimum coverage for MGMT analysis [default: 5]
