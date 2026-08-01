@@ -12,6 +12,8 @@ for (package in c('optparse', 'reshape2')) {
 option_list = list(
   make_option(c("-i", "--input"), type="character", default=NULL, 
               help="input_file", metavar="character"),
+  make_option(c("-k", "--hotspots"), type="character", default="false",
+              help="CNS hotspot table always reported", metavar="character"),
   make_option(c("-s", "--sample"), type="character", default=NULL, 
               help="sample", metavar="character"),
   make_option(c("-o", "--output"), type="character", default=NULL, 
@@ -44,12 +46,52 @@ af_eur[is.na(af_eur)] <- 0
 var_file$af_eur <- af_eur
 message("Variants absent from 1000G (treated as novel, AF=0): ", n_novel)
 
-is_rare      <- var_file$af_eur < 0.001
-in_cosmic    <- var_file$cosmic70 != "."
-is_upstream  <- var_file$Func.refGene == "upstream"
-not_synon    <- var_file$ExonicFunc.refGene != "synonymous SNV"
+is_rare   <- var_file$af_eur < 0.001
+in_cosmic <- var_file$cosmic70 != "."
 
-keep <- (is_rare | in_cosmic | is_upstream) & not_synon
+# Consequence matters more than rarity: keeping every rare variant floods the
+# report with intronic calls (135 of 159 on a typical sample). Restrict to
+# variants that can change the protein or the splice site.
+coding_func <- c("exonic", "splicing", "exonic;splicing")
+impactful   <- c("nonsynonymous SNV", "stopgain", "stoploss",
+                 "frameshift deletion", "frameshift insertion",
+                 "nonframeshift deletion", "nonframeshift insertion",
+                 "frameshift substitution", "nonframeshift substitution")
+
+is_coding    <- var_file$Func.refGene %in% coding_func
+is_impactful <- var_file$ExonicFunc.refGene %in% impactful |
+                var_file$Func.refGene %in% c("splicing", "exonic;splicing")
+
+# Recurrent CNS variants are always reported, whatever the filter above decides:
+# the TERT promoter variants are "upstream" rather than exonic, and a hotspot may
+# be present in a population database.
+is_hotspot <- rep(FALSE, nrow(var_file))
+if (!is.null(opt$hotspots) && opt$hotspots != "false" && file.exists(opt$hotspots)) {
+    hs <- read.delim(opt$hotspots, comment.char = "#", stringsAsFactors = FALSE)
+    genes <- strsplit(as.character(var_file$Gene.refGene), "[;,]")
+    for (i in seq_len(nrow(hs))) {
+        g_hit <- vapply(genes, function(g) hs$gene[i] %in% trimws(g), logical(1))
+        if (!any(g_hit)) next
+        aa_hit <- if (hs$aa[i] == "*") TRUE
+                  else grepl(hs$aa[i], as.character(var_file$AAChange.refGene), fixed = TRUE)
+        pos_hit <- if (hs$chrom[i] == "." || hs$end[i] == 0) TRUE
+                   else var_file$Chr == hs$chrom[i] &
+                        suppressWarnings(as.numeric(var_file$Start)) >= hs$start[i] &
+                        suppressWarnings(as.numeric(var_file$Start)) <= hs$end[i]
+        hit <- g_hit & aa_hit & pos_hit
+        # A row naming a specific residue (IDH1 R132) or a coordinate window
+        # (the TERT promoter) is reported whatever its consequence. A gene-level
+        # "*" row only widens the gene set - it must still be a coding change,
+        # otherwise every intron of TP53 or EGFR lands in the report.
+        if (hs$aa[i] == "*" && (hs$chrom[i] == "." || hs$end[i] == 0))
+            hit <- hit & is_coding & is_impactful
+        is_hotspot <- is_hotspot | hit
+    }
+    message("Variants matching a CNS hotspot: ", sum(is_hotspot, na.rm = TRUE))
+}
+is_hotspot[is.na(is_hotspot)] <- FALSE
+
+keep <- is_hotspot | ((is_rare | in_cosmic) & is_coding & is_impactful)
 no_syn <- var_file[which(keep), ]
 no_syn <- no_syn[order(no_syn$af_eur), ]
 message("Variants retained after filtering: ", nrow(no_syn), " of ", nrow(var_file))

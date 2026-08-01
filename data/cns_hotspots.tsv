@@ -1,0 +1,51 @@
+# Recurrent CNS tumour variants that are always reported, whatever the generic
+# consequence filter decides. Without this a tighter filter would drop the
+# TERT promoter variants (they are "upstream", not exonic) and could drop a
+# hotspot that happens to be common in a population database.
+#
+# gene      refGene symbol; aliases listed as separate rows
+# aa        substring matched against AAChange, or * for any change in the gene
+# chrom/start/end   optional coordinate window (hg38); 0 0 to ignore
+# note      what the variant indicates
+#
+gene	aa	chrom	start	end	note
+IDH1	R132	.	0	0	IDH1 R132; astrocytoma / oligodendroglioma
+IDH2	R172	.	0	0	IDH2 R172; astrocytoma / oligodendroglioma
+TERT	*	chr5	1294900	1295400	TERT promoter (C228T / C250T)
+BRAF	V600	.	0	0	BRAF V600E; MAPK activation
+H3-3A	K28	.	0	0	H3.3 K27M (K28M in the new numbering); diffuse midline glioma
+H3-3A	K27	.	0	0	H3.3 K27M; diffuse midline glioma
+H3-3A	G35	.	0	0	H3.3 G34R/V (G35 in the new numbering); hemispheric glioma
+H3-3A	G34	.	0	0	H3.3 G34R/V; hemispheric glioma
+H3F3A	K27	.	0	0	H3.3 K27M; diffuse midline glioma
+H3F3A	G34	.	0	0	H3.3 G34R/V; hemispheric glioma
+H3C2	K28	.	0	0	H3.1 K27M; diffuse midline glioma
+H3C3	K28	.	0	0	H3.1 K27M; diffuse midline glioma
+HIST1H3B	K27	.	0	0	H3.1 K27M; diffuse midline glioma
+HIST1H3C	K27	.	0	0	H3.1 K27M; diffuse midline glioma
+FGFR1	N546	.	0	0	FGFR1 N546K; low-grade glioma
+FGFR1	K656	.	0	0	FGFR1 K656E; low-grade glioma
+PIK3CA	*	.	0	0	PIK3CA; PI3K pathway
+PIK3R1	*	.	0	0	PIK3R1; PI3K pathway
+CTNNB1	*	.	0	0	CTNNB1; WNT-activated medulloblastoma
+SMO	*	.	0	0	SMO; SHH-activated medulloblastoma
+PTCH1	*	.	0	0	PTCH1; SHH-activated medulloblastoma
+TP53	*	.	0	0	TP53
+ATRX	*	.	0	0	ATRX; astrocytoma
+CIC	*	.	0	0	CIC; oligodendroglioma
+FUBP1	*	.	0	0	FUBP1; oligodendroglioma
+NF1	*	.	0	0	NF1
+NF2	*	.	0	0	NF2; meningioma / schwannoma
+PTEN	*	.	0	0	PTEN
+RB1	*	.	0	0	RB1
+EGFR	*	.	0	0	EGFR
+PPM1D	*	.	0	0	PPM1D; truncating alterations
+TERT	*	.	0	0	TERT
+TRAF7	*	.	0	0	TRAF7; meningioma
+AKT1	E17	.	0	0	AKT1 E17K; meningioma
+KLF4	K409	.	0	0	KLF4 K409Q; meningioma
+SMARCB1	*	.	0	0	SMARCB1; meningioma / AT-RT
+SMARCE1	*	.	0	0	SMARCE1; clear cell meningioma
+POLR2A	*	.	0	0	POLR2A; meningioma
+BAP1	*	.	0	0	BAP1
+SUFU	*	.	0	0	SUFU; SHH medulloblastoma

@@ -355,6 +355,7 @@ individual labels with your own `-c custom.config`.
 | `--minFusionReads` | Minimum supporting reads for a fusion candidate. | `10` | `--minFusionReads 5` |
 | `--minFusionMapq` | Minimum mapping quality, where the caller reports it. | `50` | `--minFusionMapq 60` |
 | `--knownFusions` | Curated CNS fusion list. | `data/cns_fusions.tsv` | `--knownFusions my.tsv` |
+| `--cnsHotspots` | Recurrent CNS variants always kept by the SNV filter. | `data/cns_hotspots.tsv` | `--cnsHotspots my.tsv` |
 
 #### Annotation parameters
 
@@ -444,6 +445,22 @@ output/
 > both copy-number plots with the purity/ploidy fit, methylation classification,
 > MGMT, and reportable fusions. The full SV call sets, the AnnotSV annotations
 > and the gene-level CNV table are written to disk only.
+
+### SNV filtering
+
+Variants are reported when they change the protein or a splice site - exonic
+non-synonymous, stopgain/stoploss, frameshift and non-frameshift changes, or
+splicing - and are either rare (1000G EUR AF < 0.001) or present in COSMIC.
+Filtering on rarity alone floods the report with intronic calls.
+
+`data/cns_hotspots.tsv` overrides that filter for recurrent CNS variants. A row
+naming a residue (`IDH1 R132`) or a coordinate window (the TERT promoter, which
+is annotated `upstream` and would otherwise be dropped) is always reported. A row
+with `*` widens the gene set but still requires a coding change, so it does not
+readmit every intron of a large gene.
+
+Each variant carries its read depth and allele fraction from the Clair3 genotype.
+
 
 ### Copy number
 

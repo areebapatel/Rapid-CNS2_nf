@@ -122,6 +122,8 @@ if (params.help) {
        --minFusionReads   Minimum supporting reads for a fusion [default: 10]
        --minFusionMapq    Minimum mapping quality for a fusion [default: 50]
        --knownFusions     Curated CNS fusion list [default: data/cns_fusions.tsv]
+       --cnsHotspots      Recurrent CNS variants always kept by the SNV filter
+                          [default: data/cns_hotspots.tsv]
        --savanaG1000      1000G SNP set for SAVANA BAF/purity [default: 1000g_hg38]
        --savanaCnaArgs    Extra flags for `savana cna`, e.g. to relax the
                           purity/ploidy viability filters when no fit is found
@@ -256,6 +258,7 @@ workflow {
     def annotations  = file(params.annotations, checkIfExists: true)
     def noFile       = file("${projectDir}/data/NO_FILE", checkIfExists: true)
     def knownFusions = file(params.knownFusions, checkIfExists: true)
+    def cnsHotspots = file(params.cnsHotspots, checkIfExists: true)
     def savanaPlotScript = file("${projectDir}/scr/plot_savana_cnv.R", checkIfExists: true)
 
     // Optional Severus resources; fall back to the empty placeholder when unset
@@ -309,7 +312,7 @@ workflow {
     avinput  = convert2annovar(passVcf, params.annovarPath, params.id).avinput
     anno     = tableAnnovar(avinput, params.annovarPath, params.annovarDB, params.id,
                             params.annovarProtocol, params.annovarOperation).multianno
-    snvTable = filterReport(filterReportScript, anno, params.id).dvReport
+    snvTable = filterReport(filterReportScript, anno, cnsHotspots, params.id).dvReport
 
     igv = igv_reports(snvTable, params.id, ref, subset, annotations)
 

@@ -190,6 +190,7 @@ process filterReport {
     input:
         path(filterReportScript)
         path(multianno)
+        path(hotspots)
         val(id)
 
     output:
@@ -200,6 +201,7 @@ process filterReport {
         Rscript ${filterReportScript} \
             --input ${multianno} \
             --output ${id}_dv_report.csv \
+            --hotspots ${hotspots} \
             --sample ${id}
         """
 }
