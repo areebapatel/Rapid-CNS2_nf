@@ -500,8 +500,8 @@ results for you.
 
 #### Uploading through the API
 
-Optional and off by default - it sends patient-derived data to a third party.
-Set your website login in the environment of the shell that launches the run:
+Optional and off by default. Set your website login in the environment of the
+shell that launches the run:
 
 ```bash
 export EPIGNOSTIX_USER='you@institute.de'      # the app.epignostix.com login
@@ -515,18 +515,17 @@ Put these in your shell profile or a file you `source` - **not** in
 If either variable is unset the upload is skipped with a warning and the rest of
 the run is unaffected.
 
-`--mnpFlexWorkflowId` defaults to 18 ("MNP-Flex Analysis"); list the ids your
-account can use with `GET /v1/workflows?entity_type=mnpflex_sample`. Sample
-metadata is sent alongside the file:
+Sample metadata is sent alongside the file:
 
-| Parameter | Default | Values the platform uses |
-|-----------|---------|--------------------------|
-| `--mnpFlexTechnology` | `Nanopore sequencing- PromethION` | also `TAPS (eg. Watchmaker genomics)`, `ND` |
-| `--mnpFlexCoverage` | `>10X` | also `ND` |
-| `--mnpFlexExtraction` | `Frozen` | also `FFPE` |
-| `--mnpFlexSex` | `ND` | |
-| `--mnpFlexLocalisation`, `--mnpFlexDiagnosis` | unset | |
-| `--mnpFlexWait` | `600` | seconds to wait for results |
+| Parameter | Default |
+|-----------|---------|
+| `--mnpFlexWorkflowId` | `18` |
+| `--mnpFlexTechnology` | `Nanopore sequencing- PromethION` |
+| `--mnpFlexCoverage` | `>10X` |
+| `--mnpFlexExtraction` | `Frozen` |
+| `--mnpFlexSex` | `ND` |
+| `--mnpFlexLocalisation`, `--mnpFlexDiagnosis` | unset |
+| `--mnpFlexWait` | `600` (seconds to wait for results) |
 
 The upload response is written to `mnpflex/<id>_mnpflex_upload.json`. The
 pipeline then polls for the analysis (up to `--mnpFlexWait`, default 600 s) and

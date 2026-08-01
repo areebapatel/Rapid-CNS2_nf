@@ -57,10 +57,9 @@ process mnpFlex {
 
 // Optional upload of the MNP-Flex input to the Epignostix research platform.
 //
-// This sends patient-derived methylation data to a third-party service, so it
-// is off by default and runs only with --mnpFlexUpload. Credentials are read
-// from EPIGNOSTIX_USER / EPIGNOSTIX_PASSWORD in the environment; do not put
-// them in a config file, which Nextflow copies into the task directory.
+// Off by default; runs only with --mnpFlexUpload. Credentials are read from
+// EPIGNOSTIX_USER / EPIGNOSTIX_PASSWORD in the environment; do not put them in
+// a config file, which Nextflow copies into the task directory.
 process mnpFlexUpload {
     label 'rapid_cns'
 

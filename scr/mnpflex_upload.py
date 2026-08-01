@@ -5,8 +5,7 @@ Credentials come from the environment (EPIGNOSTIX_USER, EPIGNOSTIX_PASSWORD)
 and are never passed as command-line arguments, so they do not appear in `ps`
 or in the Nextflow .command.* files.
 
-This sends patient-derived methylation data to a third-party service. It runs
-only when --mnpFlexUpload is set.
+Runs only when --mnpFlexUpload is set.
 """
 import argparse
 import json
