@@ -54,12 +54,10 @@ and cloud platforms.
 
 ## 🔧 Requirements
 
-- **Nextflow:** version 23.10.0 or later (enforced by `manifest.nextflowVersion`)
-- **Container Engine:** Singularity/Apptainer (typical on HPC) or Docker
-- **Java:** OpenJDK 8 or later
 - **System:** Linux (Ubuntu 18.04+, CentOS 7+, or similar)
-- **Memory:** Minimum 8GB RAM, recommended 32GB+ for large datasets
-- **Storage:** At least 100GB free space for reference genomes and databases
+- **Memory:** 32 GB or more; the SV and copy number steps are the peak
+- **Storage:** at least 100 GB for reference genomes and annotation databases,
+  plus room for the work directory (~150 GB per sample, removable afterwards)
 
 ## 🚀 Quick start
 
@@ -69,31 +67,13 @@ git clone https://github.com/areebapatel/Rapid-CNS2_nf.git
 cd Rapid-CNS2_nf
 ```
 
-### 2. Install dependencies
+### 2. Install prerequisites
 
-#### Install Nextflow
-```bash
-# Using Conda (recommended)
-conda create -n nextflow python=3.9
-conda activate nextflow
-conda install -c bioconda nextflow
-
-# Or manual installation
-curl -s https://get.nextflow.io | bash
-sudo mv nextflow /usr/local/bin/
-```
-
-#### Install container engine
-```bash
-# Docker (recommended)
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Or Singularity
-sudo apt-get update
-sudo apt-get install -y singularity-container
-```
+| Tool | Version | Notes |
+|---|---|---|
+| [Nextflow](https://www.nextflow.io/docs/latest/install.html) | 23.10.0 or later | enforced by `manifest.nextflowVersion` |
+| [Java](https://adoptium.net/) | 17 or later | required by current Nextflow releases; comes with Nextflow if you install it from Bioconda |
+| [Apptainer/Singularity](https://apptainer.org/docs/user/main/quick_start.html) *or* [Docker](https://docs.docker.com/engine/install/) | any recent version | pick whichever your system supports, then use the matching profile |
 
 ### 3. Download reference genome
 ```bash
