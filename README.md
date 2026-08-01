@@ -30,14 +30,17 @@ sampling data.
 ## ✨ Features
 
 - **Aligned or unaligned BAM input**, with alignment detected from the data
-- **SNVs with Clair3**, the model auto-detected from the BAM's basecaller
+- **SNVs with Clair3**, the model auto-detected from the BAM's basecaller,
+  filtered on consequence with a CNS hotspot allowlist and reported with
+  per-variant coverage and VAF
 - **Structural variants from Sniffles2 and Severus**, annotated with AnnotSV, and
   screened against a curated list of recurrent CNS fusions
 - **Copy number from CNVpytor and SAVANA**, the latter absolute and corrected for
   tumour purity and ploidy
 - **Methylation**: Rapid-CNS² classifier and MGMT promoter status
+- **MNP-Flex**: input prepared for [app.epignostix.com](https://app.epignostix.com), and
+  optionally submitted through its API with the classification returned
 - **HTML report** collecting all of the above
-- **MNP-Flex input** for upload to [app.epignostix.com](https://app.epignostix.com)
 
 ## 🔧 Requirements
 
