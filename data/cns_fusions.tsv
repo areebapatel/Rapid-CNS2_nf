@@ -9,6 +9,11 @@
 #              statement, NOT a diagnosis; a fusion is one line of
 #              evidence and must be read with the methylation class
 #
+# Gene symbols must match data/refGene.txt.gz. Aliases are listed side by side
+# where the rename is recent, because which one resolves depends on the refGene
+# vintage: ZFTA/C11orf95 (currently C11orf95) and SEPTIN14/SEPT14 (currently
+# SEPTIN14). Rows whose symbol is absent simply never match.
+#
 gene5	gene3	svtype	min_len	max_len	entity
 KIAA1549	BRAF	DUP	1500000	2500000	Most frequent in pilocytic astrocytoma; also other low-grade gliomas
 BRAF	*	ANY	0	0	BRAF fusion; MAPK-pathway activation
@@ -42,7 +47,9 @@ EWSR1	ERG	ANY	0	0	EWSR1 fusion; Ewing sarcoma family
 EWSR1	*	ANY	0	0	EWSR1-rearranged tumour
 FUS	*	ANY	0	0	FUS-rearranged tumour
 NUTM1	*	ANY	0	0	NUTM1-rearranged tumour
-C19MC	*	ANY	0	0	C19MC alteration; associated with ETMR
+# C19MC is a miRNA cluster at 19q13.42, not a refGene gene symbol, so it
+# cannot be matched by name; ETMR detection would need a coordinate rule.
+# C19MC	*	ANY	0	0	C19MC alteration; associated with ETMR
 LMNB1	*	ANY	0	0	ETMR-like / LMNB1-rearranged
 PLAGL1	*	ANY	0	0	CNS tumour with PLAGL1 fusion
 EP300	BCOR	ANY	0	0	CNS tumour with EP300-BCOR fusion
@@ -50,3 +57,15 @@ FGFR2	*	ANY	0	0	FGFR2-fused glioma
 PDGFRA	*	ANY	0	0	PDGFRA-altered glioma
 RAF1	*	ANY	0	0	RAF1-fused glioma
 QKI	*	ANY	0	0	QKI-rearranged glioma
+GOPC	ROS1	ANY	0	0	GOPC-ROS1; infant-type hemispheric and other gliomas
+ZFTA	MAML2	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+ZFTA	MAML3	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+ZFTA	NCOA1	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+ZFTA	NCOA2	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+ZFTA	*	ANY	0	0	ZFTA rearrangement; supratentorial ependymoma
+C11orf95	MAML2	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+C11orf95	NCOA1	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+C11orf95	NCOA2	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+C11orf95	*	ANY	0	0	ZFTA rearrangement; supratentorial ependymoma
+PRKCA	SLC44A1	ANY	0	0	SLC44A1-PRKCA; papillary glioneuronal tumour
+EGFR	SEPTIN14	ANY	0	0	Glioblastoma, EGFR-SEPTIN14
