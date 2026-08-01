@@ -179,6 +179,12 @@ params:
   }
   .experimental .small { font-size: 0.85em; color: var(--on-surface-variant); }
 
+  hr.plot-sep {
+    border: 0;
+    border-top: 1px dashed var(--outline);
+    margin: 28px 0 18px 0;
+  }
+
   .section {
     margin-bottom: 10px;
     padding-bottom: 10px;
@@ -367,10 +373,12 @@ xfun::file_string(igv_report)
 
 ## Copy number profile
 
+#### Read depth (CNVpytor)
+
 <div class="note-muted">
-Read-depth copy number called by CNVpytor in 100 kb bins; each point is the
-normalised depth of one bin relative to the genome-wide mean, so gains sit above
-and losses below the central band.
+Read-depth copy number in 100 kb bins; each point is the normalised depth of one
+bin relative to the genome-wide mean, so gains sit above and losses below the
+central band.
 </div>
 
 ```{r, echo=FALSE, warning=FALSE, out.width="100%"}
@@ -380,8 +388,10 @@ knitr::include_graphics(cnv_plot)
 ```{r, echo=FALSE, results='asis'}
 if (!exists("savana_cnv_plot")) savana_cnv_plot <- NULL
 if (!is.null(savana_cnv_plot)) {
+  cat('<hr class="plot-sep">\n')
+  cat('<h4>Absolute copy number (SAVANA)</h4>\n')
   cat('<div class="note-muted">',
-      'Absolute copy number from the SAVANA segmentation, fitted from read depth',
+      'Fitted from read depth',
       'and B-allele frequency and corrected for tumour purity and ploidy. The',
       'y axis is copy number rather than a ratio, the dashed line marks the',
       'sample ploidy, and CNS-relevant genes are annotated at their copy number',
@@ -463,12 +473,19 @@ if (is.null(mnpflex) || !nrow(mnpflex)) {
   cat('<div class="note-muted">No MNP-Flex result available for this sample.</div>\n')
 } else {
   cat('<div class="note">',
-      'MNP-Flex is an independent methylation classifier run on the',
-      '<a href="https://app.epignostix.com">Epignostix</a> platform, compatible',
-      'with the Heidelberg CNS tumour classifier and covering 184 subclasses of',
-      'the 2021 WHO classification. The methylation bed file produced by this',
-      'pipeline was submitted through the platform API; the classifier and its',
-      'quality check are reported as returned.',
+      'MNP-Flex is a platform-agnostic methylation classifier for',
+      'sequencing-based methylation data. It is compatible with the Heidelberg',
+      'CNS tumour methylation classifier v12.8 comprising 184 subclasses. The',
+      'methylation bed file produced by this pipeline was submitted through the',
+      '<a href="https://app.epignostix.com">Epignostix</a> platform API; the',
+      'classifier and its quality check are reported as returned.',
+      '</div>\n')
+  cat('<div class="note-muted">',
+      'Methylation classification of CNS tumours using MNP-Flex is a research',
+      'tool currently under development. It has not been clinically validated in',
+      'sufficiently large cohorts. Interpretation and implementation of the',
+      'results in a clinical setting is in the sole responsibility of the',
+      'treating physician.',
       '</div>\n')
   if (!is.na(mnpflex_clf)) cat('<div class="note-muted">Classifier: ', mnpflex_clf, '</div>\n')
   if (!is.na(mnpflex_qc))  cat('<div class="note-muted">', mnpflex_qc, '</div>\n')
@@ -510,11 +527,12 @@ avg <- mgmt_file$average
 avg <- round(as.numeric(avg), 2)
 avg <- paste0(avg,"%")
 status <- mgmt_file$status
-cat("#### MGMT promoter methylation status is assessed based on a logistic regression based prediction model that considers 137 most predictive CpG sites in the MGMT promoter region. The cutoff is assigned as 25%")
-cat("\n\n#### Average methylation = ")
+cat('<div class="note-muted">MGMT promoter methylation status is assessed with a logistic regression model over the 137 most predictive CpG sites in the MGMT promoter region; the cutoff is 25%.</div>')
+cat('<div class="note">Average methylation = <strong>')
 cat(avg)
-cat("\n\n#### Predicted MGMT promoter status = ")
+cat('</strong></div><div class="note">Predicted MGMT promoter status = <strong>')
 cat(status)
+cat('</strong></div>')
 ```
 
 ```{r setup3, echo=FALSE}
@@ -525,7 +543,7 @@ if (!file.exists(methylartist_plot)
 mgmt_too_low <- TRUE
 ```
 ```{r, echo=FALSE, warning=FALSE, results='asis', eval=mgmt_too_low}
-cat("#### MGMT promoter methylation status was not assessed in this sample due to sequence coverage at the MGMT promter region being too low.")
+cat('<div class="note-muted">MGMT promoter methylation status was not assessed in this sample due to sequence coverage at the MGMT promoter region being too low.</div>')
 ```
 
 ## MGMT promoter methylation plot
@@ -534,7 +552,7 @@ knitr::include_graphics(methylartist_plot)
 ```
 
 ```{r, echo=FALSE, warning=FALSE, results='asis', eval=mgmt_too_low}
-cat("#### An MGMT promoter plot was not produced in this sample due to sequence coverage at the MGMT site being too low.")
+cat('<div class="note-muted">An MGMT promoter plot was not produced in this sample due to sequence coverage at the MGMT site being too low.</div>')
 ```
 
 <div class="section">

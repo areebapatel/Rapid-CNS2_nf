@@ -23,6 +23,7 @@ an HPC cluster or the cloud.
 [Parameters](#-parameters) ·
 [Containers](#-containers) ·
 [Output](#-output) ·
+[Help](#-help) ·
 [Changelog](#-changelog) ·
 [Citation](#-citation) ·
 [License](#-license)
@@ -543,12 +544,11 @@ If the analysis has not finished within `--mnpFlexWait`, the run still succeeds
 and the report omits the section; re-run `scr/mnpflex_results.py --sample-id <id>`
 later to collect it.
 
-### Getting Help
+## 🆘 Help
 
-- Check the Nextflow documentation: https://www.nextflow.io/docs/
-- Review the pipeline logs in the `work/` directory
-- Check the `pipeline_info/` directory for execution reports
-- Run with `--help` for available options
+- `nextflow run main.nf --help` lists every parameter
+- Task logs are in `work/`; run reports and the timeline in `pipeline_info/`
+- [Nextflow documentation](https://www.nextflow.io/docs/)
 
 ## 📝 Changelog
 
