@@ -209,8 +209,7 @@ def info_get(info, key):
     return m.group(1) if m else None
 
 def get_vaf(info, fmt, sample):
-    # sniffles reports VAF, savana TUMOUR_AF (one value per breakend), severus a
-    # VAF format field; fall back to DV/(DV+DR) where only counts are given.
+    # sniffles VAF, savana TUMOUR_AF, severus a VAF format field; else DV/(DV+DR)
     for key in ("VAF", "TUMOUR_AF"):
         v = info_get(info, key)
         if v:
@@ -235,13 +234,9 @@ def get_vaf(info, fmt, sample):
                 pass
     return None
 
-# EGFRvIII is the in-frame loss of exons 2-7, so both breakends sit inside EGFR:
-# the 5-prime one in intron 1, the 3-prime one in intron 7. Testing only one
-# breakend flags amplicon rearrangements that delete the promoter instead, and a
-# size floor misses the real thing - real deletions run to a few tens of kb, well
-# under the textbook ~190 kb. Introns are read from the annotation rather than
-# hard-coded: exon numbering is transcript-specific, and shorter EGFR
-# transcripts lack exon 4, which shifts every downstream exon by one.
+# EGFRvIII deletes exons 2-7: both breakends inside EGFR, the first in intron 1
+# and the second in intron 7. Bounds come from the annotation because exon
+# numbering is transcript-specific - the shorter EGFR transcripts lack exon 4.
 EGFR_INTRON1 = EGFR_INTRON7 = None
 try:
     _f = open("egfr_exons.txt").read().split()
@@ -305,11 +300,8 @@ for line in open("input.vcf"):
     vaf = get_vaf(info, f[8] if len(f) > 8 else "", f[9] if len(f) > 9 else "")
     vaf_s = "." if vaf is None else f"{vaf * 100:.1f}%"
 
-    # 2. EGFRvIII, before the size filter below: it is intragenic, so the gene
-    # pairing further down would discard it (both breakends are in EGFR).
-    # EGFRvIII is an intragenic deletion, not a gene fusion, so it is reported in
-    # its own table. The caller's own SVTYPE is kept - savana encodes the event
-    # as a breakend pair, and calling that a DEL would misstate what it reported.
+    # 2. EGFRvIII, before the size filter: the gene pairing below would drop it
+    # kept out of the fusion tables: an intragenic deletion, not a fusion
     if is_egfrviii(chrom, pos, chrom2, pos2, svtype):
         viii_rows.append((chrom, min(pos, pos2), max(pos, pos2), svtype,
                           span or ".", sup or ".", vaf_s, mq or "."))
@@ -360,8 +352,7 @@ print(f"{caller}: {len(uniq)} pass filters, {len(rep)} reportable, {len(tier1)} 
 for r in rep:
     print(f"  TIER{r[10]}  {r[0]}  {r[5]}  {r[6]} bp  {r[7]} reads  VAF {r[8]}  -> {r[11]}")
 
-# EGFRvIII, in its own table: the same deletion reported by both mate records of
-# a breakend pair collapses to one row
+# collapse the two mate records of a breakend pair into one row
 seen_v, viii = set(), []
 for r in sorted(viii_rows, key=lambda r: r[1]):
     key = (r[1] // 1000, r[2] // 1000)
