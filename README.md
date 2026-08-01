@@ -33,8 +33,8 @@ sampling data.
 - **SNVs with Clair3**, the model auto-detected from the BAM's basecaller,
   filtered on consequence with a CNS hotspot allowlist and reported with
   per-variant coverage and VAF
-- **Structural variants from Sniffles2 and Severus**, annotated with AnnotSV, and
-  screened against a curated list of recurrent CNS fusions
+- **Structural variants from Sniffles2, Severus and SAVANA**, annotated with
+  AnnotSV and screened per caller against a curated list of recurrent CNS fusions
 - **Copy number from CNVpytor and SAVANA**, the latter absolute and corrected for
   tumour purity and ploidy
 - **Methylation**: Rapid-CNS² classifier and MGMT promoter status
@@ -272,7 +272,7 @@ graph TD
     E --> G[Methylation - modkit]
     E --> H[SV - Sniffles2 + Severus]
     E --> N[CNV - CNVpytor]
-    E --> O[SAVANA - CN, purity, ploidy]
+    E --> O[SAVANA - SV breakpoints, CN, purity, ploidy]
     F --> I[Annotation - ANNOVAR + filtering]
     G --> J[MGMT promoter status]
     G --> K[Methylation classification]

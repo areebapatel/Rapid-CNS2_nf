@@ -53,8 +53,9 @@ log.info """
  *  b. Annotation using ANNOVAR
  *  c. Filtering
  * 3 - Structural variants and annotation
- *  a. Sniffles2 and Severus
+ *  a. Sniffles2, Severus and SAVANA
  *  b. Annotation using AnnotSV
+ *  c. Fusion screen against the curated CNS list
  * 4 - Methylation analysis
  *  a. Methylation values using modkit
  *  b. Methylation classification using Rapid-CNS2 classifier
@@ -64,7 +65,7 @@ log.info """
  *     tumour purity and ploidy
  * 6 - Report rendering
  * (optional) Run wf-human-variation SNP and SV workflows
- * (optional) Run MNP-Flex preprocessing
+ * (optional) MNP-Flex input, API submission and classification
  *******************************************************************************************
 */
 
