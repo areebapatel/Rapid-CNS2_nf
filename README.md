@@ -11,8 +11,7 @@
 ## 🧬 Overview
 
 Molecular profiling of central nervous system (CNS) tumours from ONT adaptive
-sampling data. Implemented in Nextflow, so it runs unchanged on a workstation,
-an HPC cluster or the cloud.
+sampling data.
 
 **Contents:**
 [Features](#-features) ·
