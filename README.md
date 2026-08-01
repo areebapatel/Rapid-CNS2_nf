@@ -516,6 +516,15 @@ Put these in your shell profile or a file you `source` - **not** in
 If either variable is unset the upload is skipped with a warning and the rest of
 the run is unaffected.
 
+Submitting the run as a batch job? A batch script is non-interactive and does not
+read `.bashrc`, so either export the variables in the shell you submit *from*
+(LSF and SLURM pass the submission environment through), or source your profile
+at the top of the launcher:
+
+```bash
+[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+```
+
 Sample metadata is sent alongside the file:
 
 | Parameter | Default |
