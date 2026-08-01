@@ -10,8 +10,16 @@
 
 ## 🧬 Overview
 
-Molecular profiling of central nervous system (CNS) tumours from ONT adaptive
-sampling data.
+The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed
+for comprehensive analysis of genomic and epigenomic data generated using adaptive
+sampling based sequencing of central nervous system (CNS) tumours. It performs
+alignment, SNV calling, structural variant and fusion calling, copy number
+variation calling, methylation analysis and classification, and provides a
+comprehensive molecular report.
+
+This pipeline is implemented using Nextflow, allowing for easy execution and
+scalability on various compute environments, including local machines, clusters
+and cloud platforms.
 
 **Contents:**
 [Features](#-features) ·
@@ -30,12 +38,14 @@ sampling data.
 ## ✨ Features
 
 - **Aligned or unaligned BAM input**, with alignment detected from the data
-- **SNVs with Clair3**, the model auto-detected from the BAM's basecaller,
+- **SNVs with [Clair3](https://github.com/HKU-BAL/Clair3)**, the model auto-detected from the BAM's basecaller,
   filtered on consequence with a CNS hotspot allowlist and reported with
   per-variant coverage and VAF
-- **Structural variants from Sniffles2, Severus and SAVANA**, annotated with
-  AnnotSV and screened per caller against a curated list of recurrent CNS fusions
-- **Copy number from CNVpytor and SAVANA**, the latter absolute and corrected for
+- **Structural variants from [Sniffles2](https://github.com/fritzsedlazeck/Sniffles),
+  [Severus](https://github.com/KolmogorovLab/Severus) and
+  [SAVANA](https://github.com/cortes-ciriano-lab/savana)**, annotated with
+  [AnnotSV](https://github.com/lgmgeo/AnnotSV) and screened per caller against a curated list of recurrent CNS fusions
+- **Copy number from [CNVpytor](https://github.com/abyzovlab/CNVpytor) and SAVANA**, the latter absolute and corrected for
   tumour purity and ploidy
 - **Methylation**: Rapid-CNS² classifier and MGMT promoter status
 - **MNP-Flex**: input prepared for [app.epignostix.com](https://app.epignostix.com), and
@@ -101,7 +111,7 @@ samtools faidx /path/to/references/hg38/hg38.fa
 
 ### 4. Install ANNOVAR
 
-ANNOVAR is required for variant annotation:
+[ANNOVAR](https://annovar.openbioinformatics.org) is required for variant annotation:
 
 1. **Register and download:**
    - Visit [ANNOVAR Download Form](https://www.openbioinformatics.org/annovar/annovar_download_form.php)
@@ -406,11 +416,11 @@ what the scheduler allocated.
 
 | Label | Image | Provides |
 |-------|-------|----------|
-| `rapid_cns` | `areebapatel/rapid_cns:3.0.2` | samtools, bedtools, vcftools, dorado, mosdepth, CNVpytor, Sniffles2, methylartist, igv-reports, AnnotSV (code), R stack |
-| `mods` | `quay.io/biocontainers/ont-modkit:0.6.4--h7f49ad2_0` | modkit |
-| `clair3` | `hkubal/clair3:v2.0.2` | Clair3 and its bundled ONT models |
-| `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | Severus |
-| `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | SAVANA |
+| `rapid_cns` | `areebapatel/rapid_cns:3.0.2` | samtools, bedtools, vcftools, [dorado](https://github.com/nanoporetech/dorado), [mosdepth](https://github.com/brentp/mosdepth), [CNVpytor](https://github.com/abyzovlab/CNVpytor), [Sniffles2](https://github.com/fritzsedlazeck/Sniffles), [methylartist](https://github.com/adamewing/methylartist), [igv-reports](https://github.com/igvteam/igv-reports), [AnnotSV](https://github.com/lgmgeo/AnnotSV) (code), R stack |
+| `mods` | `quay.io/biocontainers/ont-modkit:0.6.4--h7f49ad2_0` | [modkit](https://github.com/nanoporetech/modkit) |
+| `clair3` | `hkubal/clair3:v2.0.2` | [Clair3](https://github.com/HKU-BAL/Clair3) and its bundled ONT models |
+| `severus` | `quay.io/biocontainers/severus:1.7--pyhdfd78af_0` | [Severus](https://github.com/KolmogorovLab/Severus) |
+| `savana` | `quay.io/biocontainers/savana:1.3.8--pyhdfd78af_0` | [SAVANA](https://github.com/cortes-ciriano-lab/savana) |
 
 ## 📤 Output
 
