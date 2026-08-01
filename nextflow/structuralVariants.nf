@@ -122,12 +122,14 @@ process svFusions {
     output:
         path "${id}_${caller}_fusions_reportable.tsv", emit: reportable
         path "${id}_${caller}_fusions_all.tsv",        emit: allCandidates
-        path "${id}_${caller}_EGFRvIII.txt",           emit: egfrviii
+        path "${id}_${caller}_EGFRvIII.tsv",           emit: egfrviii
 
     script:
         """
         if [ "${caller}" = "savana" ]; then
-            awk -F'\\t' '/^#/ {print; next} \$8 ~ /SOURCE=SUPPLEMENTARY/ {print}' \
+            # keep breakpoints backed by supplementary alignments, including
+            # SOURCE=CIGAR/SUPPLEMENTARY; only CIGAR-only calls are dropped
+            awk -F'\\t' '/^#/ {print; next} \$8 ~ /SOURCE=[^;]*SUPPLEMENTARY/ {print}' \
                 ${svVcf} > input.vcf
         else
             cp ${svVcf} input.vcf
@@ -136,6 +138,11 @@ process svFusions {
         zcat ${refGene} \
           | awk -F'\\t' 'BEGIN{OFS="\\t"} \$3 ~ /^chr[0-9XY]+\$/ {print \$3, \$5, \$6, \$13}' \
           | sort -k1,1 -k2,2n | bedtools merge -i - -c 4 -o distinct > gene_bodies.bed
+
+        # exon bounds of the EGFR reference transcript, for the EGFRvIII check
+        zcat ${refGene} \
+          | awk -F'\\t' '\$2=="${params.egfrTranscript}" && \$3=="chr7" {print \$10; print \$11; exit}' \
+          > egfr_exons.txt
 
         python3 - "${id}" "${caller}" "${knownFusions}" \
                  "${params.minFusionLen}" "${params.minFusionReads}" "${params.minFusionMapq}" <<'PY'
@@ -201,7 +208,63 @@ def info_get(info, key):
     m = re.search(rf"(?:^|;){key}=([^;\\t]+)", info)
     return m.group(1) if m else None
 
-rows = []
+def get_vaf(info, fmt, sample):
+    # sniffles reports VAF, savana TUMOUR_AF (one value per breakend), severus a
+    # VAF format field; fall back to DV/(DV+DR) where only counts are given.
+    for key in ("VAF", "TUMOUR_AF"):
+        v = info_get(info, key)
+        if v:
+            try:
+                return float(v.split(",")[0])
+            except ValueError:
+                pass
+    if fmt and sample:
+        keys, vals = fmt.split(":"), sample.split(":")
+        if "VAF" in keys and keys.index("VAF") < len(vals):
+            try:
+                return float(vals[keys.index("VAF")])
+            except ValueError:
+                pass
+        if "DV" in keys and "DR" in keys:
+            try:
+                dv = float(vals[keys.index("DV")])
+                dr = float(vals[keys.index("DR")])
+                if dv + dr > 0:
+                    return dv / (dv + dr)
+            except (ValueError, IndexError):
+                pass
+    return None
+
+# EGFRvIII is the in-frame loss of exons 2-7, so both breakends sit inside EGFR:
+# the 5-prime one in intron 1, the 3-prime one in intron 7. Testing only one
+# breakend flags amplicon rearrangements that delete the promoter instead, and a
+# size floor misses the real thing - real deletions run to a few tens of kb, well
+# under the textbook ~190 kb. Introns are read from the annotation rather than
+# hard-coded: exon numbering is transcript-specific, and shorter EGFR
+# transcripts lack exon 4, which shifts every downstream exon by one.
+EGFR_INTRON1 = EGFR_INTRON7 = None
+try:
+    _f = open("egfr_exons.txt").read().split()
+    _st = [int(x) for x in _f[0].rstrip(",").split(",")]
+    _en = [int(x) for x in _f[1].rstrip(",").split(",")]
+    if len(_st) > 8:
+        EGFR_INTRON1 = (_en[0], _st[1])
+        EGFR_INTRON7 = (_en[6], _st[7])
+except (OSError, IndexError, ValueError):
+    pass
+if EGFR_INTRON1 is None:
+    print("WARNING: EGFR reference transcript not found - skipping the EGFRvIII check")
+
+def is_egfrviii(chrom, pos, chrom2, pos2, svtype):
+    if EGFR_INTRON1 is None:
+        return False
+    if chrom != "chr7" or chrom2 != "chr7" or svtype not in ("DEL", "BND", "TRA"):
+        return False
+    a, b = min(pos, pos2), max(pos, pos2)
+    return (EGFR_INTRON1[0] <= a <= EGFR_INTRON1[1]
+            and EGFR_INTRON7[0] <= b <= EGFR_INTRON7[1])
+
+rows, viii_rows = [], []
 for line in open("input.vcf"):
     if line.startswith("#"):
         continue
@@ -221,12 +284,7 @@ for line in open("input.vcf"):
 
     span = abs(pos2 - pos) if chrom == chrom2 else 0
 
-    # 1. structural sanity
-    interchrom = chrom != chrom2
-    if not (svtype in ("BND", "TRA") or interchrom or span >= MIN_LEN):
-        continue
-
-    # 2. evidence
+    # 1. evidence
     sup = (info_get(info, "TUMOUR_READ_SUPPORT") or info_get(info, "SUPPORT") or "")
     if not sup:
         sr = info_get(info, "SUPP_READS")          # severus: a:b:c:d:e:f
@@ -244,6 +302,23 @@ for line in open("input.vcf"):
                 continue
         except ValueError:
             pass
+    vaf = get_vaf(info, f[8] if len(f) > 8 else "", f[9] if len(f) > 9 else "")
+    vaf_s = "." if vaf is None else f"{vaf * 100:.1f}%"
+
+    # 2. EGFRvIII, before the size filter below: it is intragenic, so the gene
+    # pairing further down would discard it (both breakends are in EGFR).
+    # EGFRvIII is an intragenic deletion, not a gene fusion, so it is reported in
+    # its own table. The caller's own SVTYPE is kept - savana encodes the event
+    # as a breakend pair, and calling that a DEL would misstate what it reported.
+    if is_egfrviii(chrom, pos, chrom2, pos2, svtype):
+        viii_rows.append((chrom, min(pos, pos2), max(pos, pos2), svtype,
+                          span or ".", sup or ".", vaf_s, mq or "."))
+        continue
+
+    # 3. structural sanity
+    interchrom = chrom != chrom2
+    if not (svtype in ("BND", "TRA") or interchrom or span >= MIN_LEN):
+        continue
 
     ga, gb = genes_at(chrom, pos), genes_at(chrom2, pos2)
     if not ga or not gb:
@@ -255,7 +330,7 @@ for line in open("input.vcf"):
     tier = str(hit[0]) if hit else "3"
     label = hit[2] if hit else f"{sorted(ga)[0]}--{sorted(gb)[0]}"
     rows.append((label, chrom, pos, chrom2, pos2, svtype,
-                 span or ".", sup or ".", mq or ".", tier,
+                 span or ".", sup or ".", vaf_s, mq or ".", tier,
                  hit[1] if hit else "",
                  ",".join(sorted(ga)), ",".join(sorted(gb))))
 
@@ -264,40 +339,43 @@ for r in rows:
     key = tuple(sorted([(r[1], r[2]), (r[3], r[4])]))
     if key not in seen:
         seen.add(key); uniq.append(r)
-uniq.sort(key=lambda r: (r[9], -int(r[7]) if str(r[7]).isdigit() else 0))
+uniq.sort(key=lambda r: (r[10], -int(r[7]) if str(r[7]).isdigit() else 0))
 
-hdr = "fusion\\tchrom1\\tpos1\\tchrom2\\tpos2\\tsvtype\\tspan\\treads\\tmapq\\ttier\\tentity\\tgenes1\\tgenes2\\n"
+hdr = ("fusion\\tchrom1\\tpos1\\tchrom2\\tpos2\\tsvtype\\tspan\\treads\\tvaf\\tmapq"
+       "\\ttier\\tentity\\tgenes1\\tgenes2\\n")
 with open(f"{sample}_{caller}_fusions_all.tsv", "w") as out:
     out.write(hdr)
     for r in uniq:
         out.write("\\t".join(map(str, r)) + "\\n")
 
 SIG = {"1": "entity-defining", "2": "potentially significant"}
-rep = [r for r in uniq if r[9] in SIG]
+rep = [r for r in uniq if r[10] in SIG]
 with open(f"{sample}_{caller}_fusions_reportable.tsv", "w") as out:
     out.write(hdr.rstrip("\\n") + "\\tsignificance\\n")
     for r in rep:
-        out.write("\\t".join(map(str, r)) + "\\t" + SIG[r[9]] + "\\n")
-tier1 = [r for r in rep if r[9] == "1"]
+        out.write("\\t".join(map(str, r)) + "\\t" + SIG[r[10]] + "\\n")
+tier1 = [r for r in rep if r[10] == "1"]
 
 print(f"{caller}: {len(uniq)} pass filters, {len(rep)} reportable, {len(tier1)} entity-defining")
 for r in rep:
-    print(f"  TIER{r[9]}  {r[0]}  {r[5]}  {r[6]} bp  {r[7]} reads  -> {r[10]}")
+    print(f"  TIER{r[10]}  {r[0]}  {r[5]}  {r[6]} bp  {r[7]} reads  VAF {r[8]}  -> {r[11]}")
+
+# EGFRvIII, in its own table: the same deletion reported by both mate records of
+# a breakend pair collapses to one row
+seen_v, viii = set(), []
+for r in sorted(viii_rows, key=lambda r: r[1]):
+    key = (r[1] // 1000, r[2] // 1000)
+    if key not in seen_v:
+        seen_v.add(key); viii.append(r)
+with open(f"{sample}_{caller}_EGFRvIII.tsv", "w") as out:
+    out.write("chrom\\tpos1\\tpos2\\tsvtype\\tspan\\treads\\tvaf\\tmapq\\n")
+    for r in viii:
+        out.write("\\t".join(map(str, r)) + "\\n")
+
+print(f"{caller}: EGFRvIII candidates: {len(viii)}")
+for r in viii:
+    print(f"  EGFRvIII  {r[0]}:{r[1]}-{r[2]}  {r[4]} bp  {r[5]} reads  VAF {r[6]}")
 PY
 
-        awk -F'\\t' '!/^#/ && \$1=="chr7" && \$2>=55019017 && \$2<=55211628 {
-                 len = 0
-                 if (match(\$8, /SVLEN=-?[0-9]+/)) len = substr(\$8, RSTART+6, RLENGTH-6) + 0
-                 if (len < 0) len = -len
-                 if (len >= 50000 && len <= 250000)
-                     print "CANDIDATE\\t" \$1 "\\t" \$2 "\\t" \$3 "\\tSVLEN=" len
-             }' input.vcf > egfrviii.hits || true
-        if [ -s egfrviii.hits ]; then
-            { echo "EGFRvIII (${caller}): candidate intragenic EGFR deletion(s)"; cat egfrviii.hits; } \
-                > ${id}_${caller}_EGFRvIII.txt
-        else
-            echo "EGFRvIII (${caller}): not detected" > ${id}_${caller}_EGFRvIII.txt
-        fi
-        cat ${id}_${caller}_EGFRvIII.txt
         """
 }

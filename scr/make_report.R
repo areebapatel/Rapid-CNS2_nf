@@ -79,12 +79,29 @@ read_fusions <- function(dir) {
         d
     }))
     if (is.null(rows) || !nrow(rows)) return(NULL)
-    # collapse the same event seen by several callers into one row
-    key <- paste(rows$fusion, rows$chrom1, rows$pos1, rows$chrom2, rows$pos2)
-    agg <- do.call(rbind, lapply(split(rows, key), function(g) {
+    # Collapse the same event seen by several callers into one row. Callers place
+    # a breakpoint a few bp apart, so cluster within a tolerance rather than
+    # matching positions exactly.
+    tol <- 1000
+    rows <- rows[order(rows$fusion, rows$chrom1, rows$chrom2,
+                       as.numeric(rows$pos1)), , drop = FALSE]
+    grp  <- paste(rows$fusion, rows$chrom1, rows$chrom2)
+    key  <- ave(as.numeric(rows$pos1), grp,
+                FUN = function(p) cumsum(c(TRUE, diff(p) > tol)))
+    agg <- do.call(rbind, lapply(split(rows, paste(grp, key)), function(g) {
         g1 <- g[1, , drop = FALSE]
         g1$caller <- paste(sort(unique(g$caller)), collapse = ", ")
         g1$reads  <- suppressWarnings(max(as.numeric(g$reads), na.rm = TRUE))
+        # callers estimate allele fraction differently; show the range rather
+        # than a single value when they disagree, so neither end is implied to
+        # be the answer
+        if (!is.null(g$vaf)) {
+            v <- suppressWarnings(as.numeric(sub("%", "", g$vaf)))
+            v <- v[!is.na(v)]
+            lo <- sprintf("%.1f", min(v)); hi <- sprintf("%.1f", max(v))
+            g1$vaf <- if (!length(v)) "." else
+                      if (lo == hi) paste0(hi, "%") else paste0(lo, "-", hi, "%")
+        }
         g1
     }))
     agg[order(agg$tier, -as.numeric(agg$reads)), , drop = FALSE]
@@ -112,12 +129,33 @@ if (!is.null(opt$purity_ploidy) && opt$purity_ploidy != "false" &&
                               error = function(e) NULL)
 }
 
-egfrviii_txt <- NA_character_
-if (!is.null(opt$egfrviii) && opt$egfrviii != "false" && dir.exists(opt$egfrviii)) {
-    ef <- list.files(opt$egfrviii, pattern = "_EGFRvIII\\.txt$", full.names = TRUE)
-    hits <- unlist(lapply(ef, function(f) grep("CANDIDATE", readLines(f, warn = FALSE), value = TRUE)))
-    egfrviii_txt <- if (length(hits)) paste(hits, collapse = "; ") else "not detected"
+# --- EGFRvIII: an intragenic deletion, reported apart from the fusions --------
+read_egfrviii <- function(dir) {
+    if (is.null(dir) || dir == "false" || !dir.exists(dir)) return(NULL)
+    files <- list.files(dir, pattern = "_EGFRvIII\\.tsv$", full.names = TRUE)
+    if (!length(files)) return(NULL)
+    rows <- do.call(rbind, lapply(files, function(f) {
+        d <- tryCatch(read.delim(f, stringsAsFactors = FALSE), error = function(e) NULL)
+        if (is.null(d) || !nrow(d)) return(NULL)
+        d$caller <- sub("^.*_([a-z0-9]+)_EGFRvIII\\.tsv$", "\\1", basename(f))
+        d
+    }))
+    if (is.null(rows) || !nrow(rows)) return(NULL)
+    rows <- rows[order(as.numeric(rows$pos1)), , drop = FALSE]
+    key  <- cumsum(c(TRUE, diff(as.numeric(rows$pos1)) > 1000))
+    do.call(rbind, lapply(split(rows, key), function(g) {
+        g1 <- g[1, , drop = FALSE]
+        g1$caller <- paste(sort(unique(g$caller)), collapse = ", ")
+        g1$svtype <- paste(sort(unique(g$svtype)), collapse = ", ")
+        g1$reads  <- suppressWarnings(max(as.numeric(g$reads), na.rm = TRUE))
+        v  <- suppressWarnings(as.numeric(sub("%", "", g$vaf))); v <- v[!is.na(v)]
+        lo <- sprintf("%.1f", min(v)); hi <- sprintf("%.1f", max(v))
+        g1$vaf <- if (!length(v)) "." else
+                  if (lo == hi) paste0(hi, "%") else paste0(lo, "-", hi, "%")
+        g1
+    }))
 }
+egfrviii_df <- read_egfrviii(opt$egfrviii)
 
 # Check if MGMT file exists
 mgmt_status = "false"

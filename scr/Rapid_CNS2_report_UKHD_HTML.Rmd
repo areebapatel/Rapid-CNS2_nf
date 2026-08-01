@@ -583,9 +583,13 @@ if (is.null(fusions_df) || !nrow(fusions_df)) {
                          big.mark = ",", trim = TRUE), "  \u2192  ",
                          fusions_df$chrom2, ":", format(as.numeric(fusions_df$pos2),
                          big.mark = ",", trim = TRUE)),
+    # kb below a megabase: intragenic events such as EGFRvIII are tens of kb
     Size        = ifelse(fusions_df$span == "." | is.na(fusions_df$span), "-",
-                         paste0(round(as.numeric(fusions_df$span) / 1e6, 2), " Mb")),
+                  ifelse(as.numeric(fusions_df$span) < 1e6,
+                         paste0(round(as.numeric(fusions_df$span) / 1e3), " kb"),
+                         paste0(round(as.numeric(fusions_df$span) / 1e6, 2), " Mb"))),
     Reads       = fusions_df$reads,
+    VAF         = if (is.null(fusions_df$vaf)) "-" else fusions_df$vaf,
     Callers     = fusions_df$caller,
     Significance= fusions_df$significance,
     Association = fusions_df$entity,
@@ -595,10 +599,38 @@ if (is.null(fusions_df) || !nrow(fusions_df)) {
                         full_width = TRUE, font_size = 12) %>%
           row_spec(0, bold = TRUE, color = "white", background = "#0047b9"))
 }
-if (exists("egfrviii_txt") && !is.na(egfrviii_txt)) {
-  cat(paste0('<div class="note-muted">EGFRvIII: ', egfrviii_txt, '</div>\n'))
+```
+
+<h4>EGFRvIII</h4>
+
+```{r, echo=FALSE, results='asis'}
+if (!exists("egfrviii_df")) egfrviii_df <- NULL
+if (is.null(egfrviii_df) || !nrow(egfrviii_df)) {
+  cat('<div class="note">No EGFRvIII variant found.</div>\n')
+} else {
+  e <- data.frame(
+    Deletion    = "EGFR exons 2–7 (potential)",
+    Type        = egfrviii_df$svtype,
+    Breakpoints = paste0(egfrviii_df$chrom, ":",
+                         format(as.numeric(egfrviii_df$pos1), big.mark = ",", trim = TRUE),
+                         "  →  ",
+                         format(as.numeric(egfrviii_df$pos2), big.mark = ",", trim = TRUE)),
+    Size        = paste0(round(as.numeric(egfrviii_df$span) / 1e3), " kb"),
+    Reads       = egfrviii_df$reads,
+    VAF         = egfrviii_df$vaf,
+    Callers     = egfrviii_df$caller,
+    check.names = FALSE)
+  print(kable(e, format = "html", escape = FALSE, row.names = FALSE) %>%
+          kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                        full_width = TRUE, font_size = 12) %>%
+          row_spec(0, bold = TRUE, color = "white", background = "#0047b9"))
 }
 ```
+
+<div class="note-muted">
+Any call listed above is a potential EGFRvIII and must be confirmed against the
+supporting reads in `sv/` before it is reported.
+</div>
 
 <div class="note-muted">
 Fusions are screened against a curated list of recurrent CNS alterations. The
