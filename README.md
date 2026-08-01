@@ -347,6 +347,7 @@ individual labels with your own `-c custom.config`.
 | `--minFusionReads` | Minimum supporting reads for a fusion candidate. | `10` | `--minFusionReads 5` |
 | `--minFusionMapq` | Minimum mapping quality, where the caller reports it. | `50` | `--minFusionMapq 60` |
 | `--knownFusions` | Curated CNS fusion list. | `data/cns_fusions.tsv` | `--knownFusions my.tsv` |
+| `--egfrTranscript` | EGFR transcript whose intron 1 and 7 bounds define EGFRvIII. | `NM_005228` | `--egfrTranscript NM_201282` |
 | `--cnsHotspots` | Recurrent CNS variants always kept by the SNV filter. | `data/cns_hotspots.tsv` | `--cnsHotspots my.tsv` |
 
 #### Annotation parameters
@@ -500,11 +501,15 @@ Each SV caller's output is screened for gene fusions and written to
 Breakpoints are assigned to gene bodies from refGene, since the panel BED is
 exon-level and breakpoints fall in introns.
 
+EGFRvIII is an intragenic deletion: both breakends must fall in EGFR, the first
+in intron 1 and the second in intron 7 of `--egfrTranscript`. Reported calls are
+candidates and should be checked against the reads.
+
 | File | Contents |
 |------|----------|
 | `<id>_<caller>_fusions_reportable.tsv` | curated-list matches, `entity-defining` (both partners named) or `potentially significant` (one named partner) |
 | `<id>_<caller>_fusions_all.tsv` | everything passing the filters |
-| `<id>_<caller>_EGFRvIII.txt` | targeted EGFRvIII check |
+| `<id>_<caller>_EGFRvIII.tsv` | EGFRvIII check, reported separately from the fusions |
 
 The `entity` column states the association a fusion carries, not a diagnosis:
 `KIAA1549--BRAF` is most frequent in pilocytic astrocytoma but also occurs in
