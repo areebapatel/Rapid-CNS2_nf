@@ -529,6 +529,7 @@ Sample metadata is sent alongside the file:
 
 | Parameter | Default |
 |-----------|---------|
+| `--mnpFlexApi` | `https://app.epignostix.com/api` |
 | `--mnpFlexWorkflowId` | `18` |
 | `--mnpFlexTechnology` | `Nanopore sequencing- PromethION` |
 | `--mnpFlexCoverage` | `>10X` |

@@ -118,6 +118,10 @@ if (params.help) {
                           @RG basecall_model field; set only to override]
        --severusVntr      Optional VNTR BED for Severus (recommended)
        --severusPON       Optional panel of normals for Severus somatic filtering
+       --minFusionLen     Smallest DEL/DUP/INV that can fuse two genes [default: 10000]
+       --minFusionReads   Minimum supporting reads for a fusion [default: 10]
+       --minFusionMapq    Minimum mapping quality for a fusion [default: 50]
+       --knownFusions     Curated CNS fusion list [default: data/cns_fusions.tsv]
        --savanaG1000      1000G SNP set for SAVANA BAF/purity [default: 1000g_hg38]
 
    ANALYSIS PARAMETERS:
@@ -125,6 +129,10 @@ if (params.help) {
        --bamMinCoverage       Minimum coverage for human variation workflow [default: 10]
        --snifflesMosaic       Run Sniffles2 in --mosaic (somatic) mode [default: true]
        --mnpFlex              Enable MNP-Flex classifier input preparation [default: true]
+       --mnpFlexUpload        Submit the MNP-Flex bed through the Epignostix API
+                              and collect the results. Needs EPIGNOSTIX_USER and
+                              EPIGNOSTIX_PASSWORD in the environment; skipped
+                              with a warning if unset [default: false]
        --publishBam           Publish the prepared full-flow-cell BAM (>150 GB)
                               [default: false]
        --runHumanVariation    Enable wf-human-variation SNP and SV pipeline [default: false]
