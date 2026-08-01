@@ -155,6 +155,30 @@ exc_igvreport = !inc_igvreport
 if (!inc_igvreport) {
     message("No IGV report supplied - the full report will omit the IGV section.")
 }
-render(opt$report_HTML,
+full_html <- render(opt$report_HTML,
        output_format = "html_document",
        output_file = paste0(prefix,"_Rapid-CNS2_report_full.html"))
+
+# Splice the IGV report in after rendering. Passing a ~100 MB standalone document
+# through pandoc takes minutes and escapes it to text; an iframe also keeps IGV's
+# CSS out of the report. strsplit() rather than sub(), whose replacement would
+# read backslashes in the embedded javascript as backreferences.
+if (inc_igvreport) {
+    igv <- xfun::file_string(igv_report)
+    igv <- gsub("&",  "&amp;",  igv, fixed = TRUE)
+    igv <- gsub('"',  "&quot;", igv, fixed = TRUE)
+    igv <- gsub("\r", "",       igv, fixed = TRUE)
+    igv <- gsub("\n", "&#10;",  igv, fixed = TRUE)   # keeps the tag on one line
+
+    # the opening tag only: pandoc re-formats the empty div onto two lines
+    marker <- '<div id="igv-embed">'
+    parts  <- strsplit(xfun::file_string(full_html), marker, fixed = TRUE)[[1]]
+    if (length(parts) == 2) {
+        cat(parts[1], marker,
+            '<iframe class="igv-frame" srcdoc="', igv, '"></iframe>',
+            parts[2], sep = "", file = full_html)
+    } else {
+        warning("IGV placeholder not found in ", full_html,
+                "; the full report will not show the IGV section.")
+    }
+}
