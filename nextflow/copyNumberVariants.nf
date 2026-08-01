@@ -102,13 +102,9 @@ process savanaTo {
         """
 }
 
-// SAVANA copy number: absolute CN fitting with tumour purity and ploidy
-// estimated from B-allele frequencies at 1000G het SNP sites.
-//
-// NOTE: CN segmentation and purity/ploidy fitting assume reasonably uniform
-// genome-wide coverage. Adaptive-sampling panel data is strongly enriched
-// on-target with sparse off-target background, so these estimates should be
-// validated against known samples before being trusted clinically.
+// SAVANA copy number: absolute CN with purity and ploidy fitted from B-allele
+// frequencies at 1000G het SNP sites. The fit assumes fairly uniform genome-wide
+// coverage, which adaptive-sampling data only partly satisfies.
 process savanaCna {
     label 'savana'
 

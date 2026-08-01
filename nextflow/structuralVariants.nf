@@ -101,23 +101,12 @@ process annotSV {
         """
 }
 
-
-
-// Gene-level fusion screen, run per caller.
-//
-// Three filters keep this specific enough to put in a report:
-//   1. structural sanity - only rearrangements that can actually fuse two
-//      genes (BND/TRA, or DEL/DUP/INV above minFusionLen). Without this a
-//      50 bp deletion straddling a gene boundary counts as a fusion, which is
-//      why an unfiltered Sniffles VCF yields more candidates than records.
-//   2. evidence - read support and mapping quality where the caller reports it.
-//   3. a curated allowlist (data/cns_fusions.tsv) matched on gene pair AND
-//      expected structure; only those become Tier 1, i.e. reportable.
-//
-// Both breakends are derived generically: a BND takes its partner from the ALT
-// bracket, everything else from INFO END/CHR2. Gene assignment uses whole gene
-// bodies from refGene, because the panel BED is exon-level and breakpoints fall
-// in introns.
+// Gene-level fusion screen, run per caller. Filters on structure (BND/TRA, or
+// DEL/DUP/INV above minFusionLen), evidence (reads and MAPQ where reported), and
+// the curated list in data/cns_fusions.tsv; only curated matches are reportable.
+// Breakends come from the ALT bracket for BND and INFO END/CHR2 otherwise. Genes
+// are assigned from refGene gene bodies - the panel BED is exon-level, and
+// breakpoints fall in introns. See the README for the full description.
 process svFusions {
     label 'rapid_cns'
 

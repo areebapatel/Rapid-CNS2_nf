@@ -542,19 +542,12 @@ export EPIGNOSTIX_PASSWORD='...'
 nextflow run main.nf ... --mnpFlexUpload
 ```
 
-Put these in your shell profile or a file you `source` - **not** in
-`nextflow.config` or a `-c` file, which Nextflow copies into the task directory.
-If either variable is unset the upload is skipped with a warning and the rest of
-the run is unaffected.
+Keep them out of `nextflow.config` and `-c` files, which Nextflow copies into the
+task directory. If either is unset the upload is skipped with a warning.
 
-Submitting the run as a batch job? A batch script is non-interactive and does not
-read `.bashrc`, so either export the variables in the shell you submit *from*
-(LSF and SLURM pass the submission environment through), or source your profile
-at the top of the launcher:
-
-```bash
-[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
-```
+A batch script does not read `.bashrc`, so when submitting through LSF or SLURM
+either export the variables in the shell you submit *from*, or source your
+profile at the top of the launcher.
 
 Sample metadata is sent alongside the file:
 
