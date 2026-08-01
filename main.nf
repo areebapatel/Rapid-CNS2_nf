@@ -130,7 +130,6 @@ if (params.help) {
        --runHumanVariation    Enable wf-human-variation SNP and SV pipeline [default: false]
 
    CONTAINER PARAMETERS:
-       --seq              Sequencer platform identifier [default: P2S, 'false' to auto-detect]
 
    PROFILES (combine one scheduler with one container engine):
        -profile lsf       Use LSF cluster scheduler
@@ -189,14 +188,18 @@ include { mosdepth }                                            from './nextflow
 include { methylationCalls; checkMgmtCoverage }                 from './nextflow/methylationAnalysis.nf'
 include { mgmtPromoterMethyartist; mgmtPred }                   from './nextflow/methylationAnalysis.nf'
 include { methylationClassification; mnpFlex }                  from './nextflow/methylationClassification.nf'
+include { mnpFlexUpload }                                       from './nextflow/methylationClassification.nf'
 include { detectClair3Model; clair3; recodeVCF; convert2annovar } from './nextflow/variantCalling.nf'
 include { tableAnnovar; filterReport; igv_reports }             from './nextflow/variantCalling.nf'
 include { human_variation_snp; human_variation_sv }             from './nextflow/variantCalling.nf'
 include { structuralVariants; severus }                         from './nextflow/structuralVariants.nf'
 include { annotSV as annotSvSniffles }                          from './nextflow/structuralVariants.nf'
 include { annotSV as annotSvSeverus }                           from './nextflow/structuralVariants.nf'
+include { svFusions as fusionsSniffles }                        from './nextflow/structuralVariants.nf'
+include { svFusions as fusionsSeverus }                         from './nextflow/structuralVariants.nf'
+include { svFusions as fusionsSavana }                          from './nextflow/structuralVariants.nf'
 include { copyNumberVariants; cnvAnnotated }                    from './nextflow/copyNumberVariants.nf'
-include { savanaTo; savanaCna }                                 from './nextflow/copyNumberVariants.nf'
+include { savanaTo; savanaCna; savanaCnvPlot }                  from './nextflow/copyNumberVariants.nf'
 include { reportRendering }                                     from './nextflow/reportRendering.nf'
 
 // Resolve --input (a single BAM, or a directory of BAMs) to a list of files
@@ -231,6 +234,8 @@ workflow {
     def mnpFlexBed   = file("${projectDir}/data/MNP-flex.bed", checkIfExists: true)
     def annotations  = file(params.annotations, checkIfExists: true)
     def noFile       = file("${projectDir}/data/NO_FILE", checkIfExists: true)
+    def knownFusions = file(params.knownFusions, checkIfExists: true)
+    def savanaPlotScript = file("${projectDir}/scr/plot_savana_cnv.R", checkIfExists: true)
 
     // Optional Severus resources; fall back to the empty placeholder when unset
     def severusVntr  = params.severusVntr ? file(params.severusVntr, checkIfExists: true) : noFile
@@ -296,7 +301,17 @@ workflow {
 
     // ---- SAVANA: tumour-only breakpoints -> copy number, purity and ploidy
     savanaSv  = savanaTo(bam, ref, refIdx, params.id)
-    savanaCna(bam, ref, savanaSv.breakpoints, params.id, params.savanaG1000)
+    savCna = savanaCna(bam, ref, savanaSv.breakpoints, params.id, params.savanaG1000)
+    savanaPlot = savanaCnvPlot(savCna.segments, savCna.purityPloidy,
+                               cnvGenes, savanaPlotScript, params.id)
+
+    fSni = fusionsSniffles(sniffles.vcf, annotations, knownFusions, params.id, 'sniffles')
+    fSev = fusionsSeverus(sev.vcf, annotations, knownFusions, params.id, 'severus')
+    fSav = fusionsSavana(savanaSv.breakpoints, annotations, knownFusions, params.id, 'savana')
+
+    // one table per caller; the report merges them and shows which callers agree
+    fusionTables = fSni.reportable.mix(fSev.reportable, fSav.reportable).collect()
+    egfrTables   = fSni.egfrviii.mix(fSev.egfrviii, fSav.egfrviii).collect()
 
     // ---- Optional: ONT wf-human-variation
     if (params.runHumanVariation) {
@@ -306,7 +321,11 @@ workflow {
 
     // ---- Optional: MNP-Flex input preparation
     if (params.mnpFlex) {
-        mnpFlex(mnpFlexScript, meth, mnpFlexBed, params.id)
+        flexBed = mnpFlex(mnpFlexScript, meth, mnpFlexBed, params.id)
+        if (mnpFlexCanUpload) {
+            def uploadScript = file("${projectDir}/scr/mnpflex_upload.py", checkIfExists: true)
+            mnpFlexUpload(uploadScript, flexBed.mnpFlexBed, params.id)
+        }
     }
 
     // ---- Final report. Optional inputs fall back to an empty placeholder file.
@@ -316,8 +335,10 @@ workflow {
         params.id,
         patientName,
         software_version,
-        params.seq,
-        bam,
+        fusionTables,
+        egfrTables,
+        savCna.purityPloidy.ifEmpty(noFile),
+        savanaPlot.plot.ifEmpty(noFile),
         snvTable,
         cnv.plotPng,
         classification.rfDetails,

@@ -12,8 +12,10 @@ process reportRendering {
         val(id)
         val(patient)
         val(softwareVersion)
-        val(seq)
-        tuple path(inputBam), path(inputBai)
+        path(fusionTables, stageAs: 'fusions/*')
+        path(egfrTables,   stageAs: 'egfrviii/*')
+        path(purityPloidy,  stageAs: 'opt_purity_ploidy.tsv')
+        path(savanaCnvPlot, stageAs: 'opt_savana_cnv.png')
         path(mutations)
         path(cnvPlot)
         path(rfDetails)
@@ -31,28 +33,6 @@ process reportRendering {
 
     script:
         """
-        # An explicit --seq overrides sequencer auto-detection
-        if [ "${seq}" != "false" ]; then
-            seq="${seq}"
-        else
-            # try the @RG header first
-            RG_seq=\$(samtools view -@4 -H ${inputBam} | grep ^@RG | grep -Po "PM:.*?\\t" | awk '{print substr(\$NF,4,3)}' || true)
-            if [ -n "\${RG_seq}" ]; then
-                seq="\${RG_seq}"
-            else
-                FN_seq=\$(samtools view ${inputBam} | grep -Po "fn:Z:[F,P]" | head -n 1 | awk '{print substr(\$NF,6,6)}' || true)
-                if [ -n "\${FN_seq}" ]; then
-                    seq="\${FN_seq}"
-                else
-                    F5_seq=\$(samtools view ${inputBam} | grep -Po "f5:Z:[F,P]" | head -n 1 | awk '{print substr(\$NF,6,6)}' || true)
-                    seq="\${F5_seq}"
-                fi
-            fi
-        fi
-        if [ -z "\${seq}" ] || [ "\${seq}" == "false" ]; then
-            seq="Unknown"
-        fi
-
         # Optional inputs arrive as an empty placeholder file when not produced
         MGMT_ARG=""
         if [ -s opt_mgmt_status.csv ]; then
@@ -66,6 +46,16 @@ process reportRendering {
             METHYLARTIST_ARG="--methylartist opt_mgmt_plot.png"
         else
             echo "Info: no methylartist plot (coverage below threshold) - omitting --methylartist"
+        fi
+
+        SAVPLOT_ARG=""
+        if [ -s opt_savana_cnv.png ]; then
+            SAVPLOT_ARG="--savana_cnv_plot opt_savana_cnv.png"
+        fi
+
+        PP_ARG=""
+        if [ -s opt_purity_ploidy.tsv ]; then
+            PP_ARG="--purity_ploidy opt_purity_ploidy.tsv"
         fi
 
         IGV_ARG=""
@@ -87,8 +77,11 @@ process reportRendering {
             \${MGMT_ARG} \
             \${METHYLARTIST_ARG} \
             \${IGV_ARG} \
+            \${PP_ARG} \
+            \${SAVPLOT_ARG} \
+            --fusions fusions \
+            --egfrviii egfrviii \
             --software_ver ${softwareVersion} \
-            --seq "\${seq}" \
             --promoter_mgmt_coverage ${mgmtAvgCov} \
             --report_HTML ${reportHTML}
         """

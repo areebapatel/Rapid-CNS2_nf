@@ -10,9 +10,9 @@
 
 ## 🧬 Overview
 
-The Rapid-CNS<sup>2</sup> nextflow pipeline is a bioinformatics workflow designed for comprehensive analysis of genomic and epigenomic data generated using adaptive sampling based sequencing of central nervous system (CNS) tumours. It performs tasks such as alignment, SNV calling, structural variant calling, methylation analysis, copy number variation calling, and provides a comprehensive molecular report.
-
-This pipeline is implemented using Nextflow, allowing for easy execution and scalability on various compute environments, including local machines, clusters, and cloud platforms.
+Molecular profiling of central nervous system (CNS) tumours from ONT adaptive
+sampling data. Implemented in Nextflow, so it runs unchanged on a workstation,
+an HPC cluster or the cloud.
 
 **Contents:**
 [Features](#-features) ·
@@ -29,14 +29,15 @@ This pipeline is implemented using Nextflow, allowing for easy execution and sca
 
 ## ✨ Features
 
-- **Modular architecture** for easy customization and extension
-- **Flexible input handling** - supports aligned and unaligned BAM files with automatic alignment detection
-- **SNV calling with Clair3**, with the model auto-detected from the BAM's basecaller
-- **Structural variants from Sniffles2 and Severus**, both annotated with AnnotSV
-- **Copy number from CNVpytor, plus SAVANA** for copy number, tumour purity and ploidy
-- **Comprehensive analysis** including methylation analysis with Rapid-CNS² classifier and MGMT promoter methylation status
-- **Automated reporting** with molecular diagnostic-ready reports
-- **MNP-Flex integration** preparing input for upload to [app.epignostix.com](https://app.epignostix.com) (on by default)
+- **Aligned or unaligned BAM input**, with alignment detected from the data
+- **SNVs with Clair3**, the model auto-detected from the BAM's basecaller
+- **Structural variants from Sniffles2 and Severus**, annotated with AnnotSV, and
+  screened against a curated list of recurrent CNS fusions
+- **Copy number from CNVpytor and SAVANA**, the latter absolute and corrected for
+  tumour purity and ploidy
+- **Methylation**: Rapid-CNS² classifier and MGMT promoter status
+- **HTML report** collecting all of the above
+- **MNP-Flex input** for upload to [app.epignostix.com](https://app.epignostix.com)
 
 ## 🔧 Requirements
 
@@ -273,10 +274,15 @@ graph TD
     G --> J[MGMT promoter status]
     G --> K[Methylation classification]
     H --> L[SV annotation - AnnotSV]
+    H --> Q[Fusion screen - curated CNS list]
+    O --> Q
+    O --> R[Absolute CN plot + purity/ploidy]
     I --> M[Report generation]
     J --> M
     K --> M
     N --> M
+    Q --> M
+    R --> M
 ```
 
 SNV calling is restricted to the NPHD panel BED; SV, CNV and methylation run on
@@ -344,6 +350,10 @@ individual labels with your own `-c custom.config`.
 | `--severusVntr` | Optional VNTR BED for Severus. Recommended: `vntrs/human_GRCh38_no_alt_analysis_set.trf.bed` from the [Severus repo](https://github.com/KolmogorovLab/Severus). | `null` | `--severusVntr /refs/vntr.bed` |
 | `--severusPON` | Optional panel of normals for Severus. Without one, tumour-only Severus has **no somatic filter**, so supplying `pon/PoN_1000G_hg38.tsv.gz` is strongly advised. With a PON, the published VCF is the somatic set. | `null` | `--severusPON /refs/PoN_1000G_hg38.tsv.gz` |
 | `--savanaG1000` | 1000G het-SNP set used by SAVANA for B-allele frequency, purity and ploidy. | `1000g_hg38` | `--savanaG1000 1000g_hg38` |
+| `--minFusionLen` | Smallest same-chromosome DEL/DUP/INV that can rearrange two genes. | `10000` | `--minFusionLen 50000` |
+| `--minFusionReads` | Minimum supporting reads for a fusion candidate. | `10` | `--minFusionReads 5` |
+| `--minFusionMapq` | Minimum mapping quality, where the caller reports it. | `50` | `--minFusionMapq 60` |
+| `--knownFusions` | Curated CNS fusion list. | `data/cns_fusions.tsv` | `--knownFusions my.tsv` |
 
 #### Annotation parameters
 
@@ -360,15 +370,10 @@ To add `cosmic70` (needs a COSMIC licence), `dbnsfp47a` or `allofus`, append to
 | Parameter | Description | Default | Example |
 |-----------|-------------|---------|---------|
 | `--containerBindPaths` | Comma-separated host paths to bind into containers. Singularity only auto-mounts the work directory, so reference genome, ANNOVAR and AnnotSV paths outside it **must** be listed here or they will be invisible inside the container. | `""` | `--containerBindPaths /data,/refs` |
-| `--seq` | Sequencer platform identifier. Set to `false` to auto-detect from the BAM header. | `P2S` | `--seq F` |
 
 ### Profile-specific parameters
 
-The pipeline supports different compute infrastructure profiles:
-
-Resources are set with native Nextflow `cpus`/`memory`/`queue` directives rather
-than hand-written `clusterOptions`, which previously emitted duplicate `-n` and
-`-q` flags on every submission.
+Resources are set with native Nextflow `cpus`/`memory`/`queue` directives.
 
 #### LSF profile (`-profile lsf`)
 - **Executor:** LSF, queue `verylong`, `perJobMemLimit` enabled
@@ -414,12 +419,14 @@ output/
 │   ├── <id>_sniffles_annotsv.tsv       # AnnotSV annotation
 │   ├── severus/                        # Severus calls + <id>.severus.vcf
 │   ├── <id>_severus_annotsv.tsv        # AnnotSV annotation
-│   └── savana/                         # SAVANA tumour-only breakpoints
+│   ├── savana/                         # SAVANA tumour-only breakpoints
+│   └── fusions/                        # per-caller fusion screen (see below)
 ├── cnv/
 │   ├── <id>.cnvpytor.calls.*.tsv       # CNVpytor calls at 1k/10k/100k bins
-│   ├── <id>_cnvpytor_100k.png/.pdf     # genome-wide plot
+│   ├── <id>_cnvpytor_100k.png/.pdf     # read-depth plot
+│   ├── <id>_savana_cnv.png             # absolute copy number, genes annotated
 │   ├── <id>.annotation.1000.xlsx       # gene-level CNV table
-│   └── savana/                         # SAVANA copy number + purity/ploidy fit
+│   └── savana/                         # SAVANA segmentation + purity/ploidy fit
 ├── mods/                   # modkit bedMethyl
 ├── mgmt/                   # MGMT coverage, status, methylartist plot
 ├── methylation_classification/         # votes, rf_details, calibrated scores
@@ -431,53 +438,95 @@ output/
 └── pipeline_info/          # timeline, trace, execution report
 ```
 
-> **Note on the report:** the final HTML currently covers coverage, SNVs,
-> the IGV report, the CNVpytor copy-number plot, methylation classification and
-> MGMT. The Sniffles2/Severus/AnnotSV results, the SAVANA copy-number and
-> purity/ploidy output and the gene-level CNV table are written to disk but are
-> **not yet included in the rendered report**.
+> **Note on the report:** the final HTML covers coverage, SNVs, the IGV report,
+> both copy-number plots with the purity/ploidy fit, methylation classification,
+> MGMT, and reportable fusions. The full SV call sets, the AnnotSV annotations
+> and the gene-level CNV table are written to disk only.
 
-### MNP-Flex integration
+### Copy number
 
-**MNP-Flex** is a methylation-based tumor classifier that provides detailed molecular classification of CNS tumours. The Rapid-CNS² pipeline can prepare the necessary input files for MNP-Flex analysis.
+**CNVpytor** (`<id>_cnvpytor_100k.png`) is a read-depth profile in 100 kb bins,
+normalised to the genome-wide mean. It assumes nothing about the tumour.
 
-#### What is MNP-Flex?
+**SAVANA** (`<id>_savana_cnv.png`) fits *absolute* copy number from read depth
+and B-allele frequency, using SV breakpoints as segment boundaries and correcting
+for purity and ploidy - so CN 0 (homozygous deletion) and CN 1 (heterozygous
+loss) are distinguishable. Genes from `data/genes.bed` are labelled at their copy
+number.
 
-MNP-Flex is a methylation classifier compatible with the latest version of the Heidelberg CNS tumour methylation classifier. It can classify CNS tumours into 184 subclasses according to the 2021 WHO classification.
+The purity/ploidy fit (`cnv/savana/<id>_purity_ploidy.tsv`) also appears in the
+report. It is **experimental and not validated for clinical use** - see the
+[SAVANA repository](https://github.com/cortes-ciriano-lab/savana). Segmentation
+assumes uniform coverage, which adaptive-sampling data only partly satisfies.
+`savana cna` is the slowest step in the pipeline.
 
-#### How to use MNP-Flex
+### Fusion screen
 
-1. **Enable MNP-Flex in the pipeline:**
-   ```bash
-   nextflow run main.nf \
-       --input /data/sample.bam \
-       --id SAMPLE001 \
-       --mnpFlex true \
-       -profile lsf,singularity
-   ```
+Each SV caller's output is screened for gene fusions and written to
+`sv/fusions/`. Three filters keep the reportable set specific:
 
-2. **Locate the output files:**
-   The pipeline creates MNP-Flex compatible files in:
-   ```
-   ${outDir}/mnpflex/
-   └── ${id}.MNPFlex.input.bed
-   ```
+1. **Structural sanity** - BND/TRA, anything interchromosomal, or a DEL/DUP/INV
+   of at least `--minFusionLen`. Without this a small deletion straddling a gene
+   boundary counts as a fusion.
+2. **Evidence** - `--minFusionReads` and `--minFusionMapq`, where the caller
+   reports them.
+3. **Curated list** - `data/cns_fusions.tsv`, matched on the gene pair *and* the
+   expected structure, not the names alone. `*` matches any partner.
 
-3. **Upload to MNP-Flex:**
-   - Visit [app.epignostix.com](https://app.epignostix.com)
-   - Upload the `.bed` file generated by the pipeline
-   - Submit for analysis
+Breakpoints are assigned to gene bodies from refGene, since the panel BED is
+exon-level and breakpoints fall in introns.
 
-4. **Interpret results:**
-   - MNP-Flex will provide detailed classification results
-   - Results include confidence scores
-   - Reports are compatible with clinical interpretation guidelines
+| File | Contents |
+|------|----------|
+| `<id>_<caller>_fusions_reportable.tsv` | curated-list matches, `entity-defining` (both partners named) or `potentially significant` (one named partner) |
+| `<id>_<caller>_fusions_all.tsv` | everything passing the filters |
+| `<id>_<caller>_EGFRvIII.txt` | targeted EGFRvIII check |
 
-#### Output files
+The `entity` column states the association a fusion carries, not a diagnosis:
+`KIAA1549--BRAF` is most frequent in pilocytic astrocytoma but also occurs in
+other low-grade gliomas.
 
-- **`${id}.MNPFlex.input.bed`:** Methylation data in MNP-Flex compatible format
+### MNP-Flex
 
-**Note:** MNP-Flex analysis is performed externally at [app.epignostix.com](https://app.epignostix.com). The pipeline only prepares the input file; it does not upload anything.
+[MNP-Flex](https://app.epignostix.com) is a methylation classifier compatible
+with the Heidelberg CNS classifier, covering 184 subclasses of the 2021 WHO
+classification.
+
+The pipeline prepares its input at `mnpflex/<id>.MNPFlex.input.bed` (on by
+default; disable with `--mnpFlex false`). Upload it manually at
+[app.epignostix.com](https://app.epignostix.com), or let the pipeline push it
+through the API.
+
+#### Uploading through the API
+
+Optional and off by default - it sends patient-derived data to a third party.
+Set your website login in the environment of the shell that launches the run:
+
+```bash
+export EPIGNOSTIX_USER='you@institute.de'      # the app.epignostix.com login
+export EPIGNOSTIX_PASSWORD='...'
+
+nextflow run main.nf ... --mnpFlexUpload --mnpFlexWorkflowId 3
+```
+
+Put these in your shell profile or a file you `source` - **not** in
+`nextflow.config` or a `-c` file, which Nextflow copies into the task directory.
+If either variable is unset the upload is skipped with a warning and the rest of
+the run is unaffected.
+
+`--mnpFlexWorkflowId` selects the MNP-Flex workflow to run; list the available
+ids with `GET /v1/workflows` on the [API](https://app.epignostix.com/api/docs).
+Sample metadata is sent alongside the file:
+
+| Parameter | Default |
+|-----------|---------|
+| `--mnpFlexTechnology` | `ONT` |
+| `--mnpFlexCoverage` | `1x` |
+| `--mnpFlexExtraction` | `fresh-frozen` |
+| `--mnpFlexSex` | `unknown` |
+| `--mnpFlexLocalisation`, `--mnpFlexDiagnosis` | unset |
+
+The API response is written to `mnpflex/<id>_mnpflex_upload.json`.
 
 ### Getting Help
 
@@ -500,9 +549,10 @@ A major update that modernises the toolchain and fixes a number of bugs.
 - **Bug fixes** across variant filtering, methylation classification, MGMT
   prediction and report rendering. The report is now HTML only; the PDF variant
   has been dropped.
-
-Note that the structural variant, SAVANA copy number and gene-level CNV outputs
-are written to disk but are not yet included in the rendered report.
+- **Fusion screen and absolute copy number.** Structural variants are screened
+  against a curated list of recurrent CNS fusions, and SAVANA contributes an
+  absolute copy-number profile with tumour purity and ploidy. Both appear in the
+  report; the full SV call sets and the gene-level CNV table are written to disk.
 
 ## 📚 Citation
 

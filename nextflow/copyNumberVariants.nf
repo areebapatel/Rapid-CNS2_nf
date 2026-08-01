@@ -90,8 +90,14 @@ process savanaTo {
             --outdir savana_to_${id} \
             --threads ${task.cpus}
 
-        VCF=\$(find savana_to_${id} -name "*.vcf" | grep -vi "germline" | head -n 1)
+        # prefer the somatic call set; savana also writes an unfiltered
+        # classified.vcf that is ~10x larger and not what downstream wants
+        VCF=\$(find savana_to_${id} -name "*classified.somatic.vcf" | head -n 1)
+        if [ -z "\${VCF}" ]; then
+            VCF=\$(find savana_to_${id} -name "*.vcf" | grep -vi "germline" | head -n 1)
+        fi
         [ -n "\${VCF}" ] || { echo "ERROR: savana to produced no VCF" >&2; exit 1; }
+        echo "using \${VCF}"
         cp "\${VCF}" ${id}.savana.breakpoints.vcf
         """
 }
@@ -118,6 +124,7 @@ process savanaCna {
     output:
         path "savana_cna_${id}/**", emit: allOutputs
         path "${id}_purity_ploidy.tsv", optional: true, emit: purityPloidy
+        path "${id}_segmented_absolute_copy_number.tsv", optional: true, emit: segments
 
     script:
         """
@@ -134,12 +141,44 @@ process savanaCna {
             --cna_threads ${task.cpus} \
             --tmpdir .
 
-        # surface the purity/ploidy fit at a predictable path for the report
+        # surface the segmentation and the purity/ploidy fit for the report
+        SEG=\$(find savana_cna_${id} -name "*segmented_absolute_copy_number.tsv" | head -n 1)
+        [ -n "\${SEG}" ] && cp "\${SEG}" ${id}_segmented_absolute_copy_number.tsv
+
         FIT=\$(find savana_cna_${id} -iname "*purity_ploidy*" | head -n 1)
         if [ -n "\${FIT}" ]; then
             cp "\${FIT}" ${id}_purity_ploidy.tsv
         else
             echo "WARNING: no purity/ploidy fit produced by savana cna" >&2
         fi
+        """
+}
+
+// Genome-wide absolute copy number from the SAVANA segmentation. Complements
+// the CNVpytor read-depth plot: values here are purity- and ploidy-corrected,
+// and the CNS genes in data/genes.bed are annotated on the profile.
+process savanaCnvPlot {
+    label 'rapid_cns'
+
+    publishDir "${params.outDir}/cnv/", mode: 'copy'
+
+    input:
+        path(segments)
+        path(purityPloidy)
+        path(cnvGenes)
+        path(plotScript)
+        val(id)
+
+    output:
+        path "${id}_savana_cnv.png", emit: plot, optional: true
+
+    script:
+        """
+        Rscript ${plotScript} \
+            --segments ${segments} \
+            --purity_ploidy ${purityPloidy} \
+            --genes ${cnvGenes} \
+            --sample ${id} \
+            --out ${id}_savana_cnv.png
         """
 }

@@ -1,0 +1,52 @@
+# Entity-defining fusions in CNS tumours, with the structure each is expected
+# to take. A candidate is reported as Tier 1 only if the gene pair AND the
+# structure match, which is what keeps recurrent artefacts out of the report.
+#
+# gene5/gene3  "*" matches any partner (order-insensitive matching is applied)
+# svtype       expected SVTYPE, or ANY
+# min_len/max_len   expected span in bp, or 0 for unconstrained
+# entity       the association this fusion carries - a descriptive
+#              statement, NOT a diagnosis; a fusion is one line of
+#              evidence and must be read with the methylation class
+#
+gene5	gene3	svtype	min_len	max_len	entity
+KIAA1549	BRAF	DUP	1500000	2500000	Most frequent in pilocytic astrocytoma; also other low-grade gliomas
+BRAF	*	ANY	0	0	BRAF fusion; MAPK-pathway activation
+FGFR3	TACC3	ANY	10000	500000	FGFR3-TACC3; glioblastoma and other gliomas
+FGFR1	TACC1	ANY	0	0	FGFR1 fusion; low-grade glioma
+ZFTA	RELA	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+C11orf95	RELA	ANY	0	0	Supratentorial ependymoma, ZFTA-fused
+YAP1	MAMLD1	ANY	0	0	Supratentorial ependymoma, YAP1-fused
+MYB	QKI	ANY	0	0	MYB-QKI; most frequent in angiocentric glioma
+MYBL1	*	ANY	0	0	Diffuse astrocytoma, MYBL1-altered
+NTRK1	*	ANY	0	0	NTRK-fused glioma
+NTRK2	*	ANY	0	0	NTRK-fused glioma
+NTRK3	*	ANY	0	0	NTRK-fused glioma
+ALK	*	ANY	0	0	Infant-type hemispheric glioma
+ROS1	*	ANY	0	0	Infant-type hemispheric glioma
+MET	*	ANY	0	0	Infant-type hemispheric glioma
+EGFR	SEPT14	ANY	0	0	Glioblastoma, EGFR-SEPT14
+MN1	BEND2	ANY	0	0	MN1 fusion; associated with astroblastoma
+MN1	CXXC5	ANY	0	0	MN1 fusion; associated with astroblastoma
+PATZ1	EWSR1	ANY	0	0	PATZ1-fused neuroepithelial tumour
+CIC	NUTM1	ANY	0	0	CIC rearrangement
+PRKCA	*	ANY	0	0	PRKCA fusion; associated with papillary glioneuronal tumour
+CIC	DUX4	ANY	0	0	CIC-DUX4; CIC-rearranged sarcoma
+CIC	FOXO4	ANY	0	0	CIC rearrangement
+CIC	LEUTX	ANY	0	0	CIC rearrangement
+CIC	*	ANY	0	0	CIC rearrangement
+BCOR	CCNB3	ANY	0	0	BCOR-altered sarcoma / CNS tumour with BCOR ITD
+BCOR	*	ANY	0	0	BCOR-altered tumour
+EWSR1	FLI1	ANY	0	0	EWSR1 fusion; Ewing sarcoma family
+EWSR1	ERG	ANY	0	0	EWSR1 fusion; Ewing sarcoma family
+EWSR1	*	ANY	0	0	EWSR1-rearranged tumour
+FUS	*	ANY	0	0	FUS-rearranged tumour
+NUTM1	*	ANY	0	0	NUTM1-rearranged tumour
+C19MC	*	ANY	0	0	C19MC alteration; associated with ETMR
+LMNB1	*	ANY	0	0	ETMR-like / LMNB1-rearranged
+PLAGL1	*	ANY	0	0	CNS tumour with PLAGL1 fusion
+EP300	BCOR	ANY	0	0	CNS tumour with EP300-BCOR fusion
+FGFR2	*	ANY	0	0	FGFR2-fused glioma
+PDGFRA	*	ANY	0	0	PDGFRA-altered glioma
+RAF1	*	ANY	0	0	RAF1-fused glioma
+QKI	*	ANY	0	0	QKI-rearranged glioma
