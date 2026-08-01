@@ -110,7 +110,9 @@ process mnpFlexResults {
 
     script:
         """
-        SAMPLE_ID=\$(python3 -c "import json;print(json.load(open('${uploadJson}'))['sample'].get('id',''))")
+        # the API returns the new sample under 'sample_id'; 'id' is absent, and
+        # .get('id','') silently yielded an empty string that skipped the fetch
+        SAMPLE_ID=\$(python3 -c "import json;s=json.load(open('${uploadJson}'))['sample'];print(s.get('sample_id') or s.get('id') or '')")
         if [ -n "\${SAMPLE_ID}" ]; then
             python3 ${resultsScript} --sample-id "\${SAMPLE_ID}" \
                 --api ${params.mnpFlexApi} --outdir . --prefix ${id} \
