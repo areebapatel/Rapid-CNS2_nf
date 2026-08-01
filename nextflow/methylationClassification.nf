@@ -91,3 +91,31 @@ process mnpFlexUpload {
             --out ${id}_mnpflex_upload.json
         """
 }
+
+// Fetch MNP-Flex results for the uploaded sample. Polls up to
+// params.mnpFlexWait seconds; if the analysis is still running the process
+// produces nothing and the report simply omits the section.
+process mnpFlexResults {
+    label 'rapid_cns'
+
+    publishDir "${params.outDir}/mnpflex/", mode: 'copy'
+
+    input:
+        path(resultsScript)
+        path(uploadJson)
+        val(id)
+
+    output:
+        path "${id}_mnpflex_predictions.tsv", emit: predictions, optional: true
+        path "${id}_bundle_summary.json",     emit: bundle,      optional: true
+
+    script:
+        """
+        SAMPLE_ID=\$(python3 -c "import json;print(json.load(open('${uploadJson}'))['sample'].get('id',''))")
+        if [ -n "\${SAMPLE_ID}" ]; then
+            python3 ${resultsScript} --sample-id "\${SAMPLE_ID}" \
+                --api ${params.mnpFlexApi} --outdir . --prefix ${id} \
+                --wait ${params.mnpFlexWait}
+        fi
+        """
+}

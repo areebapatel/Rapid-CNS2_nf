@@ -455,6 +455,42 @@ ggplot(data=mc, aes(x=methClass, y=Recalibrated_Frequency)) +
 
 <div class="section">
 
+## MNP-Flex classification
+
+```{r, echo=FALSE, results='asis'}
+if (!exists("mnpflex")) mnpflex <- NULL
+if (is.null(mnpflex) || !nrow(mnpflex)) {
+  cat('<div class="note-muted">No MNP-Flex result available for this sample.</div>\n')
+} else {
+  cat('<div class="note">',
+      'MNP-Flex is an independent methylation classifier run on the',
+      '<a href="https://app.epignostix.com">Epignostix</a> platform, compatible',
+      'with the Heidelberg CNS tumour classifier and covering 184 subclasses of',
+      'the 2021 WHO classification. The methylation bed file produced by this',
+      'pipeline was submitted through the platform API; the classifier and its',
+      'quality check are reported as returned.',
+      '</div>\n')
+  if (!is.na(mnpflex_clf)) cat('<div class="note-muted">Classifier: ', mnpflex_clf, '</div>\n')
+  if (!is.na(mnpflex_qc))  cat('<div class="note-muted">', mnpflex_qc, '</div>\n')
+
+  d <- head(mnpflex[order(-mnpflex$score), ], 10)
+  names(d) <- c("Methylation class", "Score")
+  print(kable(d, format = "html", escape = FALSE, row.names = FALSE, digits = 4) %>%
+          kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                        full_width = TRUE, font_size = 12) %>%
+          row_spec(0, bold = TRUE, color = "white", background = "#0047b9"))
+  cat('<div class="note-muted">',
+      'Descriptions of the methylation classes are given in',
+      '<a href="https://www.cell.com/cancer-cell/fulltext/S1535-6108(25)00495-7">',
+      'Cancer Cell (2025)</a>.',
+      '</div>\n')
+}
+```
+
+</div>
+
+<div class="section">
+
 ## MGMT promoter methylation \
 <div class="note">
 Average coverage of MGMT is: **`r cov`**x.

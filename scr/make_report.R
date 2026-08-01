@@ -39,6 +39,8 @@ option_list = list(
               help="R Markdown template file", metavar="character"),
   make_option(c("-f", "--fusions"), type="character", default="false",
               help="directory of per-caller reportable fusion tables", metavar="character"),
+  make_option(c("-y", "--mnpflex"), type="character", default="false",
+              help="MNP-Flex predictions table", metavar="character"),
   make_option(c("-w", "--savana_cnv_plot"), type="character", default="false",
               help="SAVANA absolute copy number plot", metavar="character"),
   make_option(c("-u", "--purity_ploidy"), type="character", default="false",
@@ -88,6 +90,16 @@ read_fusions <- function(dir) {
     agg[order(agg$tier, -as.numeric(agg$reads)), , drop = FALSE]
 }
 fusions_df <- read_fusions(opt$fusions)
+
+mnpflex <- NULL; mnpflex_qc <- NA_character_; mnpflex_clf <- NA_character_
+if (!is.null(opt$mnpflex) && opt$mnpflex != "false" && file.exists(opt$mnpflex)) {
+    hdr <- grep("^#", readLines(opt$mnpflex, warn = FALSE), value = TRUE)
+    grab <- function(k) { h <- grep(paste0("^# ", k), hdr, value = TRUE)
+                          if (length(h)) sub("^[^\t]*\t", "", h[1]) else NA_character_ }
+    mnpflex_clf <- grab("classifier"); mnpflex_qc <- grab("qc")
+    mnpflex <- tryCatch(read.delim(opt$mnpflex, comment.char = "#",
+                                   stringsAsFactors = FALSE), error = function(e) NULL)
+}
 
 savana_cnv_plot <- opt$savana_cnv_plot
 if (is.null(savana_cnv_plot) || savana_cnv_plot == "false" ||

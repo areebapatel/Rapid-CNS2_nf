@@ -16,6 +16,7 @@ process reportRendering {
         path(egfrTables,   stageAs: 'egfrviii/*')
         path(purityPloidy,  stageAs: 'opt_purity_ploidy.tsv')
         path(savanaCnvPlot, stageAs: 'opt_savana_cnv.png')
+        path(mnpFlexPred,   stageAs: 'opt_mnpflex_predictions.tsv')
         path(mutations)
         path(cnvPlot)
         path(rfDetails)
@@ -46,6 +47,11 @@ process reportRendering {
             METHYLARTIST_ARG="--methylartist opt_mgmt_plot.png"
         else
             echo "Info: no methylartist plot (coverage below threshold) - omitting --methylartist"
+        fi
+
+        FLEX_ARG=""
+        if [ -s opt_mnpflex_predictions.tsv ]; then
+            FLEX_ARG="--mnpflex opt_mnpflex_predictions.tsv"
         fi
 
         SAVPLOT_ARG=""
@@ -79,6 +85,7 @@ process reportRendering {
             \${IGV_ARG} \
             \${PP_ARG} \
             \${SAVPLOT_ARG} \
+            \${FLEX_ARG} \
             --fusions fusions \
             --egfrviii egfrviii \
             --software_ver ${softwareVersion} \

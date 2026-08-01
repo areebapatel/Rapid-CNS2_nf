@@ -183,12 +183,23 @@ if (params.annovarProtocol.split(',').size() != params.annovarOperation.split(',
     error "annovarProtocol (${params.annovarProtocol.split(',').size()} entries) and " +
           "annovarOperation (${params.annovarOperation.split(',').size()} entries) must be the same length"
 
+// The MNP-Flex upload is optional and gated on credentials: it runs only when
+// EPIGNOSTIX_USER and EPIGNOSTIX_PASSWORD are set. Without them the bed file is
+// still produced and can be uploaded by hand at app.epignostix.com.
+mnpFlexCanUpload = params.mnpFlexUpload && params.mnpFlex &&
+                   params.mnpFlexWorkflowId &&
+                   System.getenv('EPIGNOSTIX_USER') && System.getenv('EPIGNOSTIX_PASSWORD')
+
+if (params.mnpFlexUpload && !mnpFlexCanUpload)
+    log.warn "MNP-Flex upload skipped (no credentials or workflow id) - " +
+             "upload mnpflex/*.MNPFlex.input.bed manually at app.epignostix.com"
+
 include { prepareBam; subsetBam }                               from './nextflow/bamProcessing.nf'
 include { mosdepth }                                            from './nextflow/utils.nf'
 include { methylationCalls; checkMgmtCoverage }                 from './nextflow/methylationAnalysis.nf'
 include { mgmtPromoterMethyartist; mgmtPred }                   from './nextflow/methylationAnalysis.nf'
 include { methylationClassification; mnpFlex }                  from './nextflow/methylationClassification.nf'
-include { mnpFlexUpload }                                       from './nextflow/methylationClassification.nf'
+include { mnpFlexUpload; mnpFlexResults }                       from './nextflow/methylationClassification.nf'
 include { detectClair3Model; clair3; recodeVCF; convert2annovar } from './nextflow/variantCalling.nf'
 include { tableAnnovar; filterReport; igv_reports }             from './nextflow/variantCalling.nf'
 include { human_variation_snp; human_variation_sv }             from './nextflow/variantCalling.nf'
@@ -320,11 +331,14 @@ workflow {
     }
 
     // ---- Optional: MNP-Flex input preparation
+    flexPredictions = Channel.empty()
     if (params.mnpFlex) {
         flexBed = mnpFlex(mnpFlexScript, meth, mnpFlexBed, params.id)
         if (mnpFlexCanUpload) {
             def uploadScript = file("${projectDir}/scr/mnpflex_upload.py", checkIfExists: true)
-            mnpFlexUpload(uploadScript, flexBed.mnpFlexBed, params.id)
+            def resultsScript = file("${projectDir}/scr/mnpflex_results.py", checkIfExists: true)
+            up = mnpFlexUpload(uploadScript, flexBed.mnpFlexBed, params.id)
+            flexPredictions = mnpFlexResults(resultsScript, up.response, params.id).predictions
         }
     }
 
@@ -339,6 +353,7 @@ workflow {
         egfrTables,
         savCna.purityPloidy.ifEmpty(noFile),
         savanaPlot.plot.ifEmpty(noFile),
+        flexPredictions.ifEmpty(noFile),
         snvTable,
         cnv.plotPng,
         classification.rfDetails,

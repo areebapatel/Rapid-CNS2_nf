@@ -113,12 +113,14 @@ def main():
     sample_id = sample.get("id") or sample.get("sample_id")
     print(f"uploaded {a.bed} as sample {a.sample} (id={sample_id}, HTTP {status})")
 
-    run = {}
+    # PUT already starts the workflow given in the query string, so only look up
+    # the run it created. Calling execute_workflow here returns 400 "already exists".
+    runs = []
     if sample_id:
-        _, run = request(
-            f"{api}/v1/mnpflex_sample/{sample_id}/execute_workflow?workflow_id={a.workflow_id}",
-            data=b"", headers=auth, method="POST")
-        print(f"started workflow {a.workflow_id} -> run {run.get('id', '?')}")
+        _, runs = request(f"{api}/v1/workflow_runs/by_entity/{sample_id}", headers=auth)
+    run = runs[0] if isinstance(runs, list) and runs else {}
+    if run:
+        print(f"workflow {run.get('workflow_id')} run {run.get('id')} ({run.get('status')})")
 
     with open(a.out, "w") as fh:
         json.dump({"sample": sample, "workflow_run": run}, fh, indent=2)

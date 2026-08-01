@@ -493,9 +493,10 @@ with the Heidelberg CNS classifier, covering 184 subclasses of the 2021 WHO
 classification.
 
 The pipeline prepares its input at `mnpflex/<id>.MNPFlex.input.bed` (on by
-default; disable with `--mnpFlex false`). Upload it manually at
-[app.epignostix.com](https://app.epignostix.com), or let the pipeline push it
-through the API.
+default; disable with `--mnpFlex false`). Upload it yourself at
+[app.epignostix.com](https://app.epignostix.com), or - if you have an account
+and set the credentials below - let the pipeline submit it and collect the
+results for you.
 
 #### Uploading through the API
 
@@ -506,7 +507,7 @@ Set your website login in the environment of the shell that launches the run:
 export EPIGNOSTIX_USER='you@institute.de'      # the app.epignostix.com login
 export EPIGNOSTIX_PASSWORD='...'
 
-nextflow run main.nf ... --mnpFlexUpload --mnpFlexWorkflowId 3
+nextflow run main.nf ... --mnpFlexUpload
 ```
 
 Put these in your shell profile or a file you `source` - **not** in
@@ -514,19 +515,34 @@ Put these in your shell profile or a file you `source` - **not** in
 If either variable is unset the upload is skipped with a warning and the rest of
 the run is unaffected.
 
-`--mnpFlexWorkflowId` selects the MNP-Flex workflow to run; list the available
-ids with `GET /v1/workflows` on the [API](https://app.epignostix.com/api/docs).
-Sample metadata is sent alongside the file:
+`--mnpFlexWorkflowId` defaults to 18 ("MNP-Flex Analysis"); list the ids your
+account can use with `GET /v1/workflows?entity_type=mnpflex_sample`. Sample
+metadata is sent alongside the file:
 
-| Parameter | Default |
-|-----------|---------|
-| `--mnpFlexTechnology` | `ONT` |
-| `--mnpFlexCoverage` | `1x` |
-| `--mnpFlexExtraction` | `fresh-frozen` |
-| `--mnpFlexSex` | `unknown` |
-| `--mnpFlexLocalisation`, `--mnpFlexDiagnosis` | unset |
+| Parameter | Default | Values the platform uses |
+|-----------|---------|--------------------------|
+| `--mnpFlexTechnology` | `Nanopore sequencing- PromethION` | also `TAPS (eg. Watchmaker genomics)`, `ND` |
+| `--mnpFlexCoverage` | `>10X` | also `ND` |
+| `--mnpFlexExtraction` | `Frozen` | also `FFPE` |
+| `--mnpFlexSex` | `ND` | |
+| `--mnpFlexLocalisation`, `--mnpFlexDiagnosis` | unset | |
+| `--mnpFlexWait` | `600` | seconds to wait for results |
 
-The API response is written to `mnpflex/<id>_mnpflex_upload.json`.
+The upload response is written to `mnpflex/<id>_mnpflex_upload.json`. The
+pipeline then polls for the analysis (up to `--mnpFlexWait`, default 600 s) and
+downloads the results:
+
+| File | Contents |
+|------|----------|
+| `<id>_mnpflex_predictions.tsv` | top classes with scores, classifier version, QC line |
+| `<id>_bundle_summary.json` | full classifier output |
+| `<id>_qc_*.json`, `<id>_mgmt_region_plot.json` | QC and MGMT plot data |
+
+The top predictions appear in the report. Descriptions of the methylation
+classes are in [Cancer Cell (2025)](https://www.cell.com/cancer-cell/fulltext/S1535-6108(25)00495-7).
+If the analysis has not finished within `--mnpFlexWait`, the run still succeeds
+and the report omits the section; re-run `scr/mnpflex_results.py --sample-id <id>`
+later to collect it.
 
 ### Getting Help
 
